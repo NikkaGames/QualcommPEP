@@ -77,11 +77,12 @@ NTSTATUS hw_backend_win_ufs_scalar_transition(_In_z_ const char* path, _In_ ULON
                                               _In_ const power_dev_t* verified_f0);
 int hw_backend_win_ufs_owner_ready(const res_graph_t* graph, uint64_t owner_epoch);
 /* execute/verify a complete desc-owned UFS native F/P program. */
-power_result_t hw_backend_win_ufs_program_execute(const power_plan_t* program, uint64_t owner_epoch,
+power_result_t hw_backend_win_ufs_program_execute(const power_sequence_t* program,
+                                                  uint64_t owner_epoch,
                                                   const power_dev_t* verified_d0,
                                                   const power_dev_t* current_f_state,
                                                   power_execution_t* trace);
-int hw_backend_win_ufs_program_verify(const power_plan_t* program, uint64_t owner_epoch);
+int hw_backend_win_ufs_program_verify(const power_sequence_t* program, uint64_t owner_epoch);
 NTSTATUS hw_backend_win_d0_quiesce(_In_ WDFDEVICE dev);
 /* retire after KMDF disable. Return busy while any AMC, IRQ state or WDF callback remains
  * unresolved. */

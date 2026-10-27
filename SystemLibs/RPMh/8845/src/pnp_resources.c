@@ -1,11 +1,11 @@
-#include "rpmh_oem_pnp_plan.h"
+#include "pnp_resources.h"
 #include <string.h>
 
-int rpmh_oem_build_pnp_plan(const rsc_irq_pair_t* pairs, uint32_t pair_cnt,
-                            const rpmh_oem_pnp_req_t* requests, uint32_t req_cnt,
-                            rpmh_oem_pnp_plan_t* out)
+int rpmh_match_pnp_resources(const rsc_irq_pair_t* pairs, uint32_t pair_cnt,
+                             const rpmh_oem_pnp_req_t* requests, uint32_t req_cnt,
+                             rpmh_pnp_resources_t* out)
 {
-    rpmh_oem_pnp_plan_t candidate = {0};
+    rpmh_pnp_resources_t candidate = {0};
     uint32_t i, j;
     if (!out || !pairs || !requests || !pair_cnt || !req_cnt || pair_cnt > RSC_IRQ_RES_LIMIT ||
         req_cnt > RPMH_OEM_MAX_DRIVERS)
@@ -36,7 +36,8 @@ int rpmh_oem_build_pnp_plan(const rsc_irq_pair_t* pairs, uint32_t pair_cnt,
                 p->raw_share_disposition != p->translated_share_disposition)
                 return 0;
             /* otherwise two device interrupts could be attributed to one Windows vector in a
-             * supposedly unique plan. This is diagnostic safety, never permission to bind an ISR.
+             * supposedly unique sequence. This is diagnostic safety, never permission to bind an
+             * ISR.
              */
 
             for (k = 0; k < pair_cnt; ++k) {
@@ -89,21 +90,23 @@ void rpmh_oem_pnp_observation_revoke(rpmh_oem_pnp_observation_t* o)
     if (!o)
         return;
     o->valid = 0;
-    memset(&o->plan, 0, sizeof(o->plan));
+    memset(&o->resources, 0, sizeof(o->resources));
     ++o->generation;
     if (!o->generation)
         o->generation = 1;
 }
 
-int rpmh_oem_pnp_observation_capture(rpmh_oem_pnp_observation_t* o, const rpmh_oem_pnp_plan_t* plan,
+int rpmh_oem_pnp_observation_capture(rpmh_oem_pnp_observation_t* o,
+                                     const rpmh_pnp_resources_t* resources,
                                      const rsc_irq_report_t* irq, uint64_t generation)
 {
     const rpmh_oem_pnp_match_t* m;
-    if (!o || !plan || !irq || !generation || o->generation != generation || plan->cnt != 1u ||
-        irq->finding != RSC_IRQ_UNIQUE_RAW_CANDIDATE || irq->matching_raw_pairs != 1u ||
-        irq->raw_vector != RPMH_OEM_8480_INTID || !irq->win_vector || !irq->win_level)
+    if (!o || !resources || !irq || !generation || o->generation != generation ||
+        resources->cnt != 1u || irq->finding != RSC_IRQ_UNIQUE_RAW_CANDIDATE ||
+        irq->matching_raw_pairs != 1u || irq->raw_vector != RPMH_OEM_8480_INTID ||
+        !irq->win_vector || !irq->win_level)
         return 0;
-    m = &plan->matches[0];
+    m = &resources->matches[0];
     if (m->driver_id != RPMH_OEM_8480_DRIVER_ID || m->gic_intid != RPMH_OEM_8480_INTID ||
         m->owner_epoch != generation || /* pnp generation, NOT hardware ownership. */
         m->res_idx != irq->candidate_idx || m->win_vector != irq->win_vector ||
@@ -112,19 +115,19 @@ int rpmh_oem_pnp_observation_capture(rpmh_oem_pnp_observation_t* o, const rpmh_o
         m->raw_share_disposition != irq->raw_share_disposition ||
         m->translated_share_disposition != irq->translated_share_disposition)
         return 0;
-    o->plan = *plan;
+    o->resources = *resources;
     o->valid = 1;
     return 1;
 }
 
 int rpmh_oem_pnp_observation_read(const rpmh_oem_pnp_observation_t* o, uint64_t generation,
-                                  rpmh_oem_pnp_plan_t* out)
+                                  rpmh_pnp_resources_t* out)
 {
     if (out)
         memset(out, 0, sizeof(*out));
     if (!o || !out || !o->valid || !generation || o->generation != generation)
         return 0;
-    *out = o->plan;
+    *out = o->resources;
     return 1;
 }
 
@@ -132,12 +135,13 @@ int rpmh_oem_pnp_observation_read(const rpmh_oem_pnp_observation_t* o, uint64_t 
  * desc ends, from the same pinned PnP generation. The distinct DRV2/TCS proof is still
  * required. */
 
-int rpmh_oem_exclusive_irq37_plan(const rpmh_oem_pnp_plan_t* plan, uint64_t pnp_generation)
+int rpmh_has_exclusive_irq37_resource(const rpmh_pnp_resources_t* resources,
+                                      uint64_t pnp_generation)
 {
     const rpmh_oem_pnp_match_t* m;
-    if (!plan || !pnp_generation || plan->cnt != 1u)
+    if (!resources || !pnp_generation || resources->cnt != 1u)
         return 0;
-    m = &plan->matches[0];
+    m = &resources->matches[0];
     return m->driver_id == RPMH_OEM_8480_DRIVER_ID && m->gic_intid == RPMH_OEM_8480_INTID &&
            m->owner_epoch == pnp_generation && m->win_vector != 0u && m->win_level != 0u &&
            !(m->raw_flags & 1u) && !(m->translated_flags & 1u) && m->raw_share_disposition == 1u &&

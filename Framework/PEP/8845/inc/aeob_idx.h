@@ -43,7 +43,7 @@ uint32_t program_p_state_cnt(const program_idx_t* idx, uint32_t comp, uint32_t s
 
 power_result_t program_idx_compile(const program_idx_t* idx, const void* desc, size_t bytes,
                                    program_class_t class, uint32_t comp, uint32_t set,
-                                   uint32_t state, power_plan_t* plan,
+                                   uint32_t state, power_sequence_t* sequence,
                                    power_pstate_program_t* p_state_program);
 #ifdef __cplusplus
 }

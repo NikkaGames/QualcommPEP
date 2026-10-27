@@ -11,10 +11,10 @@ extern "C" {
 
 typedef struct runtime_dstate_scope {
     program_idx_t idx;
-    power_plan_t d0;
-    power_plan_t d1;
-    power_plan_t d2;
-    power_plan_t d3;
+    power_sequence_t d0;
+    power_sequence_t d1;
+    power_sequence_t d2;
+    power_sequence_t d3;
     power_dev_t physical;
     uint32_t last_nonempty_target; /* only updated after verified nonempty votes. */
     uint8_t empty_f0;

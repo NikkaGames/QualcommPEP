@@ -40,7 +40,7 @@ static int read_twice(oem_pnp_d0_lease_t* l, void* irq, uint64_t epoch, uint32_t
 int oem_d0_lease_prepare(oem_pnp_d0_lease_t* l, const rpmh_oem_pnp_observation_t* obs,
                          uint64_t generation)
 {
-    rpmh_oem_pnp_plan_t p = {0};
+    rpmh_pnp_resources_t p = {0};
     const rpmh_oem_pnp_match_t* m;
     if (!l || (l->phase != D0_LEASE_COLD && l->phase != D0_LEASE_CLOSED) ||
         !rpmh_oem_pnp_observation_read(obs, generation, &p) || p.cnt != 1)

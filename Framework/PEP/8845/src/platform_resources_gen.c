@@ -3,7 +3,7 @@
 
 #include "platform_resources.h"
 
-const char* const QcPep8845DsdtRailNames[] = {
+const char* const platform_rail_names[] = {
     "PPP_RESOURCE_ID_BUCK_BOOST1_B",
     "PPP_RESOURCE_ID_BUCK_BOOST2_B",
     "PPP_RESOURCE_ID_CLK1_A",
@@ -61,9 +61,9 @@ const char* const QcPep8845DsdtRailNames[] = {
     "PPP_RESOURCE_ID_SMPS4_G",
     "PPP_RESOURCE_ID_SMPS5_F",
 };
-const unsigned int QcPep8845DsdtRailNameCount = 56u;
+const unsigned int platform_rail_cnt = 56u;
 
-const dsdt_route_t QcPep8845DsdtRoutes[] = {
+const dsdt_route_t platform_routes[] = {
     {"ICBID_MASTER_APPSS_PROC", "ICBID_SLAVE_DISPLAY_CFG"},
     {"ICBID_MASTER_APPSS_PROC", "ICBID_SLAVE_PRNG"},
     {"ICBID_MASTER_APPSS_PROC", "ICBID_SLAVE_QUP_3"},
@@ -75,9 +75,9 @@ const dsdt_route_t QcPep8845DsdtRoutes[] = {
     {"ICBID_MASTER_QUP_CORE_3", "ICBID_SLAVE_QUP_CORE_3"},
     {"ICBID_MASTER_UFS_MEM", "ICBID_SLAVE_EBI1"},
 };
-const unsigned int QcPep8845DsdtRouteCount = 10u;
+const unsigned int platform_route_cnt = 10u;
 
-const char* const QcPep8845DsdtClockNames[] = {
+const char* const platform_clock_names[] = {
     "disp_cc_mdss_ahb_clk",
     "disp_cc_mdss_byte0_clk",
     "disp_cc_mdss_byte0_intf_clk",
@@ -112,7 +112,7 @@ const char* const QcPep8845DsdtClockNames[] = {
     "gcc_ufs_phy_tx_symbol_0_clk",
     "gcc_ufs_phy_unipro_core_clk",
 };
-const unsigned int QcPep8845DsdtClockNameCount = 33u;
+const unsigned int platform_clock_cnt = 33u;
 
-const unsigned short QcPep8845DsdtTlmmPins[] = {52u, 53u, 55u, 64u, 65u, 68u, 69u, 86u, 129u, 161u, 164u};
-const unsigned int QcPep8845DsdtTlmmPinCount = 11u;
+const unsigned short platform_tlmm_pins[] = {52u, 53u, 55u, 64u, 65u, 68u, 69u, 86u, 129u, 161u, 164u};
+const unsigned int platform_tlmm_pin_cnt = 11u;

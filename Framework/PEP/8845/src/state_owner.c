@@ -71,8 +71,8 @@ power_result_t comp_owner_execute_f_state(comp_state_owner_t* o, const void* des
         ++n;
     }
     if (n) {
-        /* expansion precedes the provider lock; the same immutable plan must be used by preflight,
-         * apply, and final readback. */
+        /* expansion precedes the provider lock; the same immutable sequence must be used by
+         * preflight, apply, and final readback. */
 
         r = power_execute_comp_f_state(&work->f_state, comp, work->program_refs, n, dev,
                                        &o->comp[comp], o->sets[comp], 32u, backend, trace,

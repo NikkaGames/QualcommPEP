@@ -1,7 +1,7 @@
 #include "res_graph.h"
 #include <string.h>
 
-static int good_path(const char* p)
+static int valid_device_path(const char* p)
 {
     size_t n = 0;
     if (!p)
@@ -16,13 +16,13 @@ static graph_dev_t* find_dev(res_graph_t* g, const char* path)
     uint32_t i;
     /* a corrupt DeviceCount must never turn a path lookup into an out-of-bounds Devices walk. */
 
-    if (!g || !good_path(path) || g->dev_cnt > GRAPH_MAX_DEVICES)
+    if (!g || !valid_device_path(path) || g->dev_cnt > GRAPH_MAX_DEVICES)
         return NULL;
     for (i = 0; i < g->dev_cnt; ++i) {
         /* never let an unterminated stored scope make strcmp read beyond the fixed path[]
          * allocation. */
 
-        if (!good_path(g->devices[i].path))
+        if (!valid_device_path(g->devices[i].path))
             return NULL;
         if (!strcmp(path, g->devices[i].path))
             return &g->devices[i];
@@ -31,19 +31,20 @@ static graph_dev_t* find_dev(res_graph_t* g, const char* path)
 }
 
 /* provider admission/preflight MUST check the bounds again before walking Actions[] or
- * passing a plan to a callback. */
+ * passing a sequence to a callback. */
 
-static int valid_dev_plan(const graph_dev_t* d, const power_plan_t* plan, uint32_t target)
+static int valid_dstate_sequence(const graph_dev_t* d, const power_sequence_t* sequence,
+                                 uint32_t target)
 {
-    return d && plan && good_path(d->path) && good_path(plan->dev_path) &&
-           !strcmp(d->path, plan->dev_path) && plan->target_d_state == target &&
-           plan->action_cnt > 0u && plan->action_cnt <= POWER_MAX_ACTIONS;
+    return d && sequence && valid_device_path(d->path) && valid_device_path(sequence->dev_path) &&
+           !strcmp(d->path, sequence->dev_path) && sequence->target_d_state == target &&
+           sequence->action_cnt > 0u && sequence->action_cnt <= POWER_MAX_ACTIONS;
 }
 
-static int valid_dev_plans(const graph_dev_t* d)
+static int valid_dstate_sequences(const graph_dev_t* d)
 {
-    return d && d->has_d0 && d->has_d3 && valid_dev_plan(d, &d->d0, 0u) &&
-           valid_dev_plan(d, &d->d3, 3u);
+    return d && d->has_d0 && d->has_d3 && valid_dstate_sequence(d, &d->d0, 0u) &&
+           valid_dstate_sequence(d, &d->d3, 3u);
 }
 
 static int valid_provider(const graph_provider_t* p)
@@ -135,11 +136,11 @@ void graph_free_sources(res_graph_t* g)
     g->release_src = NULL;
 }
 
-int graph_add_plan(res_graph_t* g, const power_plan_t* p)
+int graph_add_sequence(res_graph_t* g, const power_sequence_t* p)
 {
     graph_dev_t* d;
     if (!g || g->sealed || g->retired || g->quiescing || g->dev_cnt > GRAPH_MAX_DEVICES || !p ||
-        !good_path(p->dev_path) || (p->target_d_state != 0u && p->target_d_state != 3u) ||
+        !valid_device_path(p->dev_path) || (p->target_d_state != 0u && p->target_d_state != 3u) ||
         !p->action_cnt || p->action_cnt > POWER_MAX_ACTIONS)
         return 0;
     d = find_dev(g, p->dev_path);
@@ -242,8 +243,8 @@ static int pins_exclusive(const res_graph_t* g)
             const graph_dev_t* db = &g->devices[j];
             for (sa = 0; sa < 2u; ++sa)
                 for (sb = 0; sb < 2u; ++sb) {
-                    const power_plan_t* pa = sa ? &da->d3 : &da->d0;
-                    const power_plan_t* pb = sb ? &db->d3 : &db->d0;
+                    const power_sequence_t* pa = sa ? &da->d3 : &da->d0;
+                    const power_sequence_t* pb = sb ? &db->d3 : &db->d0;
                     for (a = 0; a < pa->action_cnt; ++a) {
                         const power_action_t* x = &pa->actions[a];
                         if (x->kind != POWER_TLMM_GPIO && x->kind != POWER_PMIC_GPIO)
@@ -274,7 +275,7 @@ int graph_seal(res_graph_t* g)
         return 0;
     for (i = 0; i < g->dev_cnt; ++i) {
         graph_dev_t* d = &g->devices[i];
-        if (!valid_dev_plans(d))
+        if (!valid_dstate_sequences(d))
             return 0;
     }
     if (!pins_exclusive(g))
@@ -293,15 +294,15 @@ static graph_provider_t* provider(res_graph_t* g, const power_action_t* a)
                                                                                : NULL;
 }
 
-static int supported(res_graph_t* g, graph_dev_t* d, const power_plan_t* plan)
+static int supported(res_graph_t* g, graph_dev_t* d, const power_sequence_t* sequence)
 {
     uint32_t i;
-    if (!d || !valid_dev_plan(d, plan, plan->target_d_state))
+    if (!d || !valid_dstate_sequence(d, sequence, sequence->target_d_state))
         return 0;
-    for (i = 0; i < plan->action_cnt; ++i) {
-        const power_action_t* a = &plan->actions[i];
+    for (i = 0; i < sequence->action_cnt; ++i) {
+        const power_action_t* a = &sequence->actions[i];
         graph_provider_t* p = provider(g, a);
-        if (!p || !p->supports(p->ctx, d->path, plan->target_d_state, a))
+        if (!p || !p->supports(p->ctx, d->path, sequence->target_d_state, a))
             return 0;
     }
     return 1;
@@ -401,7 +402,7 @@ int graph_can_claim_held(res_graph_t* g, const char* path)
 {
     graph_dev_t* d = find_dev(g, path);
     return g && g->sealed && !g->retired && !g->quiescing && d && complete_comp_contract(g, d) &&
-           valid_dev_plans(d) && !d->prepared && !d->provider_transaction_entered &&
+           valid_dstate_sequences(d) && !d->prepared && !d->provider_transaction_entered &&
            !d->state.quarantined && (!d->state.state_known || d->state.current_d_state == 3u) &&
            supported(g, d, &d->d0) && supported(g, d, &d->d3);
 }
@@ -455,7 +456,7 @@ int graph_forget_firmware_state(res_graph_t* g, const char* path)
         return 0;
     d = find_dev(g, path);
     if (g->sealed && !g->retired && d && d->prepared && d->provider_transaction_entered &&
-        !d->state.quarantined && valid_dev_plans(d)) {
+        !d->state.quarantined && valid_dstate_sequences(d)) {
         d->state.state_known = 0u;
         okay = 1;
     }
@@ -471,7 +472,7 @@ int graph_is_prepared(res_graph_t* g, const char* path)
         return 0;
     d = find_dev(g, path);
     ready = g->sealed && !g->retired && !g->quiescing && d && d->prepared &&
-            complete_comp_contract(g, d) && !d->state.quarantined && valid_dev_plans(d);
+            complete_comp_contract(g, d) && !d->state.quarantined && valid_dstate_sequences(d);
     g->release(g->lock_ctx);
     return ready;
 }
@@ -487,7 +488,8 @@ int graph_reg_dstate_only(res_graph_t* g, const char* path, uint32_t components)
         return 0;
     d = find_dev(g, path);
     ready = g->comp_inventory_verified && g->sealed && !g->retired && !g->quiescing && d &&
-            d->prepared && !d->requires_comp_runtime && !d->state.quarantined && valid_dev_plans(d);
+            d->prepared && !d->requires_comp_runtime && !d->state.quarantined &&
+            valid_dstate_sequences(d);
     g->release(g->lock_ctx);
     return ready;
 }
@@ -502,7 +504,7 @@ int graph_reg_reviewed_ic_comp(res_graph_t* g, const char* path, uint32_t compon
     ready = g->comp_inventory_verified && g->sealed && !g->retired && !g->quiescing &&
             reviewed_ic_f0(d) && d->prepared && d->provider_transaction_entered &&
             d->state.state_known && d->state.current_d_state == 0u && !d->state.quarantined &&
-            valid_dev_plans(d);
+            valid_dstate_sequences(d);
     g->release(g->lock_ctx);
     return ready;
 }
@@ -514,7 +516,7 @@ int graph_prepare(res_graph_t* g, const char* path)
     if (!g || !g->acquire || !g->release || !g->acquire(g->lock_ctx))
         return 0;
     /* resolve inside the same lock used for retirement and transitions. PREPARE must not
-     * inspect prepared or plan pointers before admission. */
+     * inspect prepared or sequence pointers before admission. */
 
     d = find_dev(g, path);
     /* admission and device recovery state must be checked under the SAME lock as transitions.
@@ -524,7 +526,7 @@ int graph_prepare(res_graph_t* g, const char* path)
 
     if (!d || !g->sealed || g->retired || g->quiescing || d->prepared ||
         d->provider_transaction_entered || !complete_comp_contract(g, d) || d->state.quarantined ||
-        !valid_dev_plans(d) || (d->state.state_known && d->state.current_d_state != 3u)) {
+        !valid_dstate_sequences(d) || (d->state.state_known && d->state.current_d_state != 3u)) {
         g->release(g->lock_ctx);
         return 0;
     }
@@ -538,7 +540,7 @@ int graph_prepare(res_graph_t* g, const char* path)
 typedef struct run_ctx {
     res_graph_t* graph;
     graph_dev_t* dev;
-    const power_plan_t* plan;
+    const power_sequence_t* sequence;
 } run_ctx_t;
 
 static graph_provider_t* run_provider(run_ctx_t* r, const power_action_t* a)
@@ -554,14 +556,15 @@ static int run_lock(void* ctx)
     /* graphtransition checked prepared before acquiring lock. Retire may have completed in
      * between; never touch stale providers. */
 
-    if (r->graph->retired || r->graph->dev_cnt > GRAPH_MAX_DEVICES || !valid_dev_plans(r->dev) ||
-        (r->graph->quiescing && r->plan->target_d_state != 3u) || !r->dev->prepared ||
+    if (r->graph->retired || r->graph->dev_cnt > GRAPH_MAX_DEVICES ||
+        !valid_dstate_sequences(r->dev) ||
+        (r->graph->quiescing && r->sequence->target_d_state != 3u) || !r->dev->prepared ||
         !complete_comp_contract(r->graph, r->dev)) {
         r->graph->release(r->graph->lock_ctx);
         return 0;
     }
 
-    if (r->plan->target_d_state == 0u)
+    if (r->sequence->target_d_state == 0u)
         r->dev->provider_transaction_entered = 1u;
     return 1;
 }
@@ -576,10 +579,10 @@ static int run_supports(void* ctx, const power_action_t* a)
 {
     run_ctx_t* r = ctx;
     graph_provider_t* p = run_provider(r, a);
-    return p && p->supports(p->ctx, r->dev->path, r->plan->target_d_state, a);
+    return p && p->supports(p->ctx, r->dev->path, r->sequence->target_d_state, a);
 }
 
-/* probe ownership immediately before every physical operation too. The planner's locked
+/* probe ownership immediately before every physical operation too. The sequence builder's locked
  * preflight is not a lifetime guarantee from an external provider; the provider's own
  * callbacks must additionally synchronize their physical writes with revocation. */
 
@@ -587,16 +590,16 @@ static int run_apply(void* ctx, const power_action_t* a)
 {
     run_ctx_t* r = ctx;
     graph_provider_t* p = run_provider(r, a);
-    return p && p->supports(p->ctx, r->dev->path, r->plan->target_d_state, a) &&
-           p->apply(p->ctx, r->dev->path, r->plan->target_d_state, a);
+    return p && p->supports(p->ctx, r->dev->path, r->sequence->target_d_state, a) &&
+           p->apply(p->ctx, r->dev->path, r->sequence->target_d_state, a);
 }
 
 static int run_verify(void* ctx, const power_action_t* a)
 {
     run_ctx_t* r = ctx;
     graph_provider_t* p = run_provider(r, a);
-    return p && p->supports(p->ctx, r->dev->path, r->plan->target_d_state, a) &&
-           p->verify(p->ctx, r->dev->path, r->plan->target_d_state, a);
+    return p && p->supports(p->ctx, r->dev->path, r->sequence->target_d_state, a) &&
+           p->verify(p->ctx, r->dev->path, r->sequence->target_d_state, a);
 }
 
 #undef RUN_FN
@@ -605,7 +608,7 @@ static int run_verify(void* ctx, const power_action_t* a)
     {                                                                                              \
         run_ctx_t* r = ctx;                                                                        \
         graph_provider_t* p = run_provider(r, a);                                                  \
-        return p && p->field(p->ctx, r->dev->path, r->plan->target_d_state, a, s);                 \
+        return p && p->field(p->ctx, r->dev->path, r->sequence->target_d_state, a, s);             \
     }
 RUN_SNAPSHOT(run_snapshot, snapshot, power_snapshot_t)
 #undef RUN_SNAPSHOT
@@ -614,24 +617,25 @@ RUN_SNAPSHOT(run_snapshot, snapshot, power_snapshot_t)
     {                                                                                              \
         run_ctx_t* r = ctx;                                                                        \
         graph_provider_t* p = run_provider(r, a);                                                  \
-        return p && p->field(p->ctx, r->dev->path, r->plan->target_d_state, a, s);                 \
+        return p && p->field(p->ctx, r->dev->path, r->sequence->target_d_state, a, s);             \
     }
 RUN_RESTORE(run_restore, restore)
 RUN_RESTORE(run_verify_restored, verify_restored)
 #undef RUN_RESTORE
 
-static int run_verify_final(void* ctx, const power_plan_t* plan)
+static int run_verify_final(void* ctx, const power_sequence_t* sequence)
 {
     run_ctx_t* r = ctx;
     uint8_t seen[GRAPH_PROVIDER_CNT] = {0};
     uint32_t i;
-    for (i = 0; i < plan->action_cnt; ++i) {
-        unsigned k = (unsigned)plan->actions[i].kind;
-        graph_provider_t* p = run_provider(r, &plan->actions[i]);
-        if (!p || !p->supports(p->ctx, r->dev->path, plan->target_d_state, &plan->actions[i]))
+    for (i = 0; i < sequence->action_cnt; ++i) {
+        unsigned k = (unsigned)sequence->actions[i].kind;
+        graph_provider_t* p = run_provider(r, &sequence->actions[i]);
+        if (!p ||
+            !p->supports(p->ctx, r->dev->path, sequence->target_d_state, &sequence->actions[i]))
             return 0;
         if (!seen[k]) {
-            if (!p->verify_final(p->ctx, r->dev->path, plan->target_d_state, plan))
+            if (!p->verify_final(p->ctx, r->dev->path, sequence->target_d_state, sequence))
                 return 0;
             seen[k] = 1u;
         }
@@ -650,10 +654,10 @@ int graph_verify_reviewed_ic_f0(res_graph_t* g, const char* path, uint32_t comp,
     if (g->comp_inventory_verified && g->sealed && !g->retired && !g->quiescing &&
         reviewed_ic_f0(d) && d->prepared && d->provider_transaction_entered &&
         d->state.state_known && d->state.current_d_state == 0u && !d->state.quarantined &&
-        valid_dev_plans(d)) {
+        valid_dstate_sequences(d)) {
         run.graph = g;
         run.dev = d;
-        run.plan = &d->d0;
+        run.sequence = &d->d0;
         /* read-only provider-owned final state verification; no f0 writes exist in the exact ACPI
          * desc. provider retirement and failed readback both refuse the PoFx completion. */
 
@@ -673,12 +677,12 @@ int graph_verify_native_ufs_d3(res_graph_t* g, const char* path, uint64_t epoch)
         return 0;
     d = find_dev(g, path);
     if (g->sealed && !g->retired && d && !d->prepared && !d->provider_transaction_entered &&
-        valid_dev_plans(d) && g->native_ufs_owner_epoch == epoch &&
+        valid_dstate_sequences(d) && g->native_ufs_owner_epoch == epoch &&
         g->backend_binding_serial == epoch && d->state.state_known && !d->state.quarantined &&
         d->state.current_d_state == 3u) {
         run.graph = g;
         run.dev = d;
-        run.plan = &d->d3;
+        run.sequence = &d->d3;
         ok = run_verify_final(&run, &d->d3);
     }
     g->release(g->lock_ctx);
@@ -695,13 +699,13 @@ power_result_t graph_transition(res_graph_t* g, const char* path, uint32_t state
         return POWER_BAD_INPUT;
     memset(trace, 0, sizeof(*trace));
     if (!d || !g->sealed || !d->prepared || !scratch || (state != 0u && state != 3u) ||
-        !valid_dev_plans(d)) {
+        !valid_dstate_sequences(d)) {
         trace->result = POWER_UNSUPPORTED;
         return trace->result;
     }
     run.graph = g;
     run.dev = d;
-    run.plan = state == 0u ? &d->d0 : &d->d3;
+    run.sequence = state == 0u ? &d->d0 : &d->d3;
     memset(&backend, 0, sizeof(backend));
     backend.ctx = &run;
     backend.lock = run_lock;
@@ -713,7 +717,7 @@ power_result_t graph_transition(res_graph_t* g, const char* path, uint32_t state
     backend.restore = run_restore;
     backend.verify_restored = run_verify_restored;
     backend.verify_current_state = run_verify_final;
-    return power_execute(run.plan, &d->state, &backend, trace, scratch);
+    return power_execute(run.sequence, &d->state, &backend, trace, scratch);
 }
 
 /* combined admission and initial d0 helper. evidence shows 8280/8480
@@ -783,7 +787,7 @@ power_result_t graph_abandon_d3(res_graph_t* g, const char* path, power_executio
     d = find_dev(g, path);
     if (!g->retired && d && d->prepared && !d->provider_transaction_entered &&
         !d->state.quarantined && (!d->state.state_known || d->state.current_d_state == 3u) &&
-        valid_dev_plans(d)) {
+        valid_dstate_sequences(d)) {
         d->prepared = 0u;
         g->release(g->lock_ctx);
         trace->failure_idx = UINT32_MAX;

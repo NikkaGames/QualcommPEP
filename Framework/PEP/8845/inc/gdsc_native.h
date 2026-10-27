@@ -48,7 +48,7 @@ typedef struct fs_gdsc_driver {
 } fs_gdsc_driver_t;
 
 /* the supplied DomainId MUST equal the table-derived clock BSP ID (0x20000 |
- * aPowerDomains[] idx). HAL GDSCR physical address must match the Molokai GCC plan. */
+ * aPowerDomains[] idx). HAL GDSCR physical address must match the Molokai GCC sequence. */
 
 int fs_gdsc_init(fs_gdsc_driver_t* driver, const gcc_io_t* io, const char* domain,
                  uint32_t domain_id, void* owner_ctx, int (*owns)(void*, const char*, uint64_t),

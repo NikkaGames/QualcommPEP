@@ -22,7 +22,7 @@ typedef struct group_vote_io {
     int (*restore)(void*, const char*, uint32_t, const power_action_t*, const power_snapshot_t*);
     int (*verify_restored)(void*, const char*, uint32_t, const power_action_t*,
                            const power_snapshot_t*);
-    int (*verify_final)(void*, const char*, uint32_t, const power_plan_t*);
+    int (*verify_final)(void*, const char*, uint32_t, const power_sequence_t*);
     /* independent proof that the src-owned required client has no vote. */
     int (*verify_released)(void*, const char*);
     int (*read_clock_config)(void*, const char*, uint32_t*);
@@ -31,7 +31,7 @@ typedef struct group_vote_io {
 typedef struct group_vote {
     group_vote_io_t io;
     power_snapshot_t snapshots[POWER_MAX_ACTIONS];
-    power_plan_t final_plan;
+    power_sequence_t final_sequence;
     char dev_path[256];
     char identity[256];
     char config_clock[POWER_NAME_BYTES];

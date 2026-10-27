@@ -127,19 +127,19 @@ static int verify_restored(void* ctx, const char* path, uint32_t st, const power
                : found && cur.enabled == snap->opaque[1] && cur.microvolts == snap->opaque[2];
 }
 
-static int final(void* ctx, const char* path, uint32_t st, const power_plan_t* plan)
+static int verify_state(void* ctx, const char* path, uint32_t st, const power_sequence_t* sequence)
 {
     uint32_t i;
     int had = 0;
-    if (!plan || st != plan->target_d_state || strcmp(path, plan->dev_path))
+    if (!sequence || st != sequence->target_d_state || strcmp(path, sequence->dev_path))
         return 0;
-    for (i = 0; i < plan->action_cnt; ++i) {
-        if (plan->actions[i].kind == POWER_PMIC_REGULATOR) {
+    for (i = 0; i < sequence->action_cnt; ++i) {
+        if (sequence->actions[i].kind == POWER_PMIC_REGULATOR) {
             had = 1;
             /* only the exact currently supported actions are accepted, and verify checks the last
              * logical client vote, not intermediate hardware settings shared with boot firmware. */
 
-            if (!verify(ctx, path, st, &plan->actions[i]))
+            if (!verify(ctx, path, st, &sequence->actions[i]))
                 return 0;
         }
     }
@@ -158,6 +158,6 @@ int graph_bind_known_vrm(res_graph_t* graph, vrm_graph_ctx_t* ctx)
     p.verify = verify;
     p.restore = restore;
     p.verify_restored = verify_restored;
-    p.verify_final = final;
+    p.verify_final = verify_state;
     return graph_bind(graph, POWER_PMIC_REGULATOR, &p);
 }

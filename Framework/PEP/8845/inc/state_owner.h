@@ -19,8 +19,8 @@ typedef struct comp_state_owner {
 
 /* no giant transient stack allocations in PoFx. */
 typedef struct comp_state_work {
-    power_plan_t f_state;
-    power_plan_t expanded;
+    power_sequence_t f_state;
+    power_sequence_t expanded;
     power_pstate_program_t p_states[32];
     const power_pstate_program_t* program_refs[32];
     uint32_t po_fx_selectors[32];

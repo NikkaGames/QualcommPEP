@@ -359,20 +359,20 @@ NTSTATUS evt_dev_prepare_hardware(_In_ WDFDEVICE dev, _In_ WDFCMRESLIST resource
                 int descriptors_valid = rsc_select_irq_candidate_descriptors(
                     resources_raw, resources_translated, &res_ctx->rsc_irq_snapshot,
                     res_ctx->rsc_irq_snapshot.generation, &irq_raw, &irq_translated);
-                /* call the previously orphaned Windows PnP planner on the exact current
+                /* call the previously orphaned Windows PnP sequence builder on the exact current
                  * raw+translated lists. The legacy owner_epoch field contains only this PnP
                  * generation, NEVER TCS rights. */
 
                 rpmh_oem_pnp_req_t oem_req = {RPMH_OEM_8480_DRIVER_ID, RPMH_OEM_8480_INTID,
                                               res_ctx->rpmh_oem_pnp_observation.generation};
-                rpmh_oem_pnp_plan_t oem_plan = {0};
-                NTSTATUS oem_status = rpmh_oem_plan_win_interrupts(
-                    resources_raw, resources_translated, &oem_req, 1u, &oem_plan);
+                rpmh_pnp_resources_t matched_resources = {0};
+                NTSTATUS oem_status = rpmh_match_windows_interrupts(
+                    resources_raw, resources_translated, &oem_req, 1u, &matched_resources);
                 BOOLEAN oem_observed = FALSE;
                 if (descriptors_valid && NT_SUCCESS(oem_status)) {
                     oem_observed =
                         rpmh_oem_pnp_observation_capture(
-                            &res_ctx->rpmh_oem_pnp_observation, &oem_plan,
+                            &res_ctx->rpmh_oem_pnp_observation, &matched_resources,
                             &res_ctx->rsc_irq_snapshot.report, res_ctx->rsc_irq_snapshot.generation)
                             ? TRUE
                             : FALSE;
@@ -420,25 +420,28 @@ NTSTATUS evt_dev_prepare_hardware(_In_ WDFDEVICE dev, _In_ WDFCMRESLIST resource
      * inactive until ownership is published. */
 
     if (res_ctx && res_ctx->rpmh_oem_pnp_observation.valid) {
-        rpmh_oem_pnp_plan_t plan = {0};
+        rpmh_pnp_resources_t matched_resources = {0};
         PCM_PARTIAL_RESOURCE_DESCRIPTOR raw = NULL, translated = NULL;
         const ULONGLONG generation = res_ctx->rpmh_oem_pnp_observation.generation;
-        if (rpmh_oem_pnp_observation_read(&res_ctx->rpmh_oem_pnp_observation, generation, &plan) &&
-            plan.cnt == 1u &&
+        if (rpmh_oem_pnp_observation_read(&res_ctx->rpmh_oem_pnp_observation, generation,
+                                          &matched_resources) &&
+            matched_resources.cnt == 1u &&
             /* do not register an unbound KMDF ISR for a shared line that can never qualify for
              * exclusive GICD mask control. This check alone grants NO controller/AMC ownership. */
 
-            rpmh_oem_exclusive_irq37_plan(&plan, generation) &&
-            plan.matches[0].driver_id == RPMH_OEM_8480_DRIVER_ID &&
-            plan.matches[0].gic_intid == RPMH_OEM_8480_INTID &&
-            plan.matches[0].res_idx < WdfCmResourceListGetCount(resources_raw) &&
-            plan.matches[0].res_idx < WdfCmResourceListGetCount(resources_translated)) {
+            rpmh_has_exclusive_irq37_resource(&matched_resources, generation) &&
+            matched_resources.matches[0].driver_id == RPMH_OEM_8480_DRIVER_ID &&
+            matched_resources.matches[0].gic_intid == RPMH_OEM_8480_INTID &&
+            matched_resources.matches[0].res_idx < WdfCmResourceListGetCount(resources_raw) &&
+            matched_resources.matches[0].res_idx <
+                WdfCmResourceListGetCount(resources_translated)) {
             oem_wdf_irq_req_t req = {0};
             oem_wdf_irq_ctx_t* interrupt_ctx = NULL;
             void* handle = NULL;
-            raw = WdfCmResourceListGetDescriptor(resources_raw, plan.matches[0].res_idx);
-            translated =
-                WdfCmResourceListGetDescriptor(resources_translated, plan.matches[0].res_idx);
+            raw =
+                WdfCmResourceListGetDescriptor(resources_raw, matched_resources.matches[0].res_idx);
+            translated = WdfCmResourceListGetDescriptor(resources_translated,
+                                                        matched_resources.matches[0].res_idx);
             if (raw && translated) {
                 req.driver_id = RPMH_OEM_8480_DRIVER_ID;
                 req.gic_intid = RPMH_OEM_8480_INTID;
@@ -846,14 +849,16 @@ NTSTATUS evt_dev_d0_entry(_In_ WDFDEVICE dev, _In_ WDF_POWER_DEVICE_STATE previo
          * D0/IRQ37 generation before EvtInterruptEnable. */
 
         if (ctx) {
-            rpmh_oem_pnp_plan_t plan = {0};
+            rpmh_pnp_resources_t matched_resources = {0};
             if (ctx->rpmh_observed_wdf_interrupt && ctx->rpmh_observed_pnp_generation &&
                 ctx->rpmh_observed_pnp_generation == ctx->rpmh_oem_pnp_observation.generation &&
                 ctx->rpmh_wdf_lifecycle.phase == RPMH_WDF_D0_OBSERVED &&
                 rpmh_oem_pnp_observation_read(&ctx->rpmh_oem_pnp_observation,
-                                              ctx->rpmh_observed_pnp_generation, &plan) &&
-                plan.cnt == 1u && plan.matches[0].driver_id == RPMH_OEM_8480_DRIVER_ID &&
-                plan.matches[0].gic_intid == RPMH_OEM_8480_INTID &&
+                                              ctx->rpmh_observed_pnp_generation,
+                                              &matched_resources) &&
+                matched_resources.cnt == 1u &&
+                matched_resources.matches[0].driver_id == RPMH_OEM_8480_DRIVER_ID &&
+                matched_resources.matches[0].gic_intid == RPMH_OEM_8480_INTID &&
                 KeGetCurrentIrql() == PASSIVE_LEVEL) {
                 if (rsc_read_only_identify_hlos_win(&ctx->rpmh_rsc_identity)) {
                     ctx->rpmh_identity_pnp_generation = ctx->rpmh_observed_pnp_generation;

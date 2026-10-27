@@ -27,7 +27,7 @@ static void stall(const gcc_io_t* io, uint32_t us)
         io->stall_microseconds(io->ctx, us);
 }
 
-static int io_ok(const gcc_io_t* io)
+static int has_register_io(const gcc_io_t* io)
 {
     return io && io->read32 && io->write32 && io->barrier && io->stall_microseconds;
 }
@@ -43,9 +43,9 @@ const gcc_clock_t* gcc_find_clock(const char* name)
     unsigned i;
     if (!name || !name[0])
         return 0;
-    for (i = 0; i < QcPep8845GccClockCount; ++i)
-        if (strcmp(QcPep8845GccClocks[i].name, name) == 0)
-            return &QcPep8845GccClocks[i];
+    for (i = 0; i < gcc_clock_cnt; ++i)
+        if (strcmp(gcc_clocks[i].name, name) == 0)
+            return &gcc_clocks[i];
     return 0;
 }
 
@@ -57,9 +57,9 @@ const gcc_clock_t* gcc_find_req_clock(const char* name)
 
 const gcc_domain_t* gcc_clock_domain(const gcc_clock_t* clock)
 {
-    if (!clock || clock->domain_idx < 0 || (unsigned)clock->domain_idx >= QcPep8845GccDomainCount)
+    if (!clock || clock->domain_idx < 0 || (unsigned)clock->domain_idx >= gcc_domain_cnt)
         return 0;
-    return &QcPep8845GccDomains[clock->domain_idx];
+    return &gcc_domains[clock->domain_idx];
 }
 
 gcc_result_t gcc_select_freq(const gcc_clock_t* clock, uint32_t hz, const gcc_freq_t** chosen)
@@ -78,11 +78,10 @@ gcc_result_t gcc_select_freq(const gcc_clock_t* clock, uint32_t hz, const gcc_fr
         return GCC_UNSUPPORTED;
     if (d->flags & GCC_DOMAIN_READ_ONLY)
         return GCC_READ_ONLY;
-    if (d->freq_first > QcPep8845GccFreqCount ||
-        d->freq_cnt > QcPep8845GccFreqCount - d->freq_first)
+    if (d->freq_first > gcc_freq_cnt || d->freq_cnt > gcc_freq_cnt - d->freq_first)
         return GCC_INVALID;
     for (i = 0; i < d->freq_cnt; ++i) {
-        const gcc_freq_t* f = &QcPep8845GccFreqs[d->freq_first + i];
+        const gcc_freq_t* f = &gcc_freqs[d->freq_first + i];
         if (f->src_kind == GCC_SRC_OTHER)
             continue;
         if (f->hz < hz)
@@ -103,9 +102,7 @@ int gcc_src_ready(const gcc_io_t* io, uint32_t src_kind)
         return 1;
     if (src_kind != GCC_SRC_GPLL0 && src_kind != GCC_SRC_GPLL4)
         return 0;
-    if (!rd(io,
-            src_kind == GCC_SRC_GPLL4 ? QcPep8845GccGpll4ModeOffset : QcPep8845GccGpll0ModeOffset,
-            &mode))
+    if (!rd(io, src_kind == GCC_SRC_GPLL4 ? gcc_gpll4_mode_offset : gcc_gpll0_mode_offset, &mode))
         return 0;
     return (mode & PLL_MODE_LOCK_DET) && (mode & PLL_MODE_OUTCTRL);
 }
@@ -128,7 +125,7 @@ gcc_result_t gcc_set_freq(const gcc_io_t* io, const gcc_clock_t* clock, const gc
     const gcc_domain_t* d;
     uint32_t cfg, cmd, mask, dval;
     gcc_result_t r;
-    if (!io_ok(io) || !clock || !freq)
+    if (!has_register_io(io) || !clock || !freq)
         return GCC_INVALID;
     d = gcc_clock_domain(clock);
     if (!d || (d->flags & GCC_DOMAIN_NO_RCG) || d->cmd_rcgr_offset == 0u)
@@ -225,7 +222,7 @@ static gcc_result_t wait_gdsc(const gcc_io_t* io, uint32_t gdscr_off, int want_o
 gcc_result_t gcc_enable(const gcc_io_t* io, const gcc_clock_t* clock)
 {
     gcc_result_t r;
-    if (!io_ok(io) || !clock)
+    if (!has_register_io(io) || !clock)
         return GCC_INVALID;
     switch (clock->kind) {
         case GCC_KIND_REQ:
@@ -265,7 +262,7 @@ gcc_result_t gcc_disable(const gcc_io_t* io, const gcc_clock_t* clock)
 {
     gcc_result_t r;
     uint32_t v = 0u;
-    if (!io_ok(io) || !clock)
+    if (!has_register_io(io) || !clock)
         return GCC_INVALID;
     switch (clock->kind) {
         case GCC_KIND_VOTE:
@@ -321,11 +318,10 @@ static const gcc_freq_t* detect_freq(const gcc_domain_t* d, uint32_t cfg, uint32
         m = mreg & mask;
         n = ((~nreg) & mask) + m;
     }
-    if (d->freq_first > QcPep8845GccFreqCount ||
-        d->freq_cnt > QcPep8845GccFreqCount - d->freq_first)
+    if (d->freq_first > gcc_freq_cnt || d->freq_cnt > gcc_freq_cnt - d->freq_first)
         return 0u;
     for (i = 0; i < d->freq_cnt; ++i) {
-        const gcc_freq_t* f = &QcPep8845GccFreqs[d->freq_first + i];
+        const gcc_freq_t* f = &gcc_freqs[d->freq_first + i];
         int mnd = f->m != 0u && f->m < f->n;
         if (f->mux_sel != mux || f->div2x != div2x)
             continue;
@@ -448,8 +444,7 @@ int gcc_read_dfs_catalog(const gcc_io_t* io, const gcc_clock_t* clock, gcc_dfs_c
         return 1;
     if (!io || !io->read32 || domain->flags || !domain->cmd_rcgr_offset || !domain->freq_cnt ||
         !domain->mnd_width || domain->mnd_width > 16u || domain->dfs_states > GCC_DFS_MAX_STATES ||
-        domain->freq_first > QcPep8845GccFreqCount ||
-        domain->freq_cnt > QcPep8845GccFreqCount - domain->freq_first ||
+        domain->freq_first > gcc_freq_cnt || domain->freq_cnt > gcc_freq_cnt - domain->freq_first ||
         domain->cmd_rcgr_offset > GCC_WINDOW_BYTES - 0x120u)
         return 0;
     for (attempt = 0u; attempt < 4u; ++attempt) {

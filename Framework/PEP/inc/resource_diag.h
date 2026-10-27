@@ -8,9 +8,9 @@
 #define RSCSW_DIAG_HISTORY_CAPACITY 96u
 #define RSCSW_PROFILE_HISTORY_CAPACITY 96u
 #define RSCSW_GRAPH_LINK_CAPACITY 64u
-#define RSCSW_PLAN_STEP_CAPACITY 64u
-#define RSCSW_PLAN_HISTORY_CAPACITY 96u
-#define RSCSW_PLAN_PREVIEW_HISTORY_CAPACITY 96u
+#define RSCSW_ACTION_SEQUENCE_STEP_CAPACITY 64u
+#define RSCSW_ACTION_SEQUENCE_HISTORY_CAPACITY 96u
+#define RSCSW_ACTION_SEQUENCE_PREVIEW_HISTORY_CAPACITY 96u
 #define RSCSW_CHECKPOINT_SLOT_CAPACITY 16u
 #define RSCSW_CHECKPOINT_HISTORY_CAPACITY 96u
 #define RSCSW_COVERAGE_HISTORY_CAPACITY 96u
@@ -286,7 +286,7 @@
 #define RSCSW_LOOKUP_QUERY_TSENS_TRIP_CLASS_ID 158u
 #define RSCSW_LOOKUP_QUERY_AOP_MAILBOX_STATE_ID 159u
 #define RSCSW_LOOKUP_QUERY_ARC_POLICY_PHASE_ID 160u
-#define RSCSW_LOOKUP_QUERY_CLOCK_PLAN_STAGE_ID 161u
+#define RSCSW_LOOKUP_QUERY_CLOCK_CONFIG_PHASE_ID 161u
 #define RSCSW_LOOKUP_QUERY_CMDDB_SLAVE_REGION_ID 162u
 #define RSCSW_LOOKUP_QUERY_DAL_WORKLOOP_EVENT_ID 163u
 #define RSCSW_LOOKUP_QUERY_GLINK_RX_INTENT_STATE_ID 164u
@@ -512,7 +512,7 @@
 #define RSCSW_LOOKUP_KIND_TSENS_TRIP_CLASS 157u
 #define RSCSW_LOOKUP_KIND_AOP_MAILBOX_STATE 158u
 #define RSCSW_LOOKUP_KIND_ARC_POLICY_PHASE 159u
-#define RSCSW_LOOKUP_KIND_CLOCK_PLAN_STAGE 160u
+#define RSCSW_LOOKUP_KIND_CLOCK_CONFIG_PHASE 160u
 #define RSCSW_LOOKUP_KIND_CMDDB_SLAVE_REGION 161u
 #define RSCSW_LOOKUP_KIND_DAL_WORKLOOP_EVENT 162u
 #define RSCSW_LOOKUP_KIND_GLINK_RX_INTENT_STATE 163u
@@ -1022,14 +1022,14 @@ typedef struct rscsw_graph_snapshot {
     ULONG node_cnt;
     ULONG link_cnt;
     ULONG active_mask;
-    ULONG last_plan_status;
-    ULONG last_plan_step_cnt;
-    ULONG last_plan_failure_cnt;
-    ULONGLONG last_plan_tick100ns;
+    ULONG last_action_sequence_status;
+    ULONG last_action_sequence_step_cnt;
+    ULONG last_action_sequence_failure_cnt;
+    ULONGLONG last_action_sequence_tick100ns;
     rscsw_graph_link_t links[RSCSW_GRAPH_LINK_CAPACITY];
 } rscsw_graph_snapshot_t;
 
-typedef struct rscsw_plan_step {
+typedef struct rscsw_action_sequence_step {
     ULONG subsystem_id;
     ULONG state;
     ULONG clock_khz;
@@ -1042,9 +1042,9 @@ typedef struct rscsw_plan_step {
     ULONG delay_us;
     ULONG ioctl_code;
     ULONG reserved;
-} rscsw_plan_step_t;
+} rscsw_action_sequence_step_t;
 
-typedef struct rscsw_plan_result {
+typedef struct rscsw_action_sequence_result {
     ULONG requested_steps;
     ULONG executed_steps;
     ULONG failed_steps;
@@ -1056,9 +1056,9 @@ typedef struct rscsw_plan_result {
     ULONG last_value2;
     ULONG last_value3;
     ULONGLONG tick100ns;
-} rscsw_plan_result_t;
+} rscsw_action_sequence_result_t;
 
-typedef struct rscsw_plan_preview_result {
+typedef struct rscsw_action_sequence_preview_result {
     ULONG requested_steps;
     ULONG flags;
     ULONG expanded_steps;
@@ -1076,9 +1076,9 @@ typedef struct rscsw_plan_preview_result {
     ULONG last_value2;
     ULONG last_value3;
     ULONGLONG tick100ns;
-} rscsw_plan_preview_result_t;
+} rscsw_action_sequence_preview_result_t;
 
-typedef struct rscsw_plan_preview_snapshot {
+typedef struct rscsw_action_sequence_preview_snapshot {
     ULONG version;
     ULONG run_cnt;
     ULONG failure_cnt;
@@ -1093,7 +1093,7 @@ typedef struct rscsw_plan_preview_snapshot {
     ULONG last_active_mask_after;
     ULONG last_flags;
     ULONGLONG last_tick100ns;
-} rscsw_plan_preview_snapshot_t;
+} rscsw_action_sequence_preview_snapshot_t;
 
 typedef struct rscsw_checkpoint_info {
     ULONG slot_id;
@@ -2016,7 +2016,7 @@ typedef struct rscsw_provision_result {
     ULONG mode_id;
     ULONG flags;
     LONG status;
-    ULONG planned_cnt;
+    ULONG prepared_cnt;
     ULONG applied_cnt;
     ULONG failed_cnt;
     ULONG policy_vote_cnt;
@@ -2039,7 +2039,7 @@ typedef struct rscsw_provision_snapshot {
     LONG last_status;
     ULONG last_mode_id;
     ULONG last_flags;
-    ULONG last_planned_cnt;
+    ULONG last_prepared_cnt;
     ULONG last_applied_cnt;
     ULONG last_failed_cnt;
     ULONG last_policy_vote_cnt;
@@ -2085,7 +2085,7 @@ typedef struct rscsw_rail_result {
     ULONG mode_id;
     ULONG flags;
     LONG status;
-    ULONG planned_cnt;
+    ULONG prepared_cnt;
     ULONG applied_cnt;
     ULONG failed_cnt;
     ULONG rail_vote_cnt;
@@ -2111,7 +2111,7 @@ typedef struct rscsw_rail_snapshot {
     LONG last_status;
     ULONG last_mode_id;
     ULONG last_flags;
-    ULONG last_planned_cnt;
+    ULONG last_prepared_cnt;
     ULONG last_applied_cnt;
     ULONG last_failed_cnt;
     ULONG last_rail_vote_cnt;
@@ -2162,7 +2162,7 @@ typedef struct rscsw_tcs_result {
     ULONG mode_id;
     ULONG flags;
     LONG status;
-    ULONG planned_cnt;
+    ULONG prepared_cnt;
     ULONG programmed_cnt;
     ULONG failed_cnt;
     ULONG policy_vote_cnt;
@@ -2186,7 +2186,7 @@ typedef struct rscsw_tcs_snapshot {
     LONG last_status;
     ULONG last_mode_id;
     ULONG last_flags;
-    ULONG last_planned_cnt;
+    ULONG last_prepared_cnt;
     ULONG last_programmed_cnt;
     ULONG last_failed_cnt;
     ULONG last_policy_vote_cnt;
@@ -2237,7 +2237,7 @@ typedef struct rscsw_thermal_result {
     ULONG mode_id;
     ULONG flags;
     LONG status;
-    ULONG planned_cnt;
+    ULONG prepared_cnt;
     ULONG sampled_cnt;
     ULONG applied_cnt;
     ULONG failed_cnt;
@@ -2265,7 +2265,7 @@ typedef struct rscsw_thermal_snapshot {
     LONG last_status;
     ULONG last_mode_id;
     ULONG last_flags;
-    ULONG last_planned_cnt;
+    ULONG last_prepared_cnt;
     ULONG last_sampled_cnt;
     ULONG last_applied_cnt;
     ULONG last_failed_cnt;
@@ -2307,7 +2307,7 @@ typedef struct rscsw_coord_result {
     ULONG mode_id;
     ULONG flags;
     LONG status;
-    ULONG planned_cnt;
+    ULONG prepared_cnt;
     ULONG applied_cnt;
     ULONG failed_cnt;
     ULONG executed_phase_mask;
@@ -2339,7 +2339,7 @@ typedef struct rscsw_coord_snapshot {
     LONG last_status;
     ULONG last_mode_id;
     ULONG last_flags;
-    ULONG last_planned_cnt;
+    ULONG last_prepared_cnt;
     ULONG last_applied_cnt;
     ULONG last_failed_cnt;
     ULONG last_executed_phase_mask;
@@ -2693,19 +2693,23 @@ NTSTATUS rsc_sw_run_profile(_In_ ULONG profile_id, _In_ ULONG iterations, _In_ U
 NTSTATUS rsc_sw_get_profile_history(_Out_writes_to_(capacity, *cnt) rscsw_profile_result_t* entries,
                                     _In_ ULONG capacity, _Out_ ULONG* cnt, _Out_ ULONG* dropped);
 NTSTATUS rsc_sw_get_dependency_graph(_Out_ rscsw_graph_snapshot_t* snapshot);
-NTSTATUS rsc_sw_execute_plan(_In_reads_(step_cnt) const rscsw_plan_step_t* steps,
-                             _In_ ULONG step_cnt, _In_ ULONG flags,
-                             _Out_opt_ rscsw_plan_result_t* result);
-NTSTATUS rsc_sw_get_plan_history(_Out_writes_to_(capacity, *cnt) rscsw_plan_result_t* entries,
-                                 _In_ ULONG capacity, _Out_ ULONG* cnt, _Out_ ULONG* dropped);
-NTSTATUS rsc_sw_get_plan_preview_snapshot(_Out_ rscsw_plan_preview_snapshot_t* snapshot);
-NTSTATUS rsc_sw_preview_plan(_In_reads_(step_cnt) const rscsw_plan_step_t* steps,
-                             _In_ ULONG step_cnt, _In_ ULONG flags,
-                             _Out_opt_ rscsw_plan_preview_result_t* result);
-NTSTATUS rsc_sw_get_plan_preview_history(_Out_writes_to_(capacity, *cnt)
-                                             rscsw_plan_preview_result_t* entries,
-                                         _In_ ULONG capacity, _Out_ ULONG* cnt,
-                                         _Out_ ULONG* dropped);
+NTSTATUS rsc_sw_execute_action_sequence(_In_reads_(step_cnt)
+                                            const rscsw_action_sequence_step_t* steps,
+                                        _In_ ULONG step_cnt, _In_ ULONG flags,
+                                        _Out_opt_ rscsw_action_sequence_result_t* result);
+NTSTATUS rsc_sw_get_action_sequence_history(_Out_writes_to_(capacity, *cnt)
+                                                rscsw_action_sequence_result_t* entries,
+                                            _In_ ULONG capacity, _Out_ ULONG* cnt,
+                                            _Out_ ULONG* dropped);
+NTSTATUS rsc_sw_get_action_sequence_preview_snapshot(
+    _Out_ rscsw_action_sequence_preview_snapshot_t* snapshot);
+NTSTATUS rsc_sw_preview_action_sequence(_In_reads_(step_cnt)
+                                            const rscsw_action_sequence_step_t* steps,
+                                        _In_ ULONG step_cnt, _In_ ULONG flags,
+                                        _Out_opt_ rscsw_action_sequence_preview_result_t* result);
+NTSTATUS rsc_sw_get_action_sequence_preview_history(
+    _Out_writes_to_(capacity, *cnt) rscsw_action_sequence_preview_result_t* entries,
+    _In_ ULONG capacity, _Out_ ULONG* cnt, _Out_ ULONG* dropped);
 NTSTATUS rsc_sw_get_checkpoint_snapshot(_Out_ rscsw_checkpoint_snapshot_t* snapshot);
 NTSTATUS rsc_sw_capture_checkpoint(_In_ ULONG slot_id, _In_opt_z_ const CHAR* name,
                                    _In_ ULONG flags, _Out_opt_ rscsw_checkpoint_result_t* result);

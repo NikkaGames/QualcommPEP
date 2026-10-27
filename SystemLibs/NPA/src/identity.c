@@ -14,7 +14,7 @@ static int has_prefix(const char* str, const char* prefix)
     return 1;
 }
 
-static int safe_clock_name(const char* name)
+static int valid_clock_name(const char* name)
 {
     size_t i;
     if (!name)
@@ -33,7 +33,7 @@ static int safe_clock_name(const char* name)
 static int is_same_clock(const npa_key_t* key, const power_action_t* action)
 {
     return key && action && key->kind == POWER_CLOCK && action->kind == POWER_CLOCK &&
-           (key->d_state == 0u || key->d_state == 3u) && safe_clock_name(key->res) &&
+           (key->d_state == 0u || key->d_state == 3u) && valid_clock_name(key->res) &&
            strcmp(key->res, action->u.clock.name) == 0 && action->u.clock.vote < 32u &&
            (key->clock_mode_bits & (1u << action->u.clock.vote)) != 0u;
 }
@@ -52,7 +52,7 @@ int npa_describe_clock_client(const npa_key_t* key, const power_action_t* action
         (decoded.kind != CLOCK8480_ENABLE && decoded.kind != CLOCK8480_DISABLE))
         return 0;
     /* en_SETFREQ is NOT a single enable client. The signed SC8480 request path uses two
-     * separate REQUIRED client scalar issues; npa_plan_clock_scalar_issues describes that
+     * separate REQUIRED client scalar issues; npa_build_clock_requests describes that
      * ordered sequence. */
 
     n = strlen(key->res);
@@ -98,50 +98,49 @@ int npa_describe_composite_clock_clients(const npa_key_t* key, const power_actio
     out->freq.client_type = SC8480_CLOCK_NPA_CLIENT_REQUIRED;
     out->enable.client_type = SC8480_CLOCK_NPA_CLIENT_REQUIRED;
     out->requested_hertz = decoded.parameter0;
-    /* opaque DSDT policy is NOT a freq divider. 's read-only NPA query attestation must
-     * validate it separately and nonmutatingly. */
+    /* validate the opaque DSDT match policy through the read-only NPA query. */
 
     out->opaque_match_policy = decoded.parameter1;
     return 1;
 }
 
-int npa_plan_clock_scalar_issues(const npa_key_t* key, const power_action_t* action,
-                                 native_npa_clock_issue_plan_t* out)
+int npa_build_clock_requests(const npa_key_t* key, const power_action_t* action,
+                             native_npa_clock_requests_t* out)
 {
     clock_action8480_t decoded;
     native_npa_composite_clock_desc_t composite;
     native_npa_client_desc_t simple;
-    native_npa_clock_issue_plan_t plan;
+    native_npa_clock_requests_t sequence;
     if (!out)
         return 0;
     memset(out, 0, sizeof(*out));
     if (!key || !action || !decode_clock_opcode8480(action, &decoded))
         return 0;
-    memset(&plan, 0, sizeof(plan));
+    memset(&sequence, 0, sizeof(sequence));
     if (decoded.kind == CLOCK8480_ENABLE_SET_FREQ) {
         /* the DSDT match-policy operand is not an NPA scalar issue. */
 
         if (!npa_describe_composite_clock_clients(key, action, &composite))
             return 0;
-        plan.steps[0].client = composite.enable;
-        plan.steps[0].requested_scalar = SC8480_CLOCK_ENABLE_REQ;
-        plan.steps[1].client = composite.freq;
-        plan.steps[1].requested_scalar = composite.requested_hertz;
-        plan.opaque_match_policy = composite.opaque_match_policy;
-        plan.cnt = 2u;
+        sequence.steps[0].client = composite.enable;
+        sequence.steps[0].requested_scalar = SC8480_CLOCK_ENABLE_REQ;
+        sequence.steps[1].client = composite.freq;
+        sequence.steps[1].requested_scalar = composite.requested_hertz;
+        sequence.opaque_match_policy = composite.opaque_match_policy;
+        sequence.cnt = 2u;
     } else {
         if (!npa_describe_clock_client(key, action, &simple))
             return 0;
-        plan.steps[0].client = simple;
-        plan.steps[0].requested_scalar =
+        sequence.steps[0].client = simple;
+        sequence.steps[0].requested_scalar =
             (decoded.kind == CLOCK8480_ENABLE) ? SC8480_CLOCK_ENABLE_REQ : SC8480_CLOCK_DISABLE_REQ;
-        plan.cnt = 1u;
+        sequence.cnt = 1u;
     }
-    *out = plan;
+    *out = sequence;
     return 1;
 }
 
-static int safe_bus_res(const char* name)
+static int valid_bus_resource_name(const char* name)
 {
     size_t i;
     /* the mapping MUST be established independently for 8480 before the caller can supply it. */
@@ -175,7 +174,7 @@ int npa_describe_bus_client(const npa_key_t* key, const char* resolved_native_re
 
     if (!key || key->kind != POWER_ICB || (key->d_state != 0u && key->d_state != 3u) ||
         rsc_driver_id == UINT32_MAX || native_client_type == 0u ||
-        native_client_type == UINT32_MAX || !safe_bus_res(resolved_native_res_name) ||
+        native_client_type == UINT32_MAX || !valid_bus_resource_name(resolved_native_res_name) ||
         !npa_build_bus_client_reference(key, ref))
         return 0;
     n = strlen(resolved_native_res_name);

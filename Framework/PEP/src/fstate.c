@@ -70,11 +70,11 @@ static BOOLEAN pep_execute_verified_comp_f_state(_Inout_ pep_devnode_t* n, _In_ 
                                                  _In_ ULONG state)
 {
     pep_comp_fstate_scope_t* scope;
-    const power_plan_t* plan;
+    const power_sequence_t* sequence;
     power_scratch_t* scratch;
     power_execution_t trace;
     power_result_t result;
-    power_plan_t* expanded = NULL;
+    power_sequence_t* expanded = NULL;
     ULONG i, nested = 0u;
     char path[256];
     if (!n || KeGetCurrentIrql() != PASSIVE_LEVEL || !n->current_f_state || comp >= n->comp_cnt ||
@@ -128,8 +128,8 @@ static BOOLEAN pep_execute_verified_comp_f_state(_Inout_ pep_devnode_t* n, _In_ 
         return TRUE;
     scope = n->f_state_scope;
     if (!scope || !scope->src_verified || scope->comp_cnt != n->comp_cnt ||
-        scope->comp_cnt > 128u || scope->plan_slots != scope->comp_cnt * 32u || !scope->plans ||
-        !scope->verified_states || !scope->backend ||
+        scope->comp_cnt > 128u || scope->sequence_slots != scope->comp_cnt * 32u ||
+        !scope->sequences || !scope->verified_states || !scope->backend ||
         /* even a direct (non-PSTATE_ADJUST) F-state requires independently verified device d0. A
          * registered PoFx handle or Windows current_d_state cannot substitute for proof that
          * physical power resources are live. */
@@ -141,9 +141,9 @@ static BOOLEAN pep_execute_verified_comp_f_state(_Inout_ pep_devnode_t* n, _In_ 
         !pep_resolve_molokai_dev(&n->instance_path, path) ||
         !bounded_acpi_path_equal(scope->dev_path, path))
         return FALSE;
-    plan = scope->plans[comp * 32u + state];
-    if (!plan || !bounded_acpi_path_equal(plan->dev_path, path) || plan->target_d_state != state ||
-        plan->action_cnt > POWER_MAX_ACTIONS)
+    sequence = scope->sequences[comp * 32u + state];
+    if (!sequence || !bounded_acpi_path_equal(sequence->dev_path, path) ||
+        sequence->target_d_state != state || sequence->action_cnt > POWER_MAX_ACTIONS)
         return FALSE;
     /* dispatch nested UFS BPMD f0/f1 through the existing authoritative graph and its atomic,
      * provider-verified PSTATE_SET executor. The ufs_graph_bridge is NOT populated until
@@ -180,8 +180,8 @@ static BOOLEAN pep_execute_verified_comp_f_state(_Inout_ pep_devnode_t* n, _In_ 
      * nonrecursive graph lock, and never commit cached F-state if one of the three P-state
      * sets failed. */
 
-    for (i = 0u; i < plan->action_cnt; ++i)
-        if (plan->actions[i].kind == POWER_PSTATE_ADJUST)
+    for (i = 0u; i < sequence->action_cnt; ++i)
+        if (sequence->actions[i].kind == POWER_PSTATE_ADJUST)
             nested = 1u;
     if (nested &&
         (!scope->p_state_programs || !scope->p_state_program_cnt || !scope->p_state_set_states ||
@@ -192,7 +192,8 @@ static BOOLEAN pep_execute_verified_comp_f_state(_Inout_ pep_devnode_t* n, _In_ 
     if (!scratch)
         return FALSE;
     if (nested) {
-        expanded = (power_plan_t*)ExAllocatePool2(POOL_FLAG_NON_PAGED, sizeof(*expanded), POOL_TAG);
+        expanded =
+            (power_sequence_t*)ExAllocatePool2(POOL_FLAG_NON_PAGED, sizeof(*expanded), POOL_TAG);
         if (!expanded) {
             ExFreePool(scratch);
             return FALSE;
@@ -201,13 +202,13 @@ static BOOLEAN pep_execute_verified_comp_f_state(_Inout_ pep_devnode_t* n, _In_ 
     RtlZeroMemory(&trace, sizeof(trace));
     if (nested) {
         result = power_execute_comp_f_state(
-            plan, comp, scope->p_state_programs, scope->p_state_program_cnt,
+            sequence, comp, scope->p_state_programs, scope->p_state_program_cnt,
             scope->physical_dev_state, &scope->verified_states[comp],
             &scope->p_state_set_states[comp * scope->sets_per_comp], scope->sets_per_comp,
             scope->backend, &trace, expanded, scratch);
     } else {
-        result = power_execute_f_state(plan, &scope->verified_states[comp], scope->backend, &trace,
-                                       scratch);
+        result = power_execute_f_state(sequence, &scope->verified_states[comp], scope->backend,
+                                       &trace, scratch);
     }
     if (expanded)
         ExFreePool(expanded);

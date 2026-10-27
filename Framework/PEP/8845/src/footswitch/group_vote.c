@@ -74,7 +74,7 @@ int group_vote_bind(group_vote_t* s, const group_vote_io_t* io, const char* path
 power_result_t group_vote_transition(group_vote_t* s, const power_pstate_program_t* program,
                                      power_execution_t* trace)
 {
-    const power_plan_t* plan;
+    const power_sequence_t* sequence;
     uint32_t i, applied = 0u, restore_cnt = 0u;
     power_result_t result = POWER_BAD_INPUT;
     int clean = 1;
@@ -99,10 +99,10 @@ power_result_t group_vote_transition(group_vote_t* s, const power_pstate_program
         result = POWER_QUARANTINED;
         goto done;
     }
-    plan = &program->resources;
+    sequence = &program->resources;
     /* no hardware writes until the complete desc program is supported. */
-    for (i = 0; i < plan->action_cnt; ++i) {
-        const power_action_t* a = &plan->actions[i];
+    for (i = 0; i < sequence->action_cnt; ++i) {
+        const power_action_t* a = &sequence->actions[i];
         if (a->kind != POWER_CLOCK && a->kind != POWER_ICB && a->kind != POWER_PMIC_REGULATOR) {
             result = POWER_UNSUPPORTED;
             trace->failure_idx = i;
@@ -116,8 +116,8 @@ power_result_t group_vote_transition(group_vote_t* s, const power_pstate_program
     }
     /* a stable per-set identity updates the old client's vote. For example, CLOCK enable,
      * CONFIGURE and rate all act on that same native client. */
-    for (i = 0; i < plan->action_cnt; ++i) {
-        const power_action_t* a = &plan->actions[i];
+    for (i = 0; i < sequence->action_cnt; ++i) {
+        const power_action_t* a = &sequence->actions[i];
         if (a->kind == POWER_CLOCK && a->u.clock.vote == 9u) {
             uint32_t observed = UINT32_MAX;
             if (!s->io.read_clock_config(s->io.ctx, a->u.clock.name, &observed) || observed > 1u) {
@@ -157,17 +157,17 @@ power_result_t group_vote_transition(group_vote_t* s, const power_pstate_program
             goto rollback;
         }
     }
-    s->final_plan = *plan;
-    memcpy(s->final_plan.dev_path, s->identity, sizeof(s->identity));
-    if (!s->io.verify_final(s->io.ctx, s->identity, program->state, &s->final_plan)) {
+    s->final_sequence = *sequence;
+    memcpy(s->final_sequence.dev_path, s->identity, sizeof(s->identity));
+    if (!s->io.verify_final(s->io.ctx, s->identity, program->state, &s->final_sequence)) {
         result = POWER_FINAL_STATE_FAILED;
-        trace->failure_idx = plan->action_cnt;
+        trace->failure_idx = sequence->action_cnt;
         goto rollback;
     }
     /* epoch can change during a slow RPMh round trip; old ownership is never success. */
     if (!live(s)) {
         result = POWER_QUARANTINED;
-        trace->failure_idx = plan->action_cnt;
+        trace->failure_idx = sequence->action_cnt;
         goto rollback;
     }
     s->state_known = 1u;
@@ -179,9 +179,9 @@ rollback:
     trace->applied = applied;
     while (applied) {
         uint32_t at = --applied;
-        if (!s->io.restore(s->io.ctx, s->identity, program->state, &plan->actions[at],
+        if (!s->io.restore(s->io.ctx, s->identity, program->state, &sequence->actions[at],
                            &s->snapshots[at]) ||
-            !s->io.verify_restored(s->io.ctx, s->identity, program->state, &plan->actions[at],
+            !s->io.verify_restored(s->io.ctx, s->identity, program->state, &sequence->actions[at],
                                    &s->snapshots[at]))
             clean = 0;
         else

@@ -10,7 +10,7 @@ extern "C" {
 #endif
 
 #define GCC_WINDOW_PHYS UINT64_C(0x00100000)
-/* keep the BSP register plan, but do not allow its MMIO adapter to reach an unassigned
+/* keep the BSP register sequence, but do not allow its MMIO adapter to reach an unassigned
  * neighbor range. */
 
 #define GCC_WINDOW_BYTES 0x001F4200u
@@ -64,15 +64,15 @@ typedef struct gcc_clock {
     uint32_t bcr_offset; /* informational only; never written. */
 } gcc_clock_t;
 
-extern const gcc_freq_t QcPep8845GccFreqs[];
-extern const unsigned int QcPep8845GccFreqCount;
-extern const gcc_domain_t QcPep8845GccDomains[];
-extern const unsigned int QcPep8845GccDomainCount;
-extern const gcc_clock_t QcPep8845GccClocks[];
-extern const unsigned int QcPep8845GccClockCount;
-extern const unsigned int QcPep8845GccGpll0ModeOffset;
-extern const unsigned int QcPep8845GccGpll4ModeOffset;
-extern const unsigned int QcPep8845GccApcsPllVoteOffset;
+extern const gcc_freq_t gcc_freqs[];
+extern const unsigned int gcc_freq_cnt;
+extern const gcc_domain_t gcc_domains[];
+extern const unsigned int gcc_domain_cnt;
+extern const gcc_clock_t gcc_clocks[];
+extern const unsigned int gcc_clock_cnt;
+extern const unsigned int gcc_gpll0_mode_offset;
+extern const unsigned int gcc_gpll4_mode_offset;
+extern const unsigned int gcc_apcs_pll_vote_offset;
 
 #define CBCR_CLK_ENABLE 0x00000001u
 #define CBCR_CLK_HW_CTL 0x00000002u

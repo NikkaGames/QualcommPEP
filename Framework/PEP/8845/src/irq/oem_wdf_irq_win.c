@@ -5,7 +5,7 @@
 #include <wdf.h>
 #include "oem_wdf_irq_create.h"
 #include "rpmh_tcs.h"
-#include "rpmh_oem_pnp_plan.h"
+#include "pnp_resources.h"
 #include "oem_wdf_dpc_tracker_win.h"
 #include "trace.h"
 #include "oem_wdf_irq_win.tmh"

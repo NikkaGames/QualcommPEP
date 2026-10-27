@@ -1,8 +1,7 @@
 #ifndef NPA_NATIVE_IDENTITY_H
 #define NPA_NATIVE_IDENTITY_H
-/* static native NPA client identity / scalar-request PLAN construction. Signed SC8480
- * establishes the CLOCK request ordering and explicit scalar values; this does NOT
- * implement NPA, grant Windows ownership or prove hardware completion. */
+/* native NPA client identities and ordered scalar requests.
+ * resource binding requires a separate owner and completion check. */
 
 #include "npa_client.h"
 #ifdef __cplusplus
@@ -75,14 +74,14 @@ typedef struct native_npa_composite_clock_desc {
 int npa_describe_composite_clock_clients(const npa_key_t*, const power_action_t*,
                                          native_npa_composite_clock_desc_t*);
 
-/* opcode 8 (EN_SETFREQ) requires a separate dual-client plan; it MUST never be
+/* opcode 8 (EN_SETFREQ) requires a separate dual-client sequence; it MUST never be
  * misrepresented by this single-res function. */
 
 int npa_describe_clock_client(const npa_key_t* key, const power_action_t* action,
                               native_npa_client_desc_t* out);
 
 /* SC8480 RVA 0x231BA8 orders EN_SETFREQ as enable=1, then frequency in Hz;
- * DISABLE explicitly votes 2. This immutable plan does not execute or prove completion. */
+ * DISABLE explicitly votes 2. This immutable sequence does not execute or prove completion. */
 
 #define NATIVE_CLOCK_MAX_SCALAR_ISSUES 2u
 #define SC8480_CLOCK_ENABLE_REQ 1u
@@ -93,17 +92,17 @@ typedef struct native_npa_scalar_issue {
     uint32_t requested_scalar;
 } native_npa_scalar_issue_t;
 
-typedef struct native_npa_clock_issue_plan {
+typedef struct native_npa_clock_requests {
     uint32_t cnt;
     uint32_t opaque_match_policy;
     native_npa_scalar_issue_t steps[NATIVE_CLOCK_MAX_SCALAR_ISSUES];
-} native_npa_clock_issue_plan_t;
+} native_npa_clock_requests_t;
 
 /* no client creation, physical write, returned hardware result or permission to register a
- * DPM owner occurs. invalid actions MUST NOT leave a partially usable output plan. */
+ * DPM owner occurs. invalid actions MUST NOT leave a partially usable output sequence. */
 
-int npa_plan_clock_scalar_issues(const npa_key_t* key, const power_action_t* action,
-                                 native_npa_clock_issue_plan_t* out);
+int npa_build_clock_requests(const npa_key_t* key, const power_action_t* action,
+                             native_npa_clock_requests_t* out);
 
 /* explicit verified native driver/TYPE mapping supplied by the eventual legitimate NPA
  * backend. It must not be inferred from DSDT client, nor from the Linux RSC MMIO base. */

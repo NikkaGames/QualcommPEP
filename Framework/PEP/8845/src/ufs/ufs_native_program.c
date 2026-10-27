@@ -1,13 +1,13 @@
 #include "ufs_native_program.h"
 #include <string.h>
 
-static int plan_path(const char* p)
+static int sequence_path(const char* p)
 {
     const char target[] = "\\_SB.UFS0";
     return p && memcmp(p, target, sizeof(target)) == 0;
 }
 
-static int matches(const power_plan_t* whole, uint32_t offset, const power_pstate_program_t* p)
+static int matches(const power_sequence_t* whole, uint32_t offset, const power_pstate_program_t* p)
 {
     uint32_t i;
     if (!whole || !p || !p->resources.action_cnt ||
@@ -21,7 +21,7 @@ static int matches(const power_plan_t* whole, uint32_t offset, const power_pstat
 
 typedef struct search {
     const ufs_catalog_t* catalog;
-    const power_plan_t* program;
+    const power_sequence_t* program;
     ufs_native_selection_t work[UFS_PSTATE_SETS];
     ufs_native_selection_t found[UFS_PSTATE_SETS];
     uint32_t found_cnt, solutions;
@@ -60,7 +60,7 @@ static void descend(search_t* s, uint32_t offset, uint32_t used, uint32_t cnt)
     }
 }
 
-int ufs_native_select_program(const ufs_catalog_t* catalog, const power_plan_t* program,
+int ufs_native_select_program(const ufs_catalog_t* catalog, const power_sequence_t* program,
                               ufs_native_selection_t out[UFS_PSTATE_SETS], uint32_t* cnt)
 {
     search_t search = {0};
@@ -68,7 +68,7 @@ int ufs_native_select_program(const ufs_catalog_t* catalog, const power_plan_t* 
     if (cnt)
         *cnt = 0u;
     if (!catalog || !catalog->compiled || !program || !out || !cnt ||
-        !plan_path(program->dev_path) ||
+        !sequence_path(program->dev_path) ||
         (program->target_d_state != 0u && program->target_d_state != 1u) || !program->action_cnt ||
         program->action_cnt > POWER_MAX_ACTIONS)
         return 0;

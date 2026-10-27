@@ -46,7 +46,7 @@ typedef struct hybrid_clock_ctx {
     hybrid_clock_entry_t entries[HYBRID_MAX_COMPOSITES];
     uint32_t entry_cnt;
     /* supplied NONPAGED scratch for final-state filtering, never stack. */
-    power_plan_t* filter_scratch;
+    power_sequence_t* filter_scratch;
     clock_native_match_query_t match_query;
     void* match_ctx;
 } hybrid_clock_ctx_t;
@@ -68,7 +68,7 @@ int clock_hybrid_discover(const res_graph_t* graph, clock_composite_resolve_t re
                           uint32_t* discovered);
 
 int clock_hybrid_make_provider(hybrid_clock_ctx_t*, const res_graph_t*, const graph_provider_t*,
-                               const hybrid_clock_entry_t*, uint32_t, power_plan_t*,
+                               const hybrid_clock_entry_t*, uint32_t, power_sequence_t*,
                                clock_native_match_query_t, void* match_ctx, graph_provider_t*);
 #ifdef __cplusplus
 }

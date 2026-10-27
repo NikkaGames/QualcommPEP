@@ -322,7 +322,7 @@ static BOOLEAN soc_subsys_try_resolve_name(_In_opt_ const UNICODE_STRING* name, 
     return FALSE;
 }
 
-static __forceinline BOOLEAN soc_subsys_platform_ok(_In_ ULONG platform_idle_state_idx)
+static __forceinline BOOLEAN soc_subsys_is_drips_state(_In_ ULONG platform_idle_state_idx)
 {
     soc_subsys_init_if_needed();
     return (platform_idle_state_idx == g_soc_subsys.drips_state_id);
@@ -638,7 +638,7 @@ BOOLEAN soc_subsys_query_cnt(_Inout_ PEP_QUERY_SOC_SUBSYSTEM_COUNT* query)
 {
     if (!query)
         return FALSE;
-    if (!soc_subsys_platform_ok(query->PlatformIdleStateIndex))
+    if (!soc_subsys_is_drips_state(query->PlatformIdleStateIndex))
         return FALSE;
 
     query->SubsystemCount = SOC_SUBSYS_CNT;
@@ -649,7 +649,7 @@ BOOLEAN soc_subsys_query_subsystem(_Inout_ PEP_QUERY_SOC_SUBSYSTEM* query)
 {
     if (!query)
         return FALSE;
-    if (!soc_subsys_platform_ok(query->PlatformIdleStateIndex))
+    if (!soc_subsys_is_drips_state(query->PlatformIdleStateIndex))
         return FALSE;
     if (query->SubsystemIndex >= SOC_SUBSYS_CNT)
         return FALSE;
@@ -676,7 +676,7 @@ BOOLEAN soc_subsys_reset_accounting(_In_ PEP_RESET_SOC_SUBSYSTEM_ACCOUNTING* res
 {
     if (!reset)
         return FALSE;
-    if (!soc_subsys_platform_ok(reset->PlatformIdleStateIndex))
+    if (!soc_subsys_is_drips_state(reset->PlatformIdleStateIndex))
         return FALSE;
 
     KIRQL irql;
@@ -726,7 +726,7 @@ BOOLEAN soc_subsys_query_blocking_time(_Inout_ PEP_QUERY_SOC_SUBSYSTEM_BLOCKING_
 {
     if (!query)
         return FALSE;
-    if (!soc_subsys_platform_ok(query->PlatformIdleStateIndex))
+    if (!soc_subsys_is_drips_state(query->PlatformIdleStateIndex))
         return FALSE;
 
     ULONG idx = 0;
@@ -757,7 +757,7 @@ BOOLEAN soc_subsys_query_metadata(_Inout_ PEP_QUERY_SOC_SUBSYSTEM_METADATA* quer
 {
     if (!query)
         return FALSE;
-    if (!soc_subsys_platform_ok(query->PlatformIdleStateIndex))
+    if (!soc_subsys_is_drips_state(query->PlatformIdleStateIndex))
         return FALSE;
 
     ULONG idx = 0;

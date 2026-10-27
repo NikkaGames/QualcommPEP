@@ -3,8 +3,8 @@
 /* wdfcmreslist -> portable PnP res correlation. No ISR or MMIO. */
 
 #include "driver.h"
-#include "rpmh_oem_pnp_plan.h"
-NTSTATUS rpmh_oem_plan_win_interrupts(_In_ WDFCMRESLIST raw, _In_ WDFCMRESLIST translated,
-                                      _In_reads_(req_cnt) const rpmh_oem_pnp_req_t* requests,
-                                      _In_ ULONG req_cnt, _Out_ rpmh_oem_pnp_plan_t* plan);
+#include "pnp_resources.h"
+NTSTATUS rpmh_match_windows_interrupts(_In_ WDFCMRESLIST raw, _In_ WDFCMRESLIST translated,
+                                       _In_reads_(req_cnt) const rpmh_oem_pnp_req_t* requests,
+                                       _In_ ULONG req_cnt, _Out_ rpmh_pnp_resources_t* resources);
 #endif

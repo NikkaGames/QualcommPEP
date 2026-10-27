@@ -30,8 +30,8 @@ typedef struct pofx_required_catalog {
 
 /* no hardware owner or NPA client is conferred by this manifest. */
 int po_fx_required_compile(pofx_required_catalog_t* catalog, const program_idx_t* idx,
-                           const void* pinned_desc, size_t desc_bytes, power_plan_t* plan_work,
-                           power_pstate_program_t* p_state_work);
+                           const void* pinned_desc, size_t desc_bytes,
+                           power_sequence_t* sequence_work, power_pstate_program_t* p_state_work);
 
 /* only a provider with complete client-specific vote and readback semantics may claim
  * readiness. No generic Windows last-vote cache is sufficient. */

@@ -1,7 +1,6 @@
 #ifndef POWER_TXN_H
 #define POWER_TXN_H
-/* portable, fail-closed Molokai aeo_b d0..d3 res transaction planner. Not a firmware
- * transport. */
+/* ordered resource actions for Molokai D-state transactions. */
 
 #include "aeob.h"
 #include "aeob_validate.h"
@@ -78,12 +77,12 @@ typedef struct power_action {
     } u;
 } power_action_t;
 
-typedef struct power_plan {
+typedef struct power_sequence {
     char dev_path[256];
     uint32_t target_d_state;
     uint32_t action_cnt;
     power_action_t actions[POWER_MAX_ACTIONS];
-} power_plan_t;
+} power_sequence_t;
 
 typedef enum power_result {
     POWER_OK = 0,
@@ -141,12 +140,12 @@ typedef struct power_backend {
      * requested final D-state. Not a replay of intermediate GPIO/reset actions or a physical
      * equality check against shared aggregate votes. */
 
-    int (*verify_current_state)(void* ctx, const power_plan_t*);
-    /* optional native res-group executor. The COMPLETE desc-derived plan is one physical
+    int (*verify_current_state)(void* ctx, const power_sequence_t*);
+    /* optional native res-group executor. The COMPLETE desc-derived sequence is one physical
      * transaction: either all vote identities are verified, or rollback is proven; uncertain
      * hardware must return RollbackFailed. Individual apply/verify callbacks are never
      * substituted with no-ops. */
-    power_result_t (*execute_owned_program)(void* ctx, const power_plan_t*,
+    power_result_t (*execute_owned_program)(void* ctx, const power_sequence_t*,
                                             struct power_execution*);
 } power_backend_t;
 
@@ -159,7 +158,7 @@ typedef struct power_execution {
 
 /* all selected resources must already pass the Molokai catalog and route validator. */
 
-/* target_d_state in the plan carries the F-state selector only for this serialized action
+/* target_d_state in the sequence carries the F-state selector only for this serialized action
  * container; it is NOT a D-state transaction and MUST NOT be passed to
  * power_execute/GraphTransition. A valid program is not permission to complete a PoFx
  * notify: the owner must independently. */
@@ -170,7 +169,7 @@ typedef struct power_pstate_program {
     uint32_t comp;
     uint32_t set;
     uint32_t state;
-    power_plan_t resources;
+    power_sequence_t resources;
 } power_pstate_program_t;
 
 power_result_t power_compile_aeo_bp_state(const void* buf, size_t length, const char* dev_path,
@@ -188,14 +187,15 @@ power_result_t power_compile_aeo_bp_state(const void* buf, size_t length, const 
 /* internal owner-locked action executor. Does not modify a device or component software
  * cache; runs every action and verifies final hardware votes. */
 
-power_result_t power_execute_action_batch(const power_plan_t* actions,
+power_result_t power_execute_action_batch(const power_sequence_t* actions,
                                           const power_backend_t* backend, power_execution_t* trace,
                                           power_scratch_t* scratch);
 /* a desc-bound, rate-only CLOCK request may configure a gated RCG in verified Dx. The
  * caller fences D-state changes; this cannot execute an enable, rail, bus or
  * peripheral-register action, or publish a D-state. */
-power_result_t power_execute_clock_rate(const power_plan_t* actions, const power_backend_t* backend,
-                                        power_execution_t* trace, power_scratch_t* scratch);
+power_result_t power_execute_clock_rate(const power_sequence_t* actions,
+                                        const power_backend_t* backend, power_execution_t* trace,
+                                        power_scratch_t* scratch);
 /* nested F-state transition: the caller supplies the CURRENT, verified F-state
  * prerequisite (f0 or f1). This is separate from ordinary PoFx P-state requests, which
  * remain f0-only. */
@@ -204,13 +204,13 @@ power_result_t power_execute_p_state_batch_from_f_state(
     const power_pstate_program_t* const* programs, uint32_t cnt, const char* dev_path,
     uint32_t comp, uint32_t set_cnt, const power_dev_t* dev, const power_dev_t* f_state,
     uint32_t expected_current_f_state, power_dev_t* per_set, const power_backend_t* backend,
-    power_execution_t* trace, power_plan_t* combined, power_scratch_t* scratch);
+    power_execution_t* trace, power_sequence_t* combined, power_scratch_t* scratch);
 power_result_t power_execute_p_state_batch(const power_pstate_program_t* const* programs,
                                            uint32_t cnt, const char* dev_path, uint32_t comp,
                                            uint32_t set_cnt, const power_dev_t* dev,
                                            const power_dev_t* f_state, power_dev_t* per_set,
                                            const power_backend_t* backend, power_execution_t* trace,
-                                           power_plan_t* combined, power_scratch_t* scratch);
+                                           power_sequence_t* combined, power_scratch_t* scratch);
 power_result_t power_execute_p_state(const power_pstate_program_t* program, const power_dev_t* dev,
                                      const power_dev_t* comp, power_dev_t* per_set,
                                      const power_backend_t* backend, power_execution_t* trace,
@@ -224,33 +224,34 @@ typedef struct power_pstate_selection {
     uint8_t target_state[32];
 } power_pstate_selection_t;
 
-power_result_t power_expand_comp_f_state(const power_plan_t* f_state, uint32_t comp,
+power_result_t power_expand_comp_f_state(const power_sequence_t* f_state, uint32_t comp,
                                          const power_pstate_program_t* const* programs,
                                          uint32_t program_cnt, uint32_t set_cnt,
-                                         power_plan_t* expanded,
+                                         power_sequence_t* expanded,
                                          power_pstate_selection_t* selection);
-power_result_t power_execute_comp_f_state(const power_plan_t* f_state, uint32_t comp,
+power_result_t power_execute_comp_f_state(const power_sequence_t* f_state, uint32_t comp,
                                           const power_pstate_program_t* const* programs,
                                           uint32_t program_cnt, const power_dev_t* dev,
                                           power_dev_t* f_state_dev, power_dev_t* per_set,
                                           uint32_t set_cnt, const power_backend_t* backend,
-                                          power_execution_t* trace, power_plan_t* expanded,
+                                          power_execution_t* trace, power_sequence_t* expanded,
                                           power_scratch_t* scratch);
 power_result_t power_compile_aeo_bf_state(const void* buf, size_t length, const char* dev_path,
-                                          uint32_t comp, uint32_t f_state, power_plan_t* plan);
+                                          uint32_t comp, uint32_t f_state,
+                                          power_sequence_t* sequence);
 power_result_t power_compile_aeo_b(const void* buf, size_t length, const char* dev_path,
-                                   uint32_t d_state, power_plan_t* plan);
+                                   uint32_t d_state, power_sequence_t* sequence);
 /* empty F-state programs still require a validated desc and physical current-state
  * verification. */
 
-power_result_t power_execute_f_state(const power_plan_t* plan, power_dev_t* comp,
+power_result_t power_execute_f_state(const power_sequence_t* sequence, power_dev_t* comp,
                                      const power_backend_t* backend, power_execution_t* trace,
                                      power_scratch_t* scratch);
 /* never reports a device d0..d3 state change unless every apply AND verify succeeds.
  * rollback failure sets quarantined=1 so even initial d0 cannot retry without externally
  * verified recovery. */
 
-power_result_t power_execute(const power_plan_t* plan, power_dev_t* dev,
+power_result_t power_execute(const power_sequence_t* sequence, power_dev_t* dev,
                              const power_backend_t* backend, power_execution_t* trace,
                              power_scratch_t* scratch);
 #ifdef __cplusplus

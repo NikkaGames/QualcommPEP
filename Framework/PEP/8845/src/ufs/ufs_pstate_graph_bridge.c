@@ -120,7 +120,7 @@ static int restored(void* v, const power_action_t* a, const power_snapshot_t* s)
     return p && s && p->verify_restored(p->ctx, PATH, st, a, s);
 }
 
-static int verify_final(void* v, const power_plan_t* combined)
+static int verify_final(void* v, const power_sequence_t* combined)
 {
     ufs_pstate_graph_bridge_t* b = v;
     uint32_t kind, st, i;
@@ -148,8 +148,9 @@ static int verify_final(void* v, const power_plan_t* combined)
 }
 
 int ufs_pstate_graph_bridge_bind(ufs_pstate_graph_bridge_t* b, res_graph_t* g,
-                                 power_plan_t* combined, power_plan_t* final, void* owner_ctx,
-                                 int (*owner_acquire)(void*), void (*owner_release)(void*))
+                                 power_sequence_t* combined, power_sequence_t* final,
+                                 void* owner_ctx, int (*owner_acquire)(void*),
+                                 void (*owner_release)(void*))
 {
     if (!b || !g || !combined || !final || combined == final || !owner_acquire || !owner_release ||
         !g->acquire || !g->release || !g->acquire(g->lock_ctx))
@@ -260,7 +261,7 @@ power_result_t ufs_fstate_graph_execute(ufs_pstate_graph_bridge_t* b, uint32_t t
                                         power_scratch_t* scratch)
 {
     ufs_pstate_req_t req[UFS_PSTATE_SETS];
-    const power_plan_t* f;
+    const power_sequence_t* f;
     power_result_t r = POWER_BAD_INPUT;
     uint32_t i, seen = 0u;
     if (trace) {

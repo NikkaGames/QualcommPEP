@@ -80,7 +80,7 @@ static int fwd_verify_restored(void* c, const char* p, uint32_t d, const power_a
     return ok;
 }
 
-static int fwd_verify_final(void* c, const char* p, uint32_t d, const power_plan_t* pl)
+static int fwd_verify_final(void* c, const char* p, uint32_t d, const power_sequence_t* pl)
 {
     hw_backend_t b;
     int ok;

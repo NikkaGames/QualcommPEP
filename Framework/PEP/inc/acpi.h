@@ -36,13 +36,13 @@ NTSTATUS acpi_query_stnd_method_names(_In_ WDFDEVICE dev,
  * hardware votes or power transition. dev must be the WDF device bound to PEP0's ACPI PDO. */
 
 NTSTATUS acpi_compile_molokai_lpmx(_In_ WDFDEVICE pep_dev, _In_z_ const char* dev_path,
-                                   _In_ ULONG d_state, _Out_ power_plan_t* plan);
+                                   _In_ ULONG d_state, _Out_ power_sequence_t* sequence);
 
-/* never takes hardware ownership or executes votes. The caller must supply nonpaged plan
+/* never takes hardware ownership or executes votes. The caller must supply nonpaged sequence
  * storage; this is not a PoFx callback. */
 
 NTSTATUS acpi_compile_molokai_dev_power(_In_ WDFDEVICE pep_dev, _In_z_ const char* dev_path,
-                                        _In_ ULONG target_d_state, _Out_ power_plan_t* plan,
+                                        _In_ ULONG target_d_state, _Out_ power_sequence_t* sequence,
                                         _Out_writes_(5) CHAR selected_method[5]);
 
 struct res_graph;
@@ -52,4 +52,4 @@ struct res_graph;
  * initialized and provider callbacks bound before calling. */
 
 NTSTATUS acpi_populate_molokai_res_graph(_In_ WDFDEVICE pep_dev, _Inout_ struct res_graph* graph,
-                                         _Out_ power_plan_t* plan_scratch);
+                                         _Out_ power_sequence_t* sequence_scratch);

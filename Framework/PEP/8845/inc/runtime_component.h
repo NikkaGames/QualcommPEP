@@ -18,8 +18,8 @@ typedef struct runtime_comp {
     void (*leave_cb)(void*);
     int (*live)(void*, uint64_t);
     comp_state_work_t* work;
-    power_plan_t expected, batch, group;
-    const power_plan_t* executing;
+    power_sequence_t expected, batch, group;
+    const power_sequence_t* executing;
     uint8_t lane[POWER_MAX_ACTIONS];
     uint32_t comp, components;
     uint8_t locked, bound, retain, dev_in_d0, proof_invalidated;

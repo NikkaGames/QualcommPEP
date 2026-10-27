@@ -30,10 +30,10 @@ static int same_path(const char* a, const char* b, size_t cap)
     return 0;
 }
 
-power_result_t power_expand_comp_f_state(const power_plan_t* fstate, uint32_t comp,
+power_result_t power_expand_comp_f_state(const power_sequence_t* fstate, uint32_t comp,
                                          const power_pstate_program_t* const* programs,
                                          uint32_t program_cnt, uint32_t set_cnt,
-                                         power_plan_t* expanded,
+                                         power_sequence_t* expanded,
                                          power_pstate_selection_t* selection)
 {
     uint32_t i, j, k;
@@ -95,12 +95,12 @@ fail:
     return result;
 }
 
-power_result_t power_execute_comp_f_state(const power_plan_t* fstate, uint32_t comp,
+power_result_t power_execute_comp_f_state(const power_sequence_t* fstate, uint32_t comp,
                                           const power_pstate_program_t* const* programs,
                                           uint32_t program_cnt, const power_dev_t* dev,
                                           power_dev_t* f_state, power_dev_t* sets, uint32_t set_cnt,
                                           const power_backend_t* backend, power_execution_t* trace,
-                                          power_plan_t* expanded, power_scratch_t* scratch)
+                                          power_sequence_t* expanded, power_scratch_t* scratch)
 {
     power_pstate_selection_t selection;
     power_result_t result;
@@ -158,7 +158,7 @@ power_result_t power_execute_p_state_batch_from_f_state(
     const power_pstate_program_t* const* programs, uint32_t cnt, const char* dev_path,
     uint32_t comp, uint32_t set_cnt, const power_dev_t* dev, const power_dev_t* fstate,
     uint32_t expected_current_f_state, power_dev_t* sets, const power_backend_t* backend,
-    power_execution_t* trace, power_plan_t* combined, power_scratch_t* scratch)
+    power_execution_t* trace, power_sequence_t* combined, power_scratch_t* scratch)
 {
     uint32_t used = 0u, i, j, total_delay = 0u;
     power_result_t result;
@@ -244,7 +244,7 @@ power_result_t power_execute_p_state_batch(const power_pstate_program_t* const* 
                                            uint32_t set_cnt, const power_dev_t* dev,
                                            const power_dev_t* fstate, power_dev_t* sets,
                                            const power_backend_t* backend, power_execution_t* trace,
-                                           power_plan_t* combined, power_scratch_t* scratch)
+                                           power_sequence_t* combined, power_scratch_t* scratch)
 {
     return power_execute_p_state_batch_from_f_state(programs, cnt, dev_path, comp, set_cnt, dev,
                                                     fstate, 0u, sets, backend, trace, combined,

@@ -35,16 +35,16 @@ typedef struct icb_node {
     uint32_t bcm_cnt;
 } icb_node_t;
 
-extern const icb_bcm_node_t QcPep8845IcbBcmNodes[];
-extern const unsigned int QcPep8845IcbBcmNodeCount;
-extern const unsigned char QcPep8845IcbBcmRelatives[];
-extern const unsigned int QcPep8845IcbBcmRelativeCount;
-extern const unsigned char QcPep8845IcbNodeBcms[];
-extern const unsigned int QcPep8845IcbNodeBcmCount;
-extern const icb_node_t QcPep8845IcbMasterNodes[];
-extern const unsigned int QcPep8845IcbMasterNodeCount;
-extern const icb_node_t QcPep8845IcbSlaveNodes[];
-extern const unsigned int QcPep8845IcbSlaveNodeCount;
+extern const icb_bcm_node_t icb_bcm_nodes[];
+extern const unsigned int icb_bcm_node_cnt;
+extern const unsigned char icb_bcm_relatives[];
+extern const unsigned int icb_bcm_relative_cnt;
+extern const unsigned char icb_node_bcms[];
+extern const unsigned int icb_node_bcm_cnt;
+extern const icb_node_t icb_master_nodes[];
+extern const unsigned int icb_master_node_cnt;
+extern const icb_node_t icb_slave_nodes[];
+extern const unsigned int icb_slave_node_cnt;
 
 #define ICB_MAX_BCMS 32u
 #define ICB_MAX_CLIENTS 128u

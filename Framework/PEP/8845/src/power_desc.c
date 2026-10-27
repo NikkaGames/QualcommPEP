@@ -19,15 +19,15 @@ int method_is_read_only_res(const char method[5])
 power_result_t power_discover_dev_d_state(const char* const* methods, uint32_t cnt,
                                           method_evaluate_t evaluate, method_release_t release,
                                           void* ctx, const char* path, uint32_t state,
-                                          power_plan_t* plan, char selected_method[5])
+                                          power_sequence_t* sequence, char selected_method[5])
 {
     uint32_t i, found = 0;
     char winning_method[5] = {0};
     power_result_t result = POWER_INVALID_PROGRAM;
-    if (!methods || !evaluate || !release || !path || !plan || !selected_method || cnt == 0 ||
+    if (!methods || !evaluate || !release || !path || !sequence || !selected_method || cnt == 0 ||
         cnt > DISCOVERY_MAX_METHODS || (state != 0u && state != 3u))
         return POWER_BAD_INPUT;
-    memset(plan, 0, sizeof(*plan));
+    memset(sequence, 0, sizeof(*sequence));
     memset(selected_method, 0, 5u);
     for (i = 0; i < cnt; ++i) {
         const void* bytes = NULL;
@@ -68,7 +68,7 @@ power_result_t power_discover_dev_d_state(const char* const* methods, uint32_t c
             release(ctx, bytes);
             goto error;
         }
-        result = power_compile_aeo_b(bytes, length, path, state, plan);
+        result = power_compile_aeo_b(bytes, length, path, state, sequence);
         release(ctx, bytes);
         if (result != POWER_OK)
             goto error;
@@ -80,7 +80,7 @@ power_result_t power_discover_dev_d_state(const char* const* methods, uint32_t c
     memcpy(selected_method, winning_method, 5u);
     return POWER_OK;
 error:
-    memset(plan, 0, sizeof(*plan));
+    memset(sequence, 0, sizeof(*sequence));
     memset(selected_method, 0, 5u);
     return result == POWER_BAD_INPUT ? POWER_BAD_INPUT : POWER_INVALID_PROGRAM;
 }

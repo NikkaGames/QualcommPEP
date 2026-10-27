@@ -11,10 +11,10 @@ extern "C" {
 
 typedef struct peer_comp {
     char path[256];
-    power_plan_t f0;
-    power_plan_t f1;
+    power_sequence_t f0;
+    power_sequence_t f1;
     power_dev_t state;
-    uint64_t compiled_plan_fingerprint;
+    uint64_t compiled_sequence_fingerprint;
     uint8_t valid;
     uint8_t quarantined;
 } peer_comp_t;

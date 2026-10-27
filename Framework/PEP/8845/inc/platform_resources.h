@@ -1,6 +1,6 @@
 #ifndef PLATFORM_RESOURCES_H
 #define PLATFORM_RESOURCES_H
-/* coverage is diagnostic; refuse only plans that require an unresolved res. */
+/* coverage is diagnostic; refuse only sequences that require an unresolved res. */
 
 #ifdef __cplusplus
 extern "C" {
@@ -11,14 +11,14 @@ typedef struct dsdt_route {
     const char* slave;
 } dsdt_route_t;
 
-extern const char* const QcPep8845DsdtRailNames[];
-extern const unsigned int QcPep8845DsdtRailNameCount;
-extern const dsdt_route_t QcPep8845DsdtRoutes[];
-extern const unsigned int QcPep8845DsdtRouteCount;
-extern const char* const QcPep8845DsdtClockNames[];
-extern const unsigned int QcPep8845DsdtClockNameCount;
-extern const unsigned short QcPep8845DsdtTlmmPins[];
-extern const unsigned int QcPep8845DsdtTlmmPinCount;
+extern const char* const platform_rail_names[];
+extern const unsigned int platform_rail_cnt;
+extern const dsdt_route_t platform_routes[];
+extern const unsigned int platform_route_cnt;
+extern const char* const platform_clock_names[];
+extern const unsigned int platform_clock_cnt;
+extern const unsigned short platform_tlmm_pins[];
+extern const unsigned int platform_tlmm_pin_cnt;
 
 #ifdef __cplusplus
 }

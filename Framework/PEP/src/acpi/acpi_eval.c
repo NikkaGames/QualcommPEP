@@ -665,7 +665,7 @@ NTSTATUS acpi_query_stnd_method_names(_In_ WDFDEVICE dev,
  * from applying firmware votes. */
 
 NTSTATUS acpi_compile_molokai_lpmx(_In_ WDFDEVICE pep_dev, _In_z_ const char* dev_path,
-                                   _In_ ULONG d_state, _Out_ power_plan_t* plan)
+                                   _In_ ULONG d_state, _Out_ power_sequence_t* sequence)
 {
     ACPI_EVAL_INPUT_BUFFER input;
     PACPI_EVAL_OUTPUT_BUFFER output = NULL;
@@ -673,12 +673,12 @@ NTSTATUS acpi_compile_molokai_lpmx(_In_ WDFDEVICE pep_dev, _In_z_ const char* de
     power_result_t result;
     NTSTATUS status;
 
-    if (!pep_dev || !dev_path || !plan || (d_state != 0u && d_state != 3u))
+    if (!pep_dev || !dev_path || !sequence || (d_state != 0u && d_state != 3u))
         return STATUS_INVALID_PARAMETER;
     if (KeGetCurrentIrql() != PASSIVE_LEVEL)
         return STATUS_INVALID_DEVICE_STATE;
 
-    RtlZeroMemory(plan, sizeof(*plan));
+    RtlZeroMemory(sequence, sizeof(*sequence));
     RtlZeroMemory(&input, sizeof(input));
     input.Signature = ACPI_EVAL_INPUT_BUFFER_SIGNATURE;
 
@@ -689,10 +689,10 @@ NTSTATUS acpi_compile_molokai_lpmx(_In_ WDFDEVICE pep_dev, _In_z_ const char* de
     if (!NT_SUCCESS(status))
         return status;
 
-    result = power_compile_aeo_b(output, (size_t)output_length, dev_path, d_state, plan);
+    result = power_compile_aeo_b(output, (size_t)output_length, dev_path, d_state, sequence);
     ExFreePool(output);
     if (result != POWER_OK) {
-        RtlZeroMemory(plan, sizeof(*plan));
+        RtlZeroMemory(sequence, sizeof(*sequence));
         return (result == POWER_BAD_INPUT) ? STATUS_INVALID_PARAMETER : STATUS_DATA_ERROR;
     }
     return STATUS_SUCCESS;
@@ -755,7 +755,7 @@ static void acpi_release_graph_src(const void* buf)
 }
 
 NTSTATUS acpi_compile_molokai_dev_power(_In_ WDFDEVICE pep_dev, _In_z_ const char* dev_path,
-                                        _In_ ULONG target_d_state, _Out_ power_plan_t* plan,
+                                        _In_ ULONG target_d_state, _Out_ power_sequence_t* sequence,
                                         _Out_writes_(5) CHAR selected_method[5])
 {
     CHAR method_names[MOLOKAI_STND_METHOD_MAX * 5u] = {0};
@@ -764,10 +764,10 @@ NTSTATUS acpi_compile_molokai_dev_power(_In_ WDFDEVICE pep_dev, _In_z_ const cha
     acpi_method_ctx_t ctx;
     power_result_t result;
     NTSTATUS status;
-    if (!pep_dev || !dev_path || !plan || !selected_method ||
+    if (!pep_dev || !dev_path || !sequence || !selected_method ||
         (target_d_state != 0u && target_d_state != 3u))
         return STATUS_INVALID_PARAMETER;
-    RtlZeroMemory(plan, sizeof(*plan));
+    RtlZeroMemory(sequence, sizeof(*sequence));
     RtlZeroMemory(selected_method, 5u);
     if (KeGetCurrentIrql() != PASSIVE_LEVEL)
         return STATUS_INVALID_DEVICE_STATE;
@@ -782,7 +782,7 @@ NTSTATUS acpi_compile_molokai_dev_power(_In_ WDFDEVICE pep_dev, _In_z_ const cha
     ctx.dev = pep_dev;
     result =
         power_discover_dev_d_state(method_ptrs, method_cnt, acpi_evaluate_desc, acpi_release_desc,
-                                   &ctx, dev_path, target_d_state, plan, selected_method);
+                                   &ctx, dev_path, target_d_state, sequence, selected_method);
     if (result == POWER_OK)
         return STATUS_SUCCESS;
     if (result == POWER_BAD_INPUT)
@@ -796,7 +796,7 @@ NTSTATUS acpi_compile_molokai_dev_power(_In_ WDFDEVICE pep_dev, _In_z_ const cha
  * identity before execution. */
 
 NTSTATUS acpi_populate_molokai_res_graph(_In_ WDFDEVICE pep_dev, _Inout_ struct res_graph* graph,
-                                         _Out_ power_plan_t* plan_scratch)
+                                         _Out_ power_sequence_t* sequence_scratch)
 {
     CHAR names[MOLOKAI_STND_METHOD_MAX * 5u] = {0};
     graph_desc_t descriptors[MOLOKAI_STND_METHOD_MAX] = {0};
@@ -804,7 +804,7 @@ NTSTATUS acpi_populate_molokai_res_graph(_In_ WDFDEVICE pep_dev, _Inout_ struct 
     ULONG i, cnt = 0, accepted = 0, unreviewed = 0;
     NTSTATUS status = STATUS_DATA_ERROR;
     graph_build_workspace_t* workspace = NULL;
-    if (!pep_dev || !graph || !plan_scratch)
+    if (!pep_dev || !graph || !sequence_scratch)
         return STATUS_INVALID_PARAMETER;
     if (KeGetCurrentIrql() != PASSIVE_LEVEL)
         return STATUS_INVALID_DEVICE_STATE;
@@ -867,7 +867,7 @@ NTSTATUS acpi_populate_molokai_res_graph(_In_ WDFDEVICE pep_dev, _Inout_ struct 
     }
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_ACPI, "acpi: graph compile descriptors=%lu",
                 accepted);
-    status = graph_build_from_descriptors(graph, descriptors, accepted, plan_scratch, workspace)
+    status = graph_build_from_descriptors(graph, descriptors, accepted, sequence_scratch, workspace)
                  ? STATUS_SUCCESS
                  : STATUS_DATA_ERROR;
     if (NT_SUCCESS(status) &&

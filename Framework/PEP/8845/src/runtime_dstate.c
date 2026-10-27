@@ -25,8 +25,8 @@ int runtime_dstate_compile(runtime_dstate_scope_t* s, const void* data, size_t b
             goto bad;
     }
     if (s->idx.f_state_mask[0]) {
-        /* reuse owned plan storage: do not put a >10 KiB plan on a Windows kernel stack just to
-         * check the empty f0 contract. */
+        /* reuse owned sequence storage: do not put a >10 KiB sequence on a Windows kernel stack
+         * just to check the empty f0 contract. */
 
         if (program_idx_compile(&s->idx, data, bytes, PROGRAM_F_STATE, 0u, 0u, 0u, &s->d0, 0) !=
                 POWER_OK ||
@@ -40,20 +40,20 @@ int runtime_dstate_compile(runtime_dstate_scope_t* s, const void* data, size_t b
     {
         uint32_t state;
         for (state = 0u; state <= 3u; ++state) {
-            power_plan_t* plan = (state == 0u)   ? &s->d0
-                                 : (state == 1u) ? &s->d1
-                                 : (state == 2u) ? &s->d2
-                                                 : &s->d3;
+            power_sequence_t* sequence = (state == 0u)   ? &s->d0
+                                         : (state == 1u) ? &s->d1
+                                         : (state == 2u) ? &s->d2
+                                                         : &s->d3;
             if (!(s->idx.d_state_mask & (uint8_t)(1u << state)))
                 continue;
-            if (program_idx_compile(&s->idx, data, bytes, PROGRAM_D_STATE, 0u, 0u, state, plan,
+            if (program_idx_compile(&s->idx, data, bytes, PROGRAM_D_STATE, 0u, 0u, state, sequence,
                                     0) != POWER_OK ||
-                (!plan->action_cnt && (state == 0u || state == 3u)))
+                (!sequence->action_cnt && (state == 0u || state == 3u)))
                 goto bad;
         }
     }
     /* a power-on-only descriptor retains D0 resources. Missing D3 does not authorize an inferred
-     * release plan. */
+     * release sequence. */
     if (!s->d0.action_cnt || (s->idx.has_d3 && !s->d3.action_cnt))
         goto bad;
     s->valid = 1u;
@@ -68,7 +68,7 @@ power_result_t runtime_dstate_execute(runtime_dstate_scope_t* s, uint32_t target
                                       power_scratch_t* scratch)
 {
     power_result_t r;
-    const power_plan_t* plan;
+    const power_sequence_t* sequence;
     if (!s || !trace)
         return POWER_BAD_INPUT;
     memset(trace, 0, sizeof(*trace));
@@ -76,11 +76,11 @@ power_result_t runtime_dstate_execute(runtime_dstate_scope_t* s, uint32_t target
     if (!s->valid || s->quarantined || target > 3u ||
         !(s->idx.d_state_mask & (uint8_t)(1u << target)) || !owner || !scratch)
         return (trace->result = POWER_UNSUPPORTED);
-    plan = (target == 0u) ? &s->d0 : (target == 1u) ? &s->d1 : (target == 2u) ? &s->d2 : &s->d3;
-    if (strcmp(s->idx.path, plan->dev_path) || plan->target_d_state != target)
+    sequence = (target == 0u) ? &s->d0 : (target == 1u) ? &s->d1 : (target == 2u) ? &s->d2 : &s->d3;
+    if (strcmp(s->idx.path, sequence->dev_path) || sequence->target_d_state != target)
         return (trace->result = POWER_INVALID_PROGRAM);
-    r = power_execute(plan, &s->physical, owner, trace, scratch);
-    if (r == POWER_OK && plan->action_cnt)
+    r = power_execute(sequence, &s->physical, owner, trace, scratch);
+    if (r == POWER_OK && sequence->action_cnt)
         s->last_nonempty_target = target;
     if (r == POWER_ROLLBACK_FAILED || s->physical.quarantined)
         s->quarantined = 1u;

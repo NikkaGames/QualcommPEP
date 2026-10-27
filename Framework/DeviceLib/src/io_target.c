@@ -353,7 +353,7 @@ NTSTATUS pmic_gpio_query_raw_state(_In_ WDFDEVICE dev, _In_ const pm_gpio_state_
     return STATUS_SUCCESS;
 }
 
-NTSTATUS pmic_gpio_apply_plan_action(_In_ WDFDEVICE dev, _In_ const power_action_t* action)
+NTSTATUS pmic_gpio_apply_action(_In_ WDFDEVICE dev, _In_ const power_action_t* action)
 {
     UCHAR input[PM_GPIO_CONFIG_DIGITAL_OUTPUT_BYTES];
     ULONG output = 0;

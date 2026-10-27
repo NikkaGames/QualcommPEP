@@ -86,35 +86,36 @@ static ULONG g_rsc_sw_profile_history_head;
 static ULONG g_rsc_sw_profile_history_cnt;
 static ULONG g_rsc_sw_profile_history_dropped;
 
-static ULONG g_rsc_sw_last_plan_status;
-static ULONG g_rsc_sw_last_plan_step_cnt;
-static ULONG g_rsc_sw_last_plan_failure_cnt;
-static ULONGLONG g_rsc_sw_last_plan_tick100ns;
+static ULONG g_rsc_sw_last_action_sequence_status;
+static ULONG g_rsc_sw_last_action_sequence_step_cnt;
+static ULONG g_rsc_sw_last_action_sequence_failure_cnt;
+static ULONGLONG g_rsc_sw_last_action_sequence_tick100ns;
 
-static rscsw_plan_result_t g_rsc_sw_plan_history[RSCSW_PLAN_HISTORY_CAPACITY];
-static ULONG g_rsc_sw_plan_history_head;
-static ULONG g_rsc_sw_plan_history_cnt;
-static ULONG g_rsc_sw_plan_history_dropped;
+static rscsw_action_sequence_result_t
+    g_rsc_sw_action_sequence_history[RSCSW_ACTION_SEQUENCE_HISTORY_CAPACITY];
+static ULONG g_rsc_sw_action_sequence_history_head;
+static ULONG g_rsc_sw_action_sequence_history_cnt;
+static ULONG g_rsc_sw_action_sequence_history_dropped;
 
-static ULONG g_rsc_sw_plan_preview_run_cnt;
-static ULONG g_rsc_sw_plan_preview_failure_cnt;
-static LONG g_rsc_sw_plan_preview_last_status;
-static ULONG g_rsc_sw_plan_preview_last_requested_steps;
-static ULONG g_rsc_sw_plan_preview_last_expanded_steps;
-static ULONG g_rsc_sw_plan_preview_last_invalid_steps;
-static ULONG g_rsc_sw_plan_preview_last_duplicate_steps;
-static ULONG g_rsc_sw_plan_preview_last_dependency_edges;
-static ULONG g_rsc_sw_plan_preview_last_reordered_steps;
-static ULONG g_rsc_sw_plan_preview_last_active_mask_before;
-static ULONG g_rsc_sw_plan_preview_last_active_mask_after;
-static ULONG g_rsc_sw_plan_preview_last_flags;
-static ULONGLONG g_rsc_sw_plan_preview_last_tick100ns;
+static ULONG g_rsc_sw_action_sequence_preview_run_cnt;
+static ULONG g_rsc_sw_action_sequence_preview_failure_cnt;
+static LONG g_rsc_sw_action_sequence_preview_last_status;
+static ULONG g_rsc_sw_action_sequence_preview_last_requested_steps;
+static ULONG g_rsc_sw_action_sequence_preview_last_expanded_steps;
+static ULONG g_rsc_sw_action_sequence_preview_last_invalid_steps;
+static ULONG g_rsc_sw_action_sequence_preview_last_duplicate_steps;
+static ULONG g_rsc_sw_action_sequence_preview_last_dependency_edges;
+static ULONG g_rsc_sw_action_sequence_preview_last_reordered_steps;
+static ULONG g_rsc_sw_action_sequence_preview_last_active_mask_before;
+static ULONG g_rsc_sw_action_sequence_preview_last_active_mask_after;
+static ULONG g_rsc_sw_action_sequence_preview_last_flags;
+static ULONGLONG g_rsc_sw_action_sequence_preview_last_tick100ns;
 
-static rscsw_plan_preview_result_t
-    g_rsc_sw_plan_preview_history[RSCSW_PLAN_PREVIEW_HISTORY_CAPACITY];
-static ULONG g_rsc_sw_plan_preview_history_head;
-static ULONG g_rsc_sw_plan_preview_history_cnt;
-static ULONG g_rsc_sw_plan_preview_history_dropped;
+static rscsw_action_sequence_preview_result_t
+    g_rsc_sw_action_sequence_preview_history[RSCSW_ACTION_SEQUENCE_PREVIEW_HISTORY_CAPACITY];
+static ULONG g_rsc_sw_action_sequence_preview_history_head;
+static ULONG g_rsc_sw_action_sequence_preview_history_cnt;
+static ULONG g_rsc_sw_action_sequence_preview_history_dropped;
 
 typedef struct rscsw_checkpoint_slot_internal {
     ULONG valid;
@@ -392,7 +393,7 @@ static ULONG g_rsc_sw_provision_failure_cnt;
 static LONG g_rsc_sw_provision_last_status;
 static ULONG g_rsc_sw_provision_last_mode_id;
 static ULONG g_rsc_sw_provision_last_flags;
-static ULONG g_rsc_sw_provision_last_planned_cnt;
+static ULONG g_rsc_sw_provision_last_prepared_cnt;
 static ULONG g_rsc_sw_provision_last_applied_cnt;
 static ULONG g_rsc_sw_provision_last_failed_cnt;
 static ULONG g_rsc_sw_provision_last_policy_vote_cnt;
@@ -412,7 +413,7 @@ static ULONG g_rsc_sw_rail_failure_cnt;
 static LONG g_rsc_sw_rail_last_status;
 static ULONG g_rsc_sw_rail_last_mode_id;
 static ULONG g_rsc_sw_rail_last_flags;
-static ULONG g_rsc_sw_rail_last_planned_cnt;
+static ULONG g_rsc_sw_rail_last_prepared_cnt;
 static ULONG g_rsc_sw_rail_last_applied_cnt;
 static ULONG g_rsc_sw_rail_last_failed_cnt;
 static ULONG g_rsc_sw_rail_last_rail_vote_cnt;
@@ -435,7 +436,7 @@ static ULONG g_rsc_sw_tcs_failure_cnt;
 static LONG g_rsc_sw_tcs_last_status;
 static ULONG g_rsc_sw_tcs_last_mode_id;
 static ULONG g_rsc_sw_tcs_last_flags;
-static ULONG g_rsc_sw_tcs_last_planned_cnt;
+static ULONG g_rsc_sw_tcs_last_prepared_cnt;
 static ULONG g_rsc_sw_tcs_last_programmed_cnt;
 static ULONG g_rsc_sw_tcs_last_failed_cnt;
 static ULONG g_rsc_sw_tcs_last_policy_vote_cnt;
@@ -456,7 +457,7 @@ static ULONG g_rsc_sw_thermal_failure_cnt;
 static LONG g_rsc_sw_thermal_last_status;
 static ULONG g_rsc_sw_thermal_last_mode_id;
 static ULONG g_rsc_sw_thermal_last_flags;
-static ULONG g_rsc_sw_thermal_last_planned_cnt;
+static ULONG g_rsc_sw_thermal_last_prepared_cnt;
 static ULONG g_rsc_sw_thermal_last_sampled_cnt;
 static ULONG g_rsc_sw_thermal_last_applied_cnt;
 static ULONG g_rsc_sw_thermal_last_failed_cnt;
@@ -481,7 +482,7 @@ static ULONG g_rsc_sw_coord_failure_cnt;
 static LONG g_rsc_sw_coord_last_status;
 static ULONG g_rsc_sw_coord_last_mode_id;
 static ULONG g_rsc_sw_coord_last_flags;
-static ULONG g_rsc_sw_coord_last_planned_cnt;
+static ULONG g_rsc_sw_coord_last_prepared_cnt;
 static ULONG g_rsc_sw_coord_last_applied_cnt;
 static ULONG g_rsc_sw_coord_last_failed_cnt;
 static ULONG g_rsc_sw_coord_last_executed_phase_mask;
@@ -949,13 +950,13 @@ static const CHAR* g_rsc_sw_names[RSCSW_NODE_CAPACITY] = {
 #define RSCSW_CONFORMANCE_REASON_CATALOG_MISMATCH 0x00000020u
 #define RSCSW_CONFORMANCE_REASON_HIGH_FAILURE_RATE 0x00000040u
 
-#define RSCSW_PLAN_FLAG_RESPECT_DEPENDENCY 0x00000001u
-#define RSCSW_PLAN_FLAG_VERIFY_NODE 0x00000002u
-#define RSCSW_PLAN_FLAG_RECORD_TEST_EVENT 0x00000004u
+#define RSCSW_ACTION_SEQUENCE_FLAG_RESPECT_DEPENDENCY 0x00000001u
+#define RSCSW_ACTION_SEQUENCE_FLAG_VERIFY_NODE 0x00000002u
+#define RSCSW_ACTION_SEQUENCE_FLAG_RECORD_TEST_EVENT 0x00000004u
 
-#define RSCSW_PLAN_PREVIEW_FLAG_INCLUDE_DEPENDENCIES 0x00000001u
-#define RSCSW_PLAN_PREVIEW_FLAG_ASSUME_ENABLE_DEPENDENCIES 0x00000002u
-#define RSCSW_PLAN_PREVIEW_FLAG_RESPECT_ORDER 0x00000004u
+#define RSCSW_ACTION_SEQUENCE_PREVIEW_FLAG_INCLUDE_DEPENDENCIES 0x00000001u
+#define RSCSW_ACTION_SEQUENCE_PREVIEW_FLAG_ASSUME_ENABLE_DEPENDENCIES 0x00000002u
+#define RSCSW_ACTION_SEQUENCE_PREVIEW_FLAG_RESPECT_ORDER 0x00000004u
 
 #define RSCSW_CHECKPOINT_OP_CAPTURE 1u
 #define RSCSW_CHECKPOINT_OP_APPLY 2u
@@ -2273,7 +2274,7 @@ static const rscsw_enum_desc_t g_rsc_sw_arc_policy_phase_types[] = {
     {0x3u, "ARC_POLICY_PHASE_VERIFY"},
     {0x4u, "ARC_POLICY_PHASE_COMPLETE"}};
 
-static const rscsw_enum_desc_t g_rsc_sw_clock_plan_stage_types[] = {
+static const rscsw_enum_desc_t g_rsc_sw_clock_config_phase_types[] = {
     {0x0u, "CLOCK_PLAN_STAGE_NONE"},
     {0x1u, "CLOCK_PLAN_STAGE_BUILD"},
     {0x2u, "CLOCK_PLAN_STAGE_VALIDATE"},
@@ -3201,7 +3202,7 @@ static const ULONG g_rsc_sw_arc_policy_phase_by_subsystem[RSCSW_NODE_CAPACITY] =
     0x0u, 0x1u, 0x2u, 0x3u, 0x4u, 0x0u, 0x1u, 0x2u, /* npa -> ARC_POLICY_PHASE_APPLY. */
     0x3u, 0x4u, 0x0u, 0x1u, 0x2u, 0x3u, 0x4u, 0x0u};
 
-static const ULONG g_rsc_sw_clock_plan_stage_by_subsystem[RSCSW_NODE_CAPACITY] = {
+static const ULONG g_rsc_sw_clock_config_phase_by_subsystem[RSCSW_NODE_CAPACITY] = {
     0x0u, 0x1u, 0x2u, 0x3u, 0x4u, 0x0u, 0x1u, 0x2u, /* npa -> CLOCK_PLAN_STAGE_VALIDATE. */
     0x3u, 0x4u, 0x0u, 0x1u, 0x2u, 0x3u, 0x4u, 0x0u};
 
@@ -3672,7 +3673,7 @@ static VOID rsc_sw_reset_provision_state(VOID)
     g_rsc_sw_provision_last_status = STATUS_SUCCESS;
     g_rsc_sw_provision_last_mode_id = 0;
     g_rsc_sw_provision_last_flags = 0;
-    g_rsc_sw_provision_last_planned_cnt = 0;
+    g_rsc_sw_provision_last_prepared_cnt = 0;
     g_rsc_sw_provision_last_applied_cnt = 0;
     g_rsc_sw_provision_last_failed_cnt = 0;
     g_rsc_sw_provision_last_policy_vote_cnt = 0;
@@ -3695,7 +3696,7 @@ static VOID rsc_sw_reset_rail_state(VOID)
     g_rsc_sw_rail_last_status = STATUS_SUCCESS;
     g_rsc_sw_rail_last_mode_id = 0;
     g_rsc_sw_rail_last_flags = 0;
-    g_rsc_sw_rail_last_planned_cnt = 0;
+    g_rsc_sw_rail_last_prepared_cnt = 0;
     g_rsc_sw_rail_last_applied_cnt = 0;
     g_rsc_sw_rail_last_failed_cnt = 0;
     g_rsc_sw_rail_last_rail_vote_cnt = 0;
@@ -3721,7 +3722,7 @@ static VOID rsc_sw_reset_tcs_state(VOID)
     g_rsc_sw_tcs_last_status = STATUS_SUCCESS;
     g_rsc_sw_tcs_last_mode_id = 0;
     g_rsc_sw_tcs_last_flags = 0;
-    g_rsc_sw_tcs_last_planned_cnt = 0;
+    g_rsc_sw_tcs_last_prepared_cnt = 0;
     g_rsc_sw_tcs_last_programmed_cnt = 0;
     g_rsc_sw_tcs_last_failed_cnt = 0;
     g_rsc_sw_tcs_last_policy_vote_cnt = 0;
@@ -3745,7 +3746,7 @@ static VOID rsc_sw_reset_thermal_state(VOID)
     g_rsc_sw_thermal_last_status = STATUS_SUCCESS;
     g_rsc_sw_thermal_last_mode_id = 0;
     g_rsc_sw_thermal_last_flags = 0;
-    g_rsc_sw_thermal_last_planned_cnt = 0;
+    g_rsc_sw_thermal_last_prepared_cnt = 0;
     g_rsc_sw_thermal_last_sampled_cnt = 0;
     g_rsc_sw_thermal_last_applied_cnt = 0;
     g_rsc_sw_thermal_last_failed_cnt = 0;
@@ -3773,7 +3774,7 @@ static VOID rsc_sw_reset_coord_state(VOID)
     g_rsc_sw_coord_last_status = STATUS_SUCCESS;
     g_rsc_sw_coord_last_mode_id = 0;
     g_rsc_sw_coord_last_flags = 0;
-    g_rsc_sw_coord_last_planned_cnt = 0;
+    g_rsc_sw_coord_last_prepared_cnt = 0;
     g_rsc_sw_coord_last_applied_cnt = 0;
     g_rsc_sw_coord_last_failed_cnt = 0;
     g_rsc_sw_coord_last_executed_phase_mask = 0;
@@ -3967,34 +3968,35 @@ static VOID rsc_sw_ensure_init(VOID)
         g_rsc_sw_profile_history_cnt = 0;
         g_rsc_sw_profile_history_dropped = 0;
 
-        g_rsc_sw_last_plan_status = STATUS_SUCCESS;
-        g_rsc_sw_last_plan_step_cnt = 0;
-        g_rsc_sw_last_plan_failure_cnt = 0;
-        g_rsc_sw_last_plan_tick100ns = 0;
+        g_rsc_sw_last_action_sequence_status = STATUS_SUCCESS;
+        g_rsc_sw_last_action_sequence_step_cnt = 0;
+        g_rsc_sw_last_action_sequence_failure_cnt = 0;
+        g_rsc_sw_last_action_sequence_tick100ns = 0;
 
-        RtlZeroMemory(g_rsc_sw_plan_history, sizeof(g_rsc_sw_plan_history));
-        g_rsc_sw_plan_history_head = 0;
-        g_rsc_sw_plan_history_cnt = 0;
-        g_rsc_sw_plan_history_dropped = 0;
+        RtlZeroMemory(g_rsc_sw_action_sequence_history, sizeof(g_rsc_sw_action_sequence_history));
+        g_rsc_sw_action_sequence_history_head = 0;
+        g_rsc_sw_action_sequence_history_cnt = 0;
+        g_rsc_sw_action_sequence_history_dropped = 0;
 
-        g_rsc_sw_plan_preview_run_cnt = 0;
-        g_rsc_sw_plan_preview_failure_cnt = 0;
-        g_rsc_sw_plan_preview_last_status = STATUS_SUCCESS;
-        g_rsc_sw_plan_preview_last_requested_steps = 0;
-        g_rsc_sw_plan_preview_last_expanded_steps = 0;
-        g_rsc_sw_plan_preview_last_invalid_steps = 0;
-        g_rsc_sw_plan_preview_last_duplicate_steps = 0;
-        g_rsc_sw_plan_preview_last_dependency_edges = 0;
-        g_rsc_sw_plan_preview_last_reordered_steps = 0;
-        g_rsc_sw_plan_preview_last_active_mask_before = 0;
-        g_rsc_sw_plan_preview_last_active_mask_after = 0;
-        g_rsc_sw_plan_preview_last_flags = 0;
-        g_rsc_sw_plan_preview_last_tick100ns = 0;
+        g_rsc_sw_action_sequence_preview_run_cnt = 0;
+        g_rsc_sw_action_sequence_preview_failure_cnt = 0;
+        g_rsc_sw_action_sequence_preview_last_status = STATUS_SUCCESS;
+        g_rsc_sw_action_sequence_preview_last_requested_steps = 0;
+        g_rsc_sw_action_sequence_preview_last_expanded_steps = 0;
+        g_rsc_sw_action_sequence_preview_last_invalid_steps = 0;
+        g_rsc_sw_action_sequence_preview_last_duplicate_steps = 0;
+        g_rsc_sw_action_sequence_preview_last_dependency_edges = 0;
+        g_rsc_sw_action_sequence_preview_last_reordered_steps = 0;
+        g_rsc_sw_action_sequence_preview_last_active_mask_before = 0;
+        g_rsc_sw_action_sequence_preview_last_active_mask_after = 0;
+        g_rsc_sw_action_sequence_preview_last_flags = 0;
+        g_rsc_sw_action_sequence_preview_last_tick100ns = 0;
 
-        RtlZeroMemory(g_rsc_sw_plan_preview_history, sizeof(g_rsc_sw_plan_preview_history));
-        g_rsc_sw_plan_preview_history_head = 0;
-        g_rsc_sw_plan_preview_history_cnt = 0;
-        g_rsc_sw_plan_preview_history_dropped = 0;
+        RtlZeroMemory(g_rsc_sw_action_sequence_preview_history,
+                      sizeof(g_rsc_sw_action_sequence_preview_history));
+        g_rsc_sw_action_sequence_preview_history_head = 0;
+        g_rsc_sw_action_sequence_preview_history_cnt = 0;
+        g_rsc_sw_action_sequence_preview_history_dropped = 0;
 
         RtlZeroMemory(g_rsc_sw_checkpoint_slots, sizeof(g_rsc_sw_checkpoint_slots));
         g_rsc_sw_checkpoint_capture_cnt = 0;
@@ -4522,34 +4524,35 @@ VOID rsc_sw_deinit(VOID)
     g_rsc_sw_profile_history_cnt = 0;
     g_rsc_sw_profile_history_dropped = 0;
 
-    g_rsc_sw_last_plan_status = STATUS_SUCCESS;
-    g_rsc_sw_last_plan_step_cnt = 0;
-    g_rsc_sw_last_plan_failure_cnt = 0;
-    g_rsc_sw_last_plan_tick100ns = 0;
+    g_rsc_sw_last_action_sequence_status = STATUS_SUCCESS;
+    g_rsc_sw_last_action_sequence_step_cnt = 0;
+    g_rsc_sw_last_action_sequence_failure_cnt = 0;
+    g_rsc_sw_last_action_sequence_tick100ns = 0;
 
-    RtlZeroMemory(g_rsc_sw_plan_history, sizeof(g_rsc_sw_plan_history));
-    g_rsc_sw_plan_history_head = 0;
-    g_rsc_sw_plan_history_cnt = 0;
-    g_rsc_sw_plan_history_dropped = 0;
+    RtlZeroMemory(g_rsc_sw_action_sequence_history, sizeof(g_rsc_sw_action_sequence_history));
+    g_rsc_sw_action_sequence_history_head = 0;
+    g_rsc_sw_action_sequence_history_cnt = 0;
+    g_rsc_sw_action_sequence_history_dropped = 0;
 
-    g_rsc_sw_plan_preview_run_cnt = 0;
-    g_rsc_sw_plan_preview_failure_cnt = 0;
-    g_rsc_sw_plan_preview_last_status = STATUS_SUCCESS;
-    g_rsc_sw_plan_preview_last_requested_steps = 0;
-    g_rsc_sw_plan_preview_last_expanded_steps = 0;
-    g_rsc_sw_plan_preview_last_invalid_steps = 0;
-    g_rsc_sw_plan_preview_last_duplicate_steps = 0;
-    g_rsc_sw_plan_preview_last_dependency_edges = 0;
-    g_rsc_sw_plan_preview_last_reordered_steps = 0;
-    g_rsc_sw_plan_preview_last_active_mask_before = 0;
-    g_rsc_sw_plan_preview_last_active_mask_after = 0;
-    g_rsc_sw_plan_preview_last_flags = 0;
-    g_rsc_sw_plan_preview_last_tick100ns = 0;
+    g_rsc_sw_action_sequence_preview_run_cnt = 0;
+    g_rsc_sw_action_sequence_preview_failure_cnt = 0;
+    g_rsc_sw_action_sequence_preview_last_status = STATUS_SUCCESS;
+    g_rsc_sw_action_sequence_preview_last_requested_steps = 0;
+    g_rsc_sw_action_sequence_preview_last_expanded_steps = 0;
+    g_rsc_sw_action_sequence_preview_last_invalid_steps = 0;
+    g_rsc_sw_action_sequence_preview_last_duplicate_steps = 0;
+    g_rsc_sw_action_sequence_preview_last_dependency_edges = 0;
+    g_rsc_sw_action_sequence_preview_last_reordered_steps = 0;
+    g_rsc_sw_action_sequence_preview_last_active_mask_before = 0;
+    g_rsc_sw_action_sequence_preview_last_active_mask_after = 0;
+    g_rsc_sw_action_sequence_preview_last_flags = 0;
+    g_rsc_sw_action_sequence_preview_last_tick100ns = 0;
 
-    RtlZeroMemory(g_rsc_sw_plan_preview_history, sizeof(g_rsc_sw_plan_preview_history));
-    g_rsc_sw_plan_preview_history_head = 0;
-    g_rsc_sw_plan_preview_history_cnt = 0;
-    g_rsc_sw_plan_preview_history_dropped = 0;
+    RtlZeroMemory(g_rsc_sw_action_sequence_preview_history,
+                  sizeof(g_rsc_sw_action_sequence_preview_history));
+    g_rsc_sw_action_sequence_preview_history_head = 0;
+    g_rsc_sw_action_sequence_preview_history_cnt = 0;
+    g_rsc_sw_action_sequence_preview_history_dropped = 0;
 
     RtlZeroMemory(g_rsc_sw_checkpoint_slots, sizeof(g_rsc_sw_checkpoint_slots));
     g_rsc_sw_checkpoint_capture_cnt = 0;
@@ -5926,10 +5929,10 @@ NTSTATUS rsc_sw_get_dependency_graph(_Out_ rscsw_graph_snapshot_t* snapshot)
         KIRQL irql;
         KeAcquireSpinLock(&g_rsc_sw_lock, &irql);
         snapshot->active_mask = g_rsc_sw_active_mask;
-        snapshot->last_plan_status = g_rsc_sw_last_plan_status;
-        snapshot->last_plan_step_cnt = g_rsc_sw_last_plan_step_cnt;
-        snapshot->last_plan_failure_cnt = g_rsc_sw_last_plan_failure_cnt;
-        snapshot->last_plan_tick100ns = g_rsc_sw_last_plan_tick100ns;
+        snapshot->last_action_sequence_status = g_rsc_sw_last_action_sequence_status;
+        snapshot->last_action_sequence_step_cnt = g_rsc_sw_last_action_sequence_step_cnt;
+        snapshot->last_action_sequence_failure_cnt = g_rsc_sw_last_action_sequence_failure_cnt;
+        snapshot->last_action_sequence_tick100ns = g_rsc_sw_last_action_sequence_tick100ns;
         KeReleaseSpinLock(&g_rsc_sw_lock, irql);
     }
 
@@ -5940,23 +5943,24 @@ NTSTATUS rsc_sw_get_dependency_graph(_Out_ rscsw_graph_snapshot_t* snapshot)
     return STATUS_SUCCESS;
 }
 
-NTSTATUS rsc_sw_execute_plan(_In_reads_(step_cnt) const rscsw_plan_step_t* steps,
-                             _In_ ULONG step_cnt, _In_ ULONG flags,
-                             _Out_opt_ rscsw_plan_result_t* result)
+NTSTATUS rsc_sw_execute_action_sequence(_In_reads_(step_cnt)
+                                            const rscsw_action_sequence_step_t* steps,
+                                        _In_ ULONG step_cnt, _In_ ULONG flags,
+                                        _Out_opt_ rscsw_action_sequence_result_t* result)
 {
-    typedef struct rscsw_plan_work {
-        rscsw_plan_step_t step;
+    typedef struct rscsw_action_sequence_work {
+        rscsw_action_sequence_step_t step;
         ULONG rank;
         ULONG ordinal;
-    } rscsw_plan_work_t;
+    } rscsw_action_sequence_work_t;
 
-    rscsw_plan_work_t work[RSCSW_PLAN_STEP_CAPACITY];
-    rscsw_plan_result_t local;
+    rscsw_action_sequence_work_t work[RSCSW_ACTION_SEQUENCE_STEP_CAPACITY];
+    rscsw_action_sequence_result_t local;
     NTSTATUS first_failure;
     NTSTATUS final_status;
     ULONGLONG tick;
 
-    if (!steps || step_cnt == 0u || step_cnt > RSCSW_PLAN_STEP_CAPACITY)
+    if (!steps || step_cnt == 0u || step_cnt > RSCSW_ACTION_SEQUENCE_STEP_CAPACITY)
         return STATUS_INVALID_PARAMETER;
 
     rsc_sw_ensure_init();
@@ -5977,7 +5981,7 @@ NTSTATUS rsc_sw_execute_plan(_In_reads_(step_cnt) const rscsw_plan_step_t* steps
             work[i].rank = 0xFFFFFFFFu;
     }
 
-    if ((flags & RSCSW_PLAN_FLAG_RESPECT_DEPENDENCY) != 0u) {
+    if ((flags & RSCSW_ACTION_SEQUENCE_FLAG_RESPECT_DEPENDENCY) != 0u) {
         for (ULONG i = 0; i < step_cnt; i++) {
             for (ULONG j = i + 1u; j < step_cnt; j++) {
                 BOOLEAN swap = FALSE;
@@ -5987,7 +5991,7 @@ NTSTATUS rsc_sw_execute_plan(_In_reads_(step_cnt) const rscsw_plan_step_t* steps
                     swap = TRUE;
 
                 if (swap) {
-                    rscsw_plan_work_t t = work[i];
+                    rscsw_action_sequence_work_t t = work[i];
                     work[i] = work[j];
                     work[j] = t;
                 }
@@ -6012,13 +6016,13 @@ NTSTATUS rsc_sw_execute_plan(_In_reads_(step_cnt) const rscsw_plan_step_t* steps
                                    work[i].step.value1, work[i].step.value2, work[i].step.value3,
                                    ioctl_code);
 
-            if ((flags & RSCSW_PLAN_FLAG_RECORD_TEST_EVENT) != 0u) {
+            if ((flags & RSCSW_ACTION_SEQUENCE_FLAG_RECORD_TEST_EVENT) != 0u) {
                 rsc_sw_record_event(sid, RSC_SW_EVENT_TEST, st, ioctl_code, work[i].step.tag,
                                     work[i].step.value0, work[i].step.value1, work[i].step.value2,
                                     work[i].step.value3, work[i].step.flags);
             }
 
-            if (NT_SUCCESS(st) && ((flags & RSCSW_PLAN_FLAG_VERIFY_NODE) != 0u)) {
+            if (NT_SUCCESS(st) && ((flags & RSCSW_ACTION_SEQUENCE_FLAG_VERIFY_NODE) != 0u)) {
                 rscsw_node_state_t node;
                 RtlZeroMemory(&node, sizeof(node));
                 st = rsc_sw_read_node_raw(sid, &node);
@@ -6061,18 +6065,18 @@ NTSTATUS rsc_sw_execute_plan(_In_reads_(step_cnt) const rscsw_plan_step_t* steps
         ULONG idx;
         KeAcquireSpinLock(&g_rsc_sw_lock, &irql);
 
-        g_rsc_sw_last_plan_status = (ULONG)final_status;
-        g_rsc_sw_last_plan_step_cnt = local.executed_steps;
-        g_rsc_sw_last_plan_failure_cnt = local.failed_steps;
-        g_rsc_sw_last_plan_tick100ns = tick;
+        g_rsc_sw_last_action_sequence_status = (ULONG)final_status;
+        g_rsc_sw_last_action_sequence_step_cnt = local.executed_steps;
+        g_rsc_sw_last_action_sequence_failure_cnt = local.failed_steps;
+        g_rsc_sw_last_action_sequence_tick100ns = tick;
 
-        idx = g_rsc_sw_plan_history_head % RSCSW_PLAN_HISTORY_CAPACITY;
-        g_rsc_sw_plan_history[idx] = local;
-        g_rsc_sw_plan_history_head = (idx + 1u) % RSCSW_PLAN_HISTORY_CAPACITY;
-        if (g_rsc_sw_plan_history_cnt < RSCSW_PLAN_HISTORY_CAPACITY)
-            g_rsc_sw_plan_history_cnt++;
+        idx = g_rsc_sw_action_sequence_history_head % RSCSW_ACTION_SEQUENCE_HISTORY_CAPACITY;
+        g_rsc_sw_action_sequence_history[idx] = local;
+        g_rsc_sw_action_sequence_history_head = (idx + 1u) % RSCSW_ACTION_SEQUENCE_HISTORY_CAPACITY;
+        if (g_rsc_sw_action_sequence_history_cnt < RSCSW_ACTION_SEQUENCE_HISTORY_CAPACITY)
+            g_rsc_sw_action_sequence_history_cnt++;
         else
-            g_rsc_sw_plan_history_dropped++;
+            g_rsc_sw_action_sequence_history_dropped++;
 
         KeReleaseSpinLock(&g_rsc_sw_lock, irql);
     }
@@ -6083,8 +6087,10 @@ NTSTATUS rsc_sw_execute_plan(_In_reads_(step_cnt) const rscsw_plan_step_t* steps
     return final_status;
 }
 
-NTSTATUS rsc_sw_get_plan_history(_Out_writes_to_(capacity, *cnt) rscsw_plan_result_t* entries,
-                                 _In_ ULONG capacity, _Out_ ULONG* cnt, _Out_ ULONG* dropped)
+NTSTATUS rsc_sw_get_action_sequence_history(_Out_writes_to_(capacity, *cnt)
+                                                rscsw_action_sequence_result_t* entries,
+                                            _In_ ULONG capacity, _Out_ ULONG* cnt,
+                                            _Out_ ULONG* dropped)
 {
     ULONG avail;
     ULONG take;
@@ -6102,19 +6108,20 @@ NTSTATUS rsc_sw_get_plan_history(_Out_writes_to_(capacity, *cnt) rscsw_plan_resu
         KIRQL irql;
         KeAcquireSpinLock(&g_rsc_sw_lock, &irql);
 
-        avail = g_rsc_sw_plan_history_cnt;
+        avail = g_rsc_sw_action_sequence_history_cnt;
         take = (capacity < avail) ? capacity : avail;
         skip = avail - take;
-        start = (g_rsc_sw_plan_history_head + RSCSW_PLAN_HISTORY_CAPACITY - avail + skip) %
-                RSCSW_PLAN_HISTORY_CAPACITY;
+        start = (g_rsc_sw_action_sequence_history_head + RSCSW_ACTION_SEQUENCE_HISTORY_CAPACITY -
+                 avail + skip) %
+                RSCSW_ACTION_SEQUENCE_HISTORY_CAPACITY;
 
         for (ULONG i = 0; i < take; i++) {
-            ULONG idx = (start + i) % RSCSW_PLAN_HISTORY_CAPACITY;
-            entries[i] = g_rsc_sw_plan_history[idx];
+            ULONG idx = (start + i) % RSCSW_ACTION_SEQUENCE_HISTORY_CAPACITY;
+            entries[i] = g_rsc_sw_action_sequence_history[idx];
         }
 
         *cnt = take;
-        *dropped = g_rsc_sw_plan_history_dropped + skip;
+        *dropped = g_rsc_sw_action_sequence_history_dropped + skip;
 
         KeReleaseSpinLock(&g_rsc_sw_lock, irql);
     }
@@ -6122,7 +6129,8 @@ NTSTATUS rsc_sw_get_plan_history(_Out_writes_to_(capacity, *cnt) rscsw_plan_resu
     return STATUS_SUCCESS;
 }
 
-NTSTATUS rsc_sw_get_plan_preview_snapshot(_Out_ rscsw_plan_preview_snapshot_t* snapshot)
+NTSTATUS rsc_sw_get_action_sequence_preview_snapshot(
+    _Out_ rscsw_action_sequence_preview_snapshot_t* snapshot)
 {
     if (!snapshot)
         return STATUS_INVALID_PARAMETER;
@@ -6135,28 +6143,30 @@ NTSTATUS rsc_sw_get_plan_preview_snapshot(_Out_ rscsw_plan_preview_snapshot_t* s
     {
         KIRQL irql;
         KeAcquireSpinLock(&g_rsc_sw_lock, &irql);
-        snapshot->run_cnt = g_rsc_sw_plan_preview_run_cnt;
-        snapshot->failure_cnt = g_rsc_sw_plan_preview_failure_cnt;
-        snapshot->last_status = g_rsc_sw_plan_preview_last_status;
-        snapshot->last_requested_steps = g_rsc_sw_plan_preview_last_requested_steps;
-        snapshot->last_expanded_steps = g_rsc_sw_plan_preview_last_expanded_steps;
-        snapshot->last_invalid_steps = g_rsc_sw_plan_preview_last_invalid_steps;
-        snapshot->last_duplicate_steps = g_rsc_sw_plan_preview_last_duplicate_steps;
-        snapshot->last_dependency_edges = g_rsc_sw_plan_preview_last_dependency_edges;
-        snapshot->last_reordered_steps = g_rsc_sw_plan_preview_last_reordered_steps;
-        snapshot->last_active_mask_before = g_rsc_sw_plan_preview_last_active_mask_before;
-        snapshot->last_active_mask_after = g_rsc_sw_plan_preview_last_active_mask_after;
-        snapshot->last_flags = g_rsc_sw_plan_preview_last_flags;
-        snapshot->last_tick100ns = g_rsc_sw_plan_preview_last_tick100ns;
+        snapshot->run_cnt = g_rsc_sw_action_sequence_preview_run_cnt;
+        snapshot->failure_cnt = g_rsc_sw_action_sequence_preview_failure_cnt;
+        snapshot->last_status = g_rsc_sw_action_sequence_preview_last_status;
+        snapshot->last_requested_steps = g_rsc_sw_action_sequence_preview_last_requested_steps;
+        snapshot->last_expanded_steps = g_rsc_sw_action_sequence_preview_last_expanded_steps;
+        snapshot->last_invalid_steps = g_rsc_sw_action_sequence_preview_last_invalid_steps;
+        snapshot->last_duplicate_steps = g_rsc_sw_action_sequence_preview_last_duplicate_steps;
+        snapshot->last_dependency_edges = g_rsc_sw_action_sequence_preview_last_dependency_edges;
+        snapshot->last_reordered_steps = g_rsc_sw_action_sequence_preview_last_reordered_steps;
+        snapshot->last_active_mask_before =
+            g_rsc_sw_action_sequence_preview_last_active_mask_before;
+        snapshot->last_active_mask_after = g_rsc_sw_action_sequence_preview_last_active_mask_after;
+        snapshot->last_flags = g_rsc_sw_action_sequence_preview_last_flags;
+        snapshot->last_tick100ns = g_rsc_sw_action_sequence_preview_last_tick100ns;
         KeReleaseSpinLock(&g_rsc_sw_lock, irql);
     }
 
     return STATUS_SUCCESS;
 }
 
-NTSTATUS rsc_sw_preview_plan(_In_reads_(step_cnt) const rscsw_plan_step_t* steps,
-                             _In_ ULONG step_cnt, _In_ ULONG flags,
-                             _Out_opt_ rscsw_plan_preview_result_t* result)
+NTSTATUS rsc_sw_preview_action_sequence(_In_reads_(step_cnt)
+                                            const rscsw_action_sequence_step_t* steps,
+                                        _In_ ULONG step_cnt, _In_ ULONG flags,
+                                        _Out_opt_ rscsw_action_sequence_preview_result_t* result)
 {
     BOOLEAN requested[RSCSW_NODE_CAPACITY];
     BOOLEAN included[RSCSW_NODE_CAPACITY];
@@ -6168,12 +6178,12 @@ NTSTATUS rsc_sw_preview_plan(_In_reads_(step_cnt) const rscsw_plan_step_t* steps
     ULONG input_cnt;
     ULONG include_cnt;
     ULONG requested_sorted_cnt;
-    rscsw_plan_preview_result_t local;
+    rscsw_action_sequence_preview_result_t local;
     BOOLEAN include_dependencies;
     NTSTATUS final_status;
     ULONGLONG tick;
 
-    if (!steps || step_cnt == 0u || step_cnt > RSCSW_PLAN_STEP_CAPACITY)
+    if (!steps || step_cnt == 0u || step_cnt > RSCSW_ACTION_SEQUENCE_STEP_CAPACITY)
         return STATUS_INVALID_PARAMETER;
 
     rsc_sw_ensure_init();
@@ -6192,8 +6202,9 @@ NTSTATUS rsc_sw_preview_plan(_In_reads_(step_cnt) const rscsw_plan_step_t* steps
     include_cnt = 0u;
     requested_sorted_cnt = 0u;
     tick = rsc_sw_now100ns();
-    include_dependencies = ((flags & RSCSW_PLAN_PREVIEW_FLAG_INCLUDE_DEPENDENCIES) != 0u) ||
-                           ((flags & RSCSW_PLAN_PREVIEW_FLAG_RESPECT_ORDER) != 0u);
+    include_dependencies =
+        ((flags & RSCSW_ACTION_SEQUENCE_PREVIEW_FLAG_INCLUDE_DEPENDENCIES) != 0u) ||
+        ((flags & RSCSW_ACTION_SEQUENCE_PREVIEW_FLAG_RESPECT_ORDER) != 0u);
 
     local.requested_steps = step_cnt;
     local.flags = flags;
@@ -6261,7 +6272,7 @@ NTSTATUS rsc_sw_preview_plan(_In_reads_(step_cnt) const rscsw_plan_step_t* steps
             sorted_included[include_cnt++] = sid;
     }
 
-    if ((flags & RSCSW_PLAN_PREVIEW_FLAG_RESPECT_ORDER) != 0u) {
+    if ((flags & RSCSW_ACTION_SEQUENCE_PREVIEW_FLAG_RESPECT_ORDER) != 0u) {
         for (ULONG i = 0; i < include_cnt; i++) {
             for (ULONG j = i + 1u; j < include_cnt; j++) {
                 ULONG lhs = sorted_included[i];
@@ -6304,7 +6315,8 @@ NTSTATUS rsc_sw_preview_plan(_In_reads_(step_cnt) const rscsw_plan_step_t* steps
             else
                 local.active_mask_after &= ~bit;
         } else if (included[sid] &&
-                   ((flags & RSCSW_PLAN_PREVIEW_FLAG_ASSUME_ENABLE_DEPENDENCIES) != 0u)) {
+                   ((flags & RSCSW_ACTION_SEQUENCE_PREVIEW_FLAG_ASSUME_ENABLE_DEPENDENCIES) !=
+                    0u)) {
             local.active_mask_after |= bit;
         }
     }
@@ -6320,29 +6332,32 @@ NTSTATUS rsc_sw_preview_plan(_In_reads_(step_cnt) const rscsw_plan_step_t* steps
         ULONG idx;
         KeAcquireSpinLock(&g_rsc_sw_lock, &irql);
 
-        g_rsc_sw_plan_preview_run_cnt++;
+        g_rsc_sw_action_sequence_preview_run_cnt++;
         if (!NT_SUCCESS(final_status))
-            g_rsc_sw_plan_preview_failure_cnt++;
+            g_rsc_sw_action_sequence_preview_failure_cnt++;
 
-        g_rsc_sw_plan_preview_last_status = final_status;
-        g_rsc_sw_plan_preview_last_requested_steps = local.requested_steps;
-        g_rsc_sw_plan_preview_last_expanded_steps = local.expanded_steps;
-        g_rsc_sw_plan_preview_last_invalid_steps = local.invalid_steps;
-        g_rsc_sw_plan_preview_last_duplicate_steps = local.duplicate_steps;
-        g_rsc_sw_plan_preview_last_dependency_edges = local.dependency_edges;
-        g_rsc_sw_plan_preview_last_reordered_steps = local.reordered_steps;
-        g_rsc_sw_plan_preview_last_active_mask_before = local.active_mask_before;
-        g_rsc_sw_plan_preview_last_active_mask_after = local.active_mask_after;
-        g_rsc_sw_plan_preview_last_flags = flags;
-        g_rsc_sw_plan_preview_last_tick100ns = tick;
+        g_rsc_sw_action_sequence_preview_last_status = final_status;
+        g_rsc_sw_action_sequence_preview_last_requested_steps = local.requested_steps;
+        g_rsc_sw_action_sequence_preview_last_expanded_steps = local.expanded_steps;
+        g_rsc_sw_action_sequence_preview_last_invalid_steps = local.invalid_steps;
+        g_rsc_sw_action_sequence_preview_last_duplicate_steps = local.duplicate_steps;
+        g_rsc_sw_action_sequence_preview_last_dependency_edges = local.dependency_edges;
+        g_rsc_sw_action_sequence_preview_last_reordered_steps = local.reordered_steps;
+        g_rsc_sw_action_sequence_preview_last_active_mask_before = local.active_mask_before;
+        g_rsc_sw_action_sequence_preview_last_active_mask_after = local.active_mask_after;
+        g_rsc_sw_action_sequence_preview_last_flags = flags;
+        g_rsc_sw_action_sequence_preview_last_tick100ns = tick;
 
-        idx = g_rsc_sw_plan_preview_history_head % RSCSW_PLAN_PREVIEW_HISTORY_CAPACITY;
-        g_rsc_sw_plan_preview_history[idx] = local;
-        g_rsc_sw_plan_preview_history_head = (idx + 1u) % RSCSW_PLAN_PREVIEW_HISTORY_CAPACITY;
-        if (g_rsc_sw_plan_preview_history_cnt < RSCSW_PLAN_PREVIEW_HISTORY_CAPACITY)
-            g_rsc_sw_plan_preview_history_cnt++;
+        idx = g_rsc_sw_action_sequence_preview_history_head %
+              RSCSW_ACTION_SEQUENCE_PREVIEW_HISTORY_CAPACITY;
+        g_rsc_sw_action_sequence_preview_history[idx] = local;
+        g_rsc_sw_action_sequence_preview_history_head =
+            (idx + 1u) % RSCSW_ACTION_SEQUENCE_PREVIEW_HISTORY_CAPACITY;
+        if (g_rsc_sw_action_sequence_preview_history_cnt <
+            RSCSW_ACTION_SEQUENCE_PREVIEW_HISTORY_CAPACITY)
+            g_rsc_sw_action_sequence_preview_history_cnt++;
         else
-            g_rsc_sw_plan_preview_history_dropped++;
+            g_rsc_sw_action_sequence_preview_history_dropped++;
 
         KeReleaseSpinLock(&g_rsc_sw_lock, irql);
     }
@@ -6352,10 +6367,9 @@ NTSTATUS rsc_sw_preview_plan(_In_reads_(step_cnt) const rscsw_plan_step_t* steps
     return final_status;
 }
 
-NTSTATUS rsc_sw_get_plan_preview_history(_Out_writes_to_(capacity, *cnt)
-                                             rscsw_plan_preview_result_t* entries,
-                                         _In_ ULONG capacity, _Out_ ULONG* cnt,
-                                         _Out_ ULONG* dropped)
+NTSTATUS rsc_sw_get_action_sequence_preview_history(
+    _Out_writes_to_(capacity, *cnt) rscsw_action_sequence_preview_result_t* entries,
+    _In_ ULONG capacity, _Out_ ULONG* cnt, _Out_ ULONG* dropped)
 {
     ULONG avail;
     ULONG take;
@@ -6373,20 +6387,20 @@ NTSTATUS rsc_sw_get_plan_preview_history(_Out_writes_to_(capacity, *cnt)
         KIRQL irql;
         KeAcquireSpinLock(&g_rsc_sw_lock, &irql);
 
-        avail = g_rsc_sw_plan_preview_history_cnt;
+        avail = g_rsc_sw_action_sequence_preview_history_cnt;
         take = (capacity < avail) ? capacity : avail;
         skip = avail - take;
-        start = (g_rsc_sw_plan_preview_history_head + RSCSW_PLAN_PREVIEW_HISTORY_CAPACITY - avail +
-                 skip) %
-                RSCSW_PLAN_PREVIEW_HISTORY_CAPACITY;
+        start = (g_rsc_sw_action_sequence_preview_history_head +
+                 RSCSW_ACTION_SEQUENCE_PREVIEW_HISTORY_CAPACITY - avail + skip) %
+                RSCSW_ACTION_SEQUENCE_PREVIEW_HISTORY_CAPACITY;
 
         for (ULONG i = 0; i < take; i++) {
-            ULONG idx = (start + i) % RSCSW_PLAN_PREVIEW_HISTORY_CAPACITY;
-            entries[i] = g_rsc_sw_plan_preview_history[idx];
+            ULONG idx = (start + i) % RSCSW_ACTION_SEQUENCE_PREVIEW_HISTORY_CAPACITY;
+            entries[i] = g_rsc_sw_action_sequence_preview_history[idx];
         }
 
         *cnt = take;
-        *dropped = g_rsc_sw_plan_preview_history_dropped + skip;
+        *dropped = g_rsc_sw_action_sequence_preview_history_dropped + skip;
 
         KeReleaseSpinLock(&g_rsc_sw_lock, irql);
     }
@@ -13946,7 +13960,7 @@ static ULONG rsc_sw_lookup_kind_for_symbol_token(_In_z_ const CHAR* name)
     if (rsc_sw_lookup_starts_with("CLOCK_DOMAIN_POLICY_", name, FALSE))
         return RSCSW_LOOKUP_KIND_CLOCK_DOMAIN_POLICY;
     if (rsc_sw_lookup_starts_with("CLOCK_PLAN_STAGE_", name, FALSE))
-        return RSCSW_LOOKUP_KIND_CLOCK_PLAN_STAGE;
+        return RSCSW_LOOKUP_KIND_CLOCK_CONFIG_PHASE;
     if (rsc_sw_lookup_starts_with("CLOCK_HAL_API_", name, FALSE))
         return RSCSW_LOOKUP_KIND_CLOCK_HAL_API_TYPE;
     if (rsc_sw_lookup_starts_with("CLOCK_CONFIG_API_", name, FALSE))
@@ -15057,7 +15071,7 @@ static const rscsw_alias_kind_route_t g_rsc_sw_alias_kind_routes[] = {
     RSCSW_ALIAS_KIND_ROUTE("CLOCK_NPA_QUERY_", RSCSW_LOOKUP_KIND_CLOCK_NPA_QUERY),
     RSCSW_ALIAS_KIND_ROUTE("CLOCK_AGG_QUERY_", RSCSW_LOOKUP_KIND_CLOCK_AGG_QUERY),
     RSCSW_ALIAS_KIND_ROUTE("CLOCK_DOMAIN_POLICY_", RSCSW_LOOKUP_KIND_CLOCK_DOMAIN_POLICY),
-    RSCSW_ALIAS_KIND_ROUTE("CLOCK_PLAN_STAGE_", RSCSW_LOOKUP_KIND_CLOCK_PLAN_STAGE),
+    RSCSW_ALIAS_KIND_ROUTE("CLOCK_PLAN_STAGE_", RSCSW_LOOKUP_KIND_CLOCK_CONFIG_PHASE),
     RSCSW_ALIAS_KIND_ROUTE("CLOCK_HAL_API_", RSCSW_LOOKUP_KIND_CLOCK_HAL_API_TYPE),
     RSCSW_ALIAS_KIND_ROUTE("CLOCK_CONFIG_API_", RSCSW_LOOKUP_KIND_CLOCK_CONFIG_API),
     RSCSW_ALIAS_KIND_ROUTE("CLOCK_PLL_FRAC_MODE_", RSCSW_LOOKUP_KIND_CLOCK_PLL_FRAC_MODE),
@@ -16138,7 +16152,7 @@ static ULONG rsc_sw_lookup_default_mask_for_match(_In_ const rscsw_lookup_match_
         case RSCSW_LOOKUP_KIND_CLOCK_NPA_QUERY:
         case RSCSW_LOOKUP_KIND_CLOCK_AGG_QUERY:
         case RSCSW_LOOKUP_KIND_CLOCK_DOMAIN_POLICY:
-        case RSCSW_LOOKUP_KIND_CLOCK_PLAN_STAGE:
+        case RSCSW_LOOKUP_KIND_CLOCK_CONFIG_PHASE:
         case RSCSW_LOOKUP_KIND_CLOCK_HAL_API_TYPE:
         case RSCSW_LOOKUP_KIND_CLOCK_CONFIG_API:
         case RSCSW_LOOKUP_KIND_CLOCK_SRC_DISABLE_MODE:
@@ -17796,10 +17810,10 @@ NTSTATUS rsc_sw_run_lookup(_In_ ULONG query_type, _In_ ULONG query_id, _In_ ULON
                                          g_rsc_sw_pcu_policy_reason_by_subsystem,
                                          RSCSW_LOOKUP_KIND_PCU_POLICY_REASON, query_text,
                                          case_insensitive, allow_partial);
-            rsc_sw_lookup_scan_enum_text(&local, g_rsc_sw_clock_plan_stage_types,
-                                         RTL_NUMBER_OF(g_rsc_sw_clock_plan_stage_types),
-                                         g_rsc_sw_clock_plan_stage_by_subsystem,
-                                         RSCSW_LOOKUP_KIND_CLOCK_PLAN_STAGE, query_text,
+            rsc_sw_lookup_scan_enum_text(&local, g_rsc_sw_clock_config_phase_types,
+                                         RTL_NUMBER_OF(g_rsc_sw_clock_config_phase_types),
+                                         g_rsc_sw_clock_config_phase_by_subsystem,
+                                         RSCSW_LOOKUP_KIND_CLOCK_CONFIG_PHASE, query_text,
                                          case_insensitive, allow_partial);
             rsc_sw_lookup_scan_enum_text(
                 &local, g_rsc_sw_clock_hal_api_types, RTL_NUMBER_OF(g_rsc_sw_clock_hal_api_types),
@@ -18502,7 +18516,7 @@ NTSTATUS rsc_sw_get_provision_snapshot(_Out_ rscsw_provision_snapshot_t* snapsho
         snapshot->last_status = g_rsc_sw_provision_last_status;
         snapshot->last_mode_id = g_rsc_sw_provision_last_mode_id;
         snapshot->last_flags = g_rsc_sw_provision_last_flags;
-        snapshot->last_planned_cnt = g_rsc_sw_provision_last_planned_cnt;
+        snapshot->last_prepared_cnt = g_rsc_sw_provision_last_prepared_cnt;
         snapshot->last_applied_cnt = g_rsc_sw_provision_last_applied_cnt;
         snapshot->last_failed_cnt = g_rsc_sw_provision_last_failed_cnt;
         snapshot->last_policy_vote_cnt = g_rsc_sw_provision_last_policy_vote_cnt;
@@ -18621,7 +18635,7 @@ NTSTATUS rsc_sw_run_provision(_In_ ULONG mode_id, _In_ ULONG flags,
         row->last_tick100ns = local.tick100ns;
 
         confidence_total += row->confidence_permille;
-        local.planned_cnt++;
+        local.prepared_cnt++;
 
         if ((flags & RSCSW_PROVISION_FLAG_APPLY_STATE) != 0u) {
             ULONG tag = 0x52565000u | ((mode_id & 0xFu) << 8) | (sid & 0xFFu);
@@ -18668,8 +18682,8 @@ NTSTATUS rsc_sw_run_provision(_In_ ULONG mode_id, _In_ ULONG flags,
         row_cnt++;
     }
 
-    if (local.planned_cnt != 0u)
-        local.avg_confidence_permille = confidence_total / local.planned_cnt;
+    if (local.prepared_cnt != 0u)
+        local.avg_confidence_permille = confidence_total / local.prepared_cnt;
 
     if ((flags & RSCSW_PROVISION_FLAG_RUN_INTERCONNECT) != 0u ||
         mode_id == RSCSW_PROVISION_MODE_PERFORMANCE) {
@@ -18703,7 +18717,7 @@ NTSTATUS rsc_sw_run_provision(_In_ ULONG mode_id, _In_ ULONG flags,
         g_rsc_sw_provision_last_status = final_status;
         g_rsc_sw_provision_last_mode_id = mode_id;
         g_rsc_sw_provision_last_flags = flags;
-        g_rsc_sw_provision_last_planned_cnt = local.planned_cnt;
+        g_rsc_sw_provision_last_prepared_cnt = local.prepared_cnt;
         g_rsc_sw_provision_last_applied_cnt = local.applied_cnt;
         g_rsc_sw_provision_last_failed_cnt = local.failed_cnt;
         g_rsc_sw_provision_last_policy_vote_cnt = local.policy_vote_cnt;
@@ -19474,7 +19488,7 @@ NTSTATUS rsc_sw_get_rail_snapshot(_Out_ rscsw_rail_snapshot_t* snapshot)
         snapshot->last_status = g_rsc_sw_rail_last_status;
         snapshot->last_mode_id = g_rsc_sw_rail_last_mode_id;
         snapshot->last_flags = g_rsc_sw_rail_last_flags;
-        snapshot->last_planned_cnt = g_rsc_sw_rail_last_planned_cnt;
+        snapshot->last_prepared_cnt = g_rsc_sw_rail_last_prepared_cnt;
         snapshot->last_applied_cnt = g_rsc_sw_rail_last_applied_cnt;
         snapshot->last_failed_cnt = g_rsc_sw_rail_last_failed_cnt;
         snapshot->last_rail_vote_cnt = g_rsc_sw_rail_last_rail_vote_cnt;
@@ -19593,7 +19607,7 @@ NTSTATUS rsc_sw_run_rail(_In_ ULONG mode_id, _In_ ULONG flags,
         row->last_tick100ns = local.tick100ns;
 
         confidence_total += row->confidence_permille;
-        local.planned_cnt++;
+        local.prepared_cnt++;
 
         if ((flags & (RSCSW_RAIL_FLAG_APPLY_ARC | RSCSW_RAIL_FLAG_APPLY_CLOCK)) != 0u) {
             ULONG tag = 0x41524C00u | ((mode_id & 0xFu) << 8) | (sid & 0xFFu);
@@ -19656,8 +19670,8 @@ NTSTATUS rsc_sw_run_rail(_In_ ULONG mode_id, _In_ ULONG flags,
         row_cnt++;
     }
 
-    if (local.planned_cnt != 0u)
-        local.avg_confidence_permille = confidence_total / local.planned_cnt;
+    if (local.prepared_cnt != 0u)
+        local.avg_confidence_permille = confidence_total / local.prepared_cnt;
 
     if ((flags & RSCSW_RAIL_FLAG_RUN_INTERCONNECT) != 0u ||
         mode_id == RSCSW_RAIL_MODE_PERFORMANCE) {
@@ -19691,7 +19705,7 @@ NTSTATUS rsc_sw_run_rail(_In_ ULONG mode_id, _In_ ULONG flags,
         g_rsc_sw_rail_last_status = final_status;
         g_rsc_sw_rail_last_mode_id = mode_id;
         g_rsc_sw_rail_last_flags = flags;
-        g_rsc_sw_rail_last_planned_cnt = local.planned_cnt;
+        g_rsc_sw_rail_last_prepared_cnt = local.prepared_cnt;
         g_rsc_sw_rail_last_applied_cnt = local.applied_cnt;
         g_rsc_sw_rail_last_failed_cnt = local.failed_cnt;
         g_rsc_sw_rail_last_rail_vote_cnt = local.rail_vote_cnt;
@@ -20415,7 +20429,7 @@ NTSTATUS rsc_sw_get_tcs_snapshot(_Out_ rscsw_tcs_snapshot_t* snapshot)
         snapshot->last_status = g_rsc_sw_tcs_last_status;
         snapshot->last_mode_id = g_rsc_sw_tcs_last_mode_id;
         snapshot->last_flags = g_rsc_sw_tcs_last_flags;
-        snapshot->last_planned_cnt = g_rsc_sw_tcs_last_planned_cnt;
+        snapshot->last_prepared_cnt = g_rsc_sw_tcs_last_prepared_cnt;
         snapshot->last_programmed_cnt = g_rsc_sw_tcs_last_programmed_cnt;
         snapshot->last_failed_cnt = g_rsc_sw_tcs_last_failed_cnt;
         snapshot->last_policy_vote_cnt = g_rsc_sw_tcs_last_policy_vote_cnt;
@@ -20540,7 +20554,7 @@ NTSTATUS rsc_sw_run_tcs(_In_ ULONG mode_id, _In_ ULONG flags, _Out_opt_ rscsw_tc
         row->last_tick100ns = local.tick100ns;
 
         confidence_total += row->confidence_permille;
-        local.planned_cnt++;
+        local.prepared_cnt++;
 
         if ((flags & RSCSW_TCS_FLAG_PROGRAM_TCS) != 0u) {
             ULONG tag = 0x53435400u | ((mode_id & 0xFu) << 8) | (sid & 0xFFu); /* 'TCS'. */
@@ -20600,8 +20614,8 @@ NTSTATUS rsc_sw_run_tcs(_In_ ULONG mode_id, _In_ ULONG flags, _Out_opt_ rscsw_tc
         row_cnt++;
     }
 
-    if (local.planned_cnt != 0u)
-        local.avg_confidence_permille = confidence_total / local.planned_cnt;
+    if (local.prepared_cnt != 0u)
+        local.avg_confidence_permille = confidence_total / local.prepared_cnt;
 
     if ((flags & RSCSW_TCS_FLAG_RUN_INTERCONNECT) != 0u || mode_id == RSCSW_TCS_MODE_ACTIVE ||
         mode_id == RSCSW_TCS_MODE_WAKE) {
@@ -20635,7 +20649,7 @@ NTSTATUS rsc_sw_run_tcs(_In_ ULONG mode_id, _In_ ULONG flags, _Out_opt_ rscsw_tc
         g_rsc_sw_tcs_last_status = final_status;
         g_rsc_sw_tcs_last_mode_id = mode_id;
         g_rsc_sw_tcs_last_flags = flags;
-        g_rsc_sw_tcs_last_planned_cnt = local.planned_cnt;
+        g_rsc_sw_tcs_last_prepared_cnt = local.prepared_cnt;
         g_rsc_sw_tcs_last_programmed_cnt = local.programmed_cnt;
         g_rsc_sw_tcs_last_failed_cnt = local.failed_cnt;
         g_rsc_sw_tcs_last_policy_vote_cnt = local.policy_vote_cnt;
@@ -21397,7 +21411,7 @@ NTSTATUS rsc_sw_get_thermal_snapshot(_Out_ rscsw_thermal_snapshot_t* snapshot)
         snapshot->last_status = g_rsc_sw_thermal_last_status;
         snapshot->last_mode_id = g_rsc_sw_thermal_last_mode_id;
         snapshot->last_flags = g_rsc_sw_thermal_last_flags;
-        snapshot->last_planned_cnt = g_rsc_sw_thermal_last_planned_cnt;
+        snapshot->last_prepared_cnt = g_rsc_sw_thermal_last_prepared_cnt;
         snapshot->last_sampled_cnt = g_rsc_sw_thermal_last_sampled_cnt;
         snapshot->last_applied_cnt = g_rsc_sw_thermal_last_applied_cnt;
         snapshot->last_failed_cnt = g_rsc_sw_thermal_last_failed_cnt;
@@ -21531,7 +21545,7 @@ NTSTATUS rsc_sw_run_thermal(_In_ ULONG mode_id, _In_ ULONG flags,
         row->last_status = STATUS_SUCCESS;
         row->last_tick100ns = local.tick100ns;
 
-        local.planned_cnt++;
+        local.prepared_cnt++;
         local.sampled_cnt++;
         pressure_total += pressure;
         confidence_total += row->confidence_permille;
@@ -21634,7 +21648,7 @@ NTSTATUS rsc_sw_run_thermal(_In_ ULONG mode_id, _In_ ULONG flags,
         g_rsc_sw_thermal_last_status = final_status;
         g_rsc_sw_thermal_last_mode_id = mode_id;
         g_rsc_sw_thermal_last_flags = flags;
-        g_rsc_sw_thermal_last_planned_cnt = local.planned_cnt;
+        g_rsc_sw_thermal_last_prepared_cnt = local.prepared_cnt;
         g_rsc_sw_thermal_last_sampled_cnt = local.sampled_cnt;
         g_rsc_sw_thermal_last_applied_cnt = local.applied_cnt;
         g_rsc_sw_thermal_last_failed_cnt = local.failed_cnt;
@@ -21863,7 +21877,7 @@ NTSTATUS rsc_sw_get_coord_snapshot(_Out_ rscsw_coord_snapshot_t* snapshot)
         snapshot->last_status = g_rsc_sw_coord_last_status;
         snapshot->last_mode_id = g_rsc_sw_coord_last_mode_id;
         snapshot->last_flags = g_rsc_sw_coord_last_flags;
-        snapshot->last_planned_cnt = g_rsc_sw_coord_last_planned_cnt;
+        snapshot->last_prepared_cnt = g_rsc_sw_coord_last_prepared_cnt;
         snapshot->last_applied_cnt = g_rsc_sw_coord_last_applied_cnt;
         snapshot->last_failed_cnt = g_rsc_sw_coord_last_failed_cnt;
         snapshot->last_executed_phase_mask = g_rsc_sw_coord_last_executed_phase_mask;
@@ -22039,7 +22053,7 @@ NTSTATUS rsc_sw_run_coord(_In_ ULONG mode_id_arg, _In_ ULONG flags,
         local.executed_phase_mask |= RSCSW_COORD_FLAG_RUN_SEQUENCE;
         phase_status = rsc_sw_run_sequence(mode_id, sequence_flags, &sequence_result);
         local.sequence_status = NT_SUCCESS(phase_status) ? sequence_result.status : phase_status;
-        local.planned_cnt += sequence_result.step_cnt;
+        local.prepared_cnt += sequence_result.step_cnt;
         local.applied_cnt += sequence_result.applied_cnt;
         local.failed_cnt += sequence_result.failed_cnt;
         rsc_sw_coord_update_last(&local, sequence_result.last_subsystem_id,
@@ -22076,7 +22090,7 @@ NTSTATUS rsc_sw_run_coord(_In_ ULONG mode_id_arg, _In_ ULONG flags,
         local.executed_phase_mask |= RSCSW_COORD_FLAG_RUN_PROVISION;
         phase_status = rsc_sw_run_provision(mode_id, provision_flags, &provision_result);
         local.provision_status = NT_SUCCESS(phase_status) ? provision_result.status : phase_status;
-        local.planned_cnt += provision_result.planned_cnt;
+        local.prepared_cnt += provision_result.prepared_cnt;
         local.applied_cnt += provision_result.applied_cnt;
         local.failed_cnt += provision_result.failed_cnt;
         rsc_sw_coord_update_last(&local, provision_result.last_subsystem_id,
@@ -22113,7 +22127,7 @@ NTSTATUS rsc_sw_run_coord(_In_ ULONG mode_id_arg, _In_ ULONG flags,
         local.executed_phase_mask |= RSCSW_COORD_FLAG_RUN_RAIL;
         phase_status = rsc_sw_run_rail(mode_id, rail_flags, &rail_result);
         local.rail_status = NT_SUCCESS(phase_status) ? rail_result.status : phase_status;
-        local.planned_cnt += rail_result.planned_cnt;
+        local.prepared_cnt += rail_result.prepared_cnt;
         local.applied_cnt += rail_result.applied_cnt;
         local.failed_cnt += rail_result.failed_cnt;
         rsc_sw_coord_update_last(&local, rail_result.last_subsystem_id, rail_result.last_tag,
@@ -22150,7 +22164,7 @@ NTSTATUS rsc_sw_run_coord(_In_ ULONG mode_id_arg, _In_ ULONG flags,
         local.executed_phase_mask |= RSCSW_COORD_FLAG_RUN_TCS;
         phase_status = rsc_sw_run_tcs(mode_id, tcs_flags, &tcs_result);
         local.tcs_status = NT_SUCCESS(phase_status) ? tcs_result.status : phase_status;
-        local.planned_cnt += tcs_result.planned_cnt;
+        local.prepared_cnt += tcs_result.prepared_cnt;
         local.applied_cnt += tcs_result.programmed_cnt;
         local.failed_cnt += tcs_result.failed_cnt;
         rsc_sw_coord_update_last(&local, tcs_result.last_subsystem_id, tcs_result.last_tag,
@@ -22186,7 +22200,7 @@ NTSTATUS rsc_sw_run_coord(_In_ ULONG mode_id_arg, _In_ ULONG flags,
         local.executed_phase_mask |= RSCSW_COORD_FLAG_RUN_THERMAL;
         phase_status = rsc_sw_run_thermal(mode_id, thermal_flags, &thermal_result);
         local.thermal_status = NT_SUCCESS(phase_status) ? thermal_result.status : phase_status;
-        local.planned_cnt += thermal_result.planned_cnt;
+        local.prepared_cnt += thermal_result.prepared_cnt;
         local.applied_cnt += thermal_result.applied_cnt;
         local.failed_cnt += thermal_result.failed_cnt;
         rsc_sw_coord_update_last(&local, thermal_result.last_subsystem_id, thermal_result.last_tag,
@@ -22354,7 +22368,7 @@ NTSTATUS rsc_sw_run_coord(_In_ ULONG mode_id_arg, _In_ ULONG flags,
         KeReleaseSpinLock(&g_rsc_sw_lock, irql);
     }
 
-    local.planned_cnt += row_cnt;
+    local.prepared_cnt += row_cnt;
     local.avg_confidence_permille = (row_cnt == 0u) ? 0u : (confidence_total / row_cnt);
     if (local.status == STATUS_SUCCESS)
         local.status = final_status;
@@ -22369,7 +22383,7 @@ NTSTATUS rsc_sw_run_coord(_In_ ULONG mode_id_arg, _In_ ULONG flags,
         g_rsc_sw_coord_last_status = local.status;
         g_rsc_sw_coord_last_mode_id = mode_id_arg;
         g_rsc_sw_coord_last_flags = flags;
-        g_rsc_sw_coord_last_planned_cnt = local.planned_cnt;
+        g_rsc_sw_coord_last_prepared_cnt = local.prepared_cnt;
         g_rsc_sw_coord_last_applied_cnt = local.applied_cnt;
         g_rsc_sw_coord_last_failed_cnt = local.failed_cnt;
         g_rsc_sw_coord_last_executed_phase_mask = local.executed_phase_mask;
@@ -22998,8 +23012,8 @@ static ULONG rsc_sw_audit_semantic_coverage_permille(_In_ ULONG subsystem_id)
                           g_rsc_sw_aop_mailbox_state_by_subsystem[subsystem_id]);
     RSCSW_AUDIT_SEM_CHECK(g_rsc_sw_arc_policy_phase_types,
                           g_rsc_sw_arc_policy_phase_by_subsystem[subsystem_id]);
-    RSCSW_AUDIT_SEM_CHECK(g_rsc_sw_clock_plan_stage_types,
-                          g_rsc_sw_clock_plan_stage_by_subsystem[subsystem_id]);
+    RSCSW_AUDIT_SEM_CHECK(g_rsc_sw_clock_config_phase_types,
+                          g_rsc_sw_clock_config_phase_by_subsystem[subsystem_id]);
     RSCSW_AUDIT_SEM_CHECK(g_rsc_sw_cmd_db_slave_region_types,
                           g_rsc_sw_cmd_db_slave_region_by_subsystem[subsystem_id]);
     RSCSW_AUDIT_SEM_CHECK(g_rsc_sw_dal_workloop_event_types,
@@ -23249,7 +23263,7 @@ static ULONG rsc_sw_audit_protocol_drift_permille(_In_ ULONG subsystem_id, _In_ 
     ULONG tsens_trip_class;
     ULONG aop_mailbox_state;
     ULONG arc_policy_phase;
-    ULONG clock_plan_stage;
+    ULONG clock_config_phase;
     ULONG cmd_db_slave_region;
     ULONG dal_workloop_event;
     ULONG glink_rx_intent_state;
@@ -23447,7 +23461,7 @@ static ULONG rsc_sw_audit_protocol_drift_permille(_In_ ULONG subsystem_id, _In_ 
     tsens_trip_class = g_rsc_sw_tsens_trip_class_by_subsystem[subsystem_id];
     aop_mailbox_state = g_rsc_sw_aop_mailbox_state_by_subsystem[subsystem_id];
     arc_policy_phase = g_rsc_sw_arc_policy_phase_by_subsystem[subsystem_id];
-    clock_plan_stage = g_rsc_sw_clock_plan_stage_by_subsystem[subsystem_id];
+    clock_config_phase = g_rsc_sw_clock_config_phase_by_subsystem[subsystem_id];
     cmd_db_slave_region = g_rsc_sw_cmd_db_slave_region_by_subsystem[subsystem_id];
     dal_workloop_event = g_rsc_sw_dal_workloop_event_by_subsystem[subsystem_id];
     glink_rx_intent_state = g_rsc_sw_glink_rx_intent_state_by_subsystem[subsystem_id];
@@ -24099,7 +24113,7 @@ static ULONG rsc_sw_audit_protocol_drift_permille(_In_ ULONG subsystem_id, _In_ 
         drift += 35u;
     if (arc_policy_phase == 0x4u && arc_rm_action == 0x0u)
         drift += 30u;
-    if (clock_plan_stage == 0x3u && clock_action == 0x4u)
+    if (clock_config_phase == 0x3u && clock_action == 0x4u)
         drift += 25u;
     if (cmd_db_slave_region == 0x4u && cmd_db_access_path == 0x0u)
         drift += 25u;
@@ -27269,7 +27283,7 @@ NTSTATUS rsc_sw_run_harden(_In_ ULONG mode_id, _In_ ULONG flags, _In_ ULONG cycl
             RtlZeroMemory(&coord_result, sizeof(coord_result));
             phase_status = rsc_sw_run_coord(coord_mode, coord_flags, &coord_result);
             local.coord_status = NT_SUCCESS(phase_status) ? coord_result.status : phase_status;
-            local.checked_cnt += coord_result.planned_cnt;
+            local.checked_cnt += coord_result.prepared_cnt;
             local.warning_cnt += coord_result.failed_cnt;
             local.failed_cnt += coord_result.failed_cnt;
             if (!NT_SUCCESS(local.coord_status))

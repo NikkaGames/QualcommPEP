@@ -191,7 +191,7 @@ ULONG_PTR pep_prepare_dev(_Inout_opt_ PVOID data)
     KeSetEvent(&n->d_state_progress_event, IO_NO_INCREMENT, FALSE);
     ExReleaseFastMutex(&n->d_state_change_f_mutex);
     pep_apply_prepare_states(n);
-    /* prepare executed and verified the initial d0 plan. record evidence before publishing
+    /* prepare executed and verified the initial d0 sequence. record evidence before publishing
      * acceptance; a subsequent d0 notify must NOT issue the initial d0 votes a second time. */
 
     ExAcquireFastMutex(&n->d_state_change_f_mutex);
@@ -853,7 +853,7 @@ ULONG_PTR pep_dev_power_state(_Inout_opt_ PVOID data)
     pep_dpm_record_notify(n, p);
     pep_handle_dev_power_system_transition(p, n);
     /* the transaction engine re-verifies an unchanged state under its res lock without
-     * replaying its plan. Node cache alone cannot bypass a concurrent clock request, revoked
+     * replaying its sequence. Node cache alone cannot bypass a concurrent clock request, revoked
      * epoch or quarantine. */
     if (p->power_state == PowerDeviceD0)
         result = pep_dev_power_state_d0_transition(p, n) ? 1u : 0u;

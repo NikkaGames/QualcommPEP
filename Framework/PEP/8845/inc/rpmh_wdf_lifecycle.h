@@ -5,7 +5,7 @@
  * activating an interrupt. */
 
 #include <stdint.h>
-#include "rpmh_oem_pnp_plan.h"
+#include "pnp_resources.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

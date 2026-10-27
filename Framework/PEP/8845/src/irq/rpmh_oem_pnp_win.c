@@ -3,13 +3,13 @@
 /* this PnP adapter is not connected to the production path without an independently verified
  * controller request table. */
 
-NTSTATUS rpmh_oem_plan_win_interrupts(_In_ WDFCMRESLIST raw, _In_ WDFCMRESLIST translated,
-                                      _In_reads_(req_cnt) const rpmh_oem_pnp_req_t* requests,
-                                      _In_ ULONG req_cnt, _Out_ rpmh_oem_pnp_plan_t* plan)
+NTSTATUS rpmh_match_windows_interrupts(_In_ WDFCMRESLIST raw, _In_ WDFCMRESLIST translated,
+                                       _In_reads_(req_cnt) const rpmh_oem_pnp_req_t* requests,
+                                       _In_ ULONG req_cnt, _Out_ rpmh_pnp_resources_t* resources)
 {
     rsc_irq_pair_t pairs[RSC_IRQ_RES_LIMIT] = {0};
     ULONG raw_cnt, translated_cnt, i;
-    if (!raw || !translated || !requests || !plan)
+    if (!raw || !translated || !requests || !resources)
         return STATUS_INVALID_PARAMETER;
     raw_cnt = WdfCmResourceListGetCount(raw);
     translated_cnt = WdfCmResourceListGetCount(translated);
@@ -37,7 +37,7 @@ NTSTATUS rpmh_oem_plan_win_interrupts(_In_ WDFCMRESLIST raw, _In_ WDFCMRESLIST t
             pairs[i].translated_share_disposition = (uint8_t)t->ShareDisposition;
         }
     }
-    return rpmh_oem_build_pnp_plan(pairs, raw_cnt, requests, req_cnt, plan)
+    return rpmh_match_pnp_resources(pairs, raw_cnt, requests, req_cnt, resources)
                ? STATUS_SUCCESS
                : STATUS_DEVICE_CONFIGURATION_ERROR;
 }

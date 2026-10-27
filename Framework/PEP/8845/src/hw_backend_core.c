@@ -29,7 +29,7 @@ const char* win_backend_probe_clock_name(uint32_t key)
     return g_probe_clocks[key];
 }
 
-static int good_path(const char* p)
+static int valid_device_path(const char* p)
 {
     size_t n = 0;
     if (!p)
@@ -39,7 +39,7 @@ static int good_path(const char* p)
     return n >= 5u && n < 256u && p[0] == '\\';
 }
 
-static int good_name(const char* s, size_t cap, const char* prefix)
+static int valid_resource_name(const char* s, size_t cap, const char* prefix)
 {
     size_t n = 0, pn = prefix ? strlen(prefix) : 0u;
     if (!s)
@@ -94,7 +94,7 @@ static int tlmm_equal(const tlmm_gpio_t* a, const tlmm_gpio_t* b)
            a->direction == b->direction && a->pull == b->pull && a->drive == b->drive;
 }
 
-static int snap_hdr_ok(const power_snapshot_t* s, uint32_t kind)
+static int valid_snapshot_header(const power_snapshot_t* s, uint32_t kind)
 {
     return s && hi32(s->opaque[SN_HDR]) == SNAP_MAGIC && lo32(s->opaque[SN_HDR]) == kind;
 }
@@ -248,9 +248,10 @@ static int validate_action(const power_action_t* a)
 
             return tlmm_decode_dsd_t_fields(a->u.gpio.fields, &cfg);
         case POWER_PMIC_REGULATOR:
-            return good_name(a->u.pmic_regulator.name, POWER_NAME_BYTES, "PPP_RESOURCE_ID_");
+            return valid_resource_name(a->u.pmic_regulator.name, POWER_NAME_BYTES,
+                                       "PPP_RESOURCE_ID_");
         case POWER_CLOCK:
-            if (!good_name(a->u.clock.name, POWER_NAME_BYTES, "gcc_"))
+            if (!valid_resource_name(a->u.clock.name, POWER_NAME_BYTES, "gcc_"))
                 return 0;
             if (clock_mem_config(a))
                 return 1;
@@ -262,8 +263,8 @@ static int validate_action(const power_action_t* a)
                 return 1;
             return 0;
         case POWER_ICB:
-            return good_name(a->u.icb.master, POWER_NAME_BYTES, "ICBID_MASTER_") &&
-                   good_name(a->u.icb.slave, POWER_NAME_BYTES, "ICBID_SLAVE_");
+            return valid_resource_name(a->u.icb.master, POWER_NAME_BYTES, "ICBID_MASTER_") &&
+                   valid_resource_name(a->u.icb.slave, POWER_NAME_BYTES, "ICBID_SLAVE_");
         case POWER_PSTATE_ADJUST:
             return 0; /* never executed by this backend. */
         default:
@@ -519,7 +520,7 @@ static int withdraw_action(win_backend_t* b, const char* path, const power_actio
 static int op_supports(void* c, const char* path, uint32_t dstate, const power_action_t* a)
 {
     win_backend_t* b = core_of(c);
-    if (!b || !good_path(path) || dstate > 3u || !a)
+    if (!b || !valid_device_path(path) || dstate > 3u || !a)
         return 0;
     if (win_backend_delegation(b, a->kind) != HW_DELEGATION_LIVE || !validate_action(a) ||
         !owner_knows(b, a) ||
@@ -671,7 +672,7 @@ static int op_restore(void* c, const char* path, uint32_t dstate, const power_ac
         return 0;
     if (a->kind == POWER_DELAY)
         return 0; /* cannot un-elapse; never called. */
-    if (!snap_hdr_ok(s, (uint32_t)a->kind))
+    if (!valid_snapshot_header(s, (uint32_t)a->kind))
         return 0;
     if (clock_mem_config(a)) {
         if (!s->opaque[SN_READ_OK] || s->opaque[SN_READ] > 1u || !b->io.clock_config_write ||
@@ -789,7 +790,7 @@ static int op_verify_restored(void* c, const char* path, uint32_t dstate, const 
         return 0;
     if (a->kind == POWER_DELAY)
         return 0;
-    if (!snap_hdr_ok(s, (uint32_t)a->kind) || !s->opaque[SN_READ_OK])
+    if (!valid_snapshot_header(s, (uint32_t)a->kind) || !s->opaque[SN_READ_OK])
         return 0;
     /* the independent readback must return exactly what it returned before the failed
      * transaction touched this res. Byte equality is a valid check even for an opaque
@@ -800,16 +801,17 @@ static int op_verify_restored(void* c, const char* path, uint32_t dstate, const 
     return now == s->opaque[SN_READ];
 }
 
-static int op_verify_final(void* c, const char* path, uint32_t dstate, const power_plan_t* plan)
+static int op_verify_final(void* c, const char* path, uint32_t dstate,
+                           const power_sequence_t* sequence)
 {
     win_backend_t* b = core_of(c);
     uint32_t i, j;
-    if (!b || !plan || !good_path(path) || plan->target_d_state != dstate ||
-        strncmp(plan->dev_path, path, 256u) != 0 || plan->action_cnt == 0u ||
-        plan->action_cnt > POWER_MAX_ACTIONS)
+    if (!b || !sequence || !valid_device_path(path) || sequence->target_d_state != dstate ||
+        strncmp(sequence->dev_path, path, 256u) != 0 || sequence->action_cnt == 0u ||
+        sequence->action_cnt > POWER_MAX_ACTIONS)
         return 0;
-    for (i = 0; i < plan->action_cnt; ++i) {
-        const power_action_t* a = &plan->actions[i];
+    for (i = 0; i < sequence->action_cnt; ++i) {
+        const power_action_t* a = &sequence->actions[i];
         int last = 1;
         uint64_t read = 0;
         tlmm_gpio_t eff, want;
@@ -818,8 +820,8 @@ static int op_verify_final(void* c, const char* path, uint32_t dstate, const pow
         if (a->kind == POWER_DELAY)
             continue;
 
-        for (j = i + 1u; j < plan->action_cnt; ++j) {
-            const power_action_t* o = &plan->actions[j];
+        for (j = i + 1u; j < sequence->action_cnt; ++j) {
+            const power_action_t* o = &sequence->actions[j];
             if (o->kind != a->kind)
                 continue;
             if (a->kind == POWER_TLMM_GPIO && o->u.gpio.fields[0] == a->u.gpio.fields[0]) {
@@ -944,16 +946,16 @@ static int op_selftest(void* c)
 
 /* npa client callbacks over the owner pool. */
 
-static int npa_key_ok(const npa_key_t* k)
+static int valid_npa_key(const npa_key_t* k)
 {
-    return k && good_path(k->dev_path) && k->res[0] &&
+    return k && valid_device_path(k->dev_path) && k->res[0] &&
            (k->kind == POWER_CLOCK || k->kind == POWER_ICB || k->kind == POWER_PMIC_REGULATOR);
 }
 
 static int npa_owns(void* c, const npa_key_t* k)
 {
     win_backend_t* b = core_of(c);
-    if (!b || !npa_key_ok(k))
+    if (!b || !valid_npa_key(k))
         return 0;
     switch (k->kind) {
         case POWER_CLOCK:
@@ -1029,7 +1031,7 @@ static int npa_validate(void* c, const npa_key_t* k, void* h)
 {
     win_backend_t* b = core_of(c);
     npa_client_slot_t* s;
-    if (!b || !npa_key_ok(k))
+    if (!b || !valid_npa_key(k))
         return 0;
     s = npa_slot_of(b, h);
     return s && s->key.kind == k->kind && s->key.d_state == k->d_state &&

@@ -4,7 +4,8 @@
 static const char k_path[] = "\\_SB.UFS0";
 static const char k_domain[] = "gcc_ufs_phy_gdsc";
 
-static int action_ok(ufs_fs_graph_t* a, const char* path, uint32_t state, const power_action_t* act)
+static int supports_ufs_action(ufs_fs_graph_t* a, const char* path, uint32_t state,
+                               const power_action_t* act)
 {
     if (!a || !a->bound || !a->res || !a->owner_epoch || !path || strcmp(path, k_path) != 0 ||
         !act || act->kind != POWER_FOOTSWITCH || strcmp(act->u.footswitch.name, k_domain) != 0 ||
@@ -17,7 +18,7 @@ static int action_ok(ufs_fs_graph_t* a, const char* path, uint32_t state, const 
 
 static int supports(void* v, const char* p, uint32_t s, const power_action_t* a)
 {
-    return action_ok((ufs_fs_graph_t*)v, p, s, a);
+    return supports_ufs_action((ufs_fs_graph_t*)v, p, s, a);
 }
 
 static int snapshot(void* v, const char* p, uint32_t s, const power_action_t* a,
@@ -85,15 +86,15 @@ static int verify_restored(void* v, const char* p, uint32_t s, const power_actio
     return g->verify_physical(g->res->io.ctx, k_domain, (uint32_t)snap->opaque[0], g->owner_epoch);
 }
 
-static int verify_final(void* v, const char* p, uint32_t s, const power_plan_t* plan)
+static int verify_final(void* v, const char* p, uint32_t s, const power_sequence_t* sequence)
 {
     ufs_fs_graph_t* g = v;
     uint32_t i, found = 0;
-    if (!plan || !p || strcmp(p, k_path) != 0 || plan->action_cnt > POWER_MAX_ACTIONS)
+    if (!sequence || !p || strcmp(p, k_path) != 0 || sequence->action_cnt > POWER_MAX_ACTIONS)
         return 0;
-    for (i = 0; i < plan->action_cnt; ++i)
-        if (plan->actions[i].kind == POWER_FOOTSWITCH) {
-            if (!action_ok(g, p, s, &plan->actions[i]))
+    for (i = 0; i < sequence->action_cnt; ++i)
+        if (sequence->actions[i].kind == POWER_FOOTSWITCH) {
+            if (!supports_ufs_action(g, p, s, &sequence->actions[i]))
                 return 0;
             ++found;
         }

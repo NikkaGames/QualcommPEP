@@ -100,7 +100,7 @@ static int verify_restored(void* opaque, const char* path, uint32_t st, const po
                                             peer->handle, old);
 }
 
-/* a plan may have been damaged after sealing; bound the path and action inventory before
+/* a sequence may have been damaged after sealing; bound the path and action inventory before
  * strcmp or any provider readback. */
 
 static int bounded_path(const char* path, size_t limit)
@@ -114,21 +114,22 @@ static int bounded_path(const char* path, size_t limit)
     return 0;
 }
 
-static int verify_final(void* opaque, const char* path, uint32_t st, const power_plan_t* plan)
+static int verify_final(void* opaque, const char* path, uint32_t st,
+                        const power_sequence_t* sequence)
 {
     npa_graph_ctx_t* c = opaque;
     uint32_t i, j;
     int found = 0;
-    if (!c || !path || !plan || (st != 0u && st != 3u) || plan->target_d_state != st ||
-        !plan->action_cnt || plan->action_cnt > POWER_MAX_ACTIONS ||
-        !bounded_path(plan->dev_path, sizeof(plan->dev_path)) ||
-        !bounded_path(path, sizeof(plan->dev_path)) || strcmp(plan->dev_path, path))
+    if (!c || !path || !sequence || (st != 0u && st != 3u) || sequence->target_d_state != st ||
+        !sequence->action_cnt || sequence->action_cnt > POWER_MAX_ACTIONS ||
+        !bounded_path(sequence->dev_path, sizeof(sequence->dev_path)) ||
+        !bounded_path(path, sizeof(sequence->dev_path)) || strcmp(sequence->dev_path, path))
         return 0;
     /* final verification is per action selector; one successful vote must not validate a stale
      * selector on the same res. */
 
-    for (i = 0; i < plan->action_cnt; ++i) {
-        const power_action_t* a = &plan->actions[i];
+    for (i = 0; i < sequence->action_cnt; ++i) {
+        const power_action_t* a = &sequence->actions[i];
         const npa_slot_t *s = NULL, *peer = NULL;
         int superseded = 0;
         if (a->kind != c->kind)
@@ -136,8 +137,8 @@ static int verify_final(void* opaque, const char* path, uint32_t st, const power
         found = 1;
         if (!supports_pair(c, path, st, a, &s, &peer))
             return 0;
-        for (j = i + 1u; j < plan->action_cnt; ++j) {
-            const power_action_t* later = &plan->actions[j];
+        for (j = i + 1u; j < sequence->action_cnt; ++j) {
+            const power_action_t* later = &sequence->actions[j];
             const npa_slot_t *other = NULL, *other_peer = NULL;
             if (later->kind != c->kind)
                 continue;

@@ -40,7 +40,7 @@ static int bounded_nonempty(const char* value, size_t capacity)
     return 0;
 }
 
-static int scalar_name_ok(const char* value)
+static int valid_scalar_resource_name(const char* value)
 {
     size_t i, length;
     if (!bounded_nonempty(value, SCALAR_NAME_BYTES) || strncmp(value, "/clk/", 5) != 0)
@@ -57,7 +57,7 @@ static int scalar_name_ok(const char* value)
     return 1;
 }
 
-static int clock_key_ok(const npa_key_t* key)
+static int valid_clock_key(const npa_key_t* key)
 {
     return key && key->kind == POWER_CLOCK && (key->d_state == 0u || key->d_state == 3u) &&
            bounded_nonempty(key->dev_path, sizeof(key->dev_path)) &&
@@ -95,7 +95,8 @@ static int clock_name(const npa_key_t* key, char out[SCALAR_NAME_BYTES])
 {
     static const char prefix[] = "/clk/", suffix[] = "/enable";
     size_t len, i;
-    if (!clock_key_ok(key) || !key->clock_mode_bits || (key->clock_mode_bits & ~CLOCK_SIMPLE_MODES))
+    if (!valid_clock_key(key) || !key->clock_mode_bits ||
+        (key->clock_mode_bits & ~CLOCK_SIMPLE_MODES))
         return 0;
     for (len = 0; len < NPA_NAME_BYTES && key->res[len]; ++len) {
         unsigned char c = (unsigned char)key->res[len];
@@ -128,8 +129,8 @@ static scalar_res_t* res_for(scalar_clock_bridge_t* b, const npa_key_t* k)
 int scalar_clock_add_res(scalar_clock_bridge_t* b, scalar_res_t* r)
 {
     uint32_t i;
-    if (!b || !r || !scalar_name_ok(r->name) || r->baseline_effective > 1u || r->effective > 1u ||
-        b->res_cnt >= SCALAR_CLOCK_MAX_NODES || b->client_cnt || !physical(r))
+    if (!b || !r || !valid_scalar_resource_name(r->name) || r->baseline_effective > 1u ||
+        r->effective > 1u || b->res_cnt >= SCALAR_CLOCK_MAX_NODES || b->client_cnt || !physical(r))
         return 0;
     for (i = 0; i < b->res_cnt; ++i)
         if (b->resources[i] == r || equal_ci(b->resources[i]->name, r->name))
@@ -165,7 +166,7 @@ static int valid(void* ctx, const npa_key_t* key, void* handle)
     scalar_clock_bridge_t* b = ctx;
     scalar_clock_client_t* c = client_for(b, handle);
     scalar_res_t* r;
-    if (!c || !clock_key_ok(key) || !owns(b, key))
+    if (!c || !valid_clock_key(key) || !owns(b, key))
         return 0;
     r = res_for(b, key);
     return r && r == c->res && c->key.d_state == key->d_state &&
@@ -181,7 +182,7 @@ static void* create(void* ctx, const npa_key_t* key)
     scalar_res_t* r = res_for(b, key);
     scalar_handle_t h;
     uint32_t i;
-    if (!b || !clock_key_ok(key) || !r || !physical(r) || b->next_cookie == UINTPTR_MAX ||
+    if (!b || !valid_clock_key(key) || !r || !physical(r) || b->next_cookie == UINTPTR_MAX ||
         b->client_cnt > SCALAR_CLOCK_MAX_HANDLES)
         return NULL;
     for (i = 0; i < b->client_cnt && b->clients[i].active; ++i) {
@@ -232,7 +233,7 @@ static int pair(void* ctx, const npa_key_t* k, void* h, const npa_key_t* peer, v
     scalar_clock_client_t* c = client_for(ctx, h);
     scalar_clock_client_t* p = client_for(ctx, ph);
     clock_intent_t intent;
-    if (!decode_simple_clock_intent(a, &intent) || !clock_key_ok(k) || !clock_key_ok(peer) ||
+    if (!decode_simple_clock_intent(a, &intent) || !valid_clock_key(k) || !valid_clock_key(peer) ||
         k->d_state == peer->d_state || !equal_ci(k->res, peer->res) ||
         strcmp(k->dev_path, peer->dev_path) != 0 ||
         !(k->clock_mode_bits & (1u << a->u.clock.vote)) || !valid(ctx, k, h) ||
@@ -268,7 +269,8 @@ static int read_pair(void* ctx, const npa_key_t* k, void* h, const npa_key_t* pk
     return 1;
 }
 
-static int snap_ok(scalar_clock_client_t* c, scalar_clock_client_t* p, const power_snapshot_t* sn)
+static int snapshot_matches_clients(scalar_clock_client_t* c, scalar_clock_client_t* p,
+                                    const power_snapshot_t* sn)
 {
     return sn && sn->opaque[0] == SNAP_MAGIC &&
            sn->opaque[1] == (((uint64_t)c->scalar.generation << 32) | c->scalar.slot) &&
@@ -316,7 +318,8 @@ static int restore_pair(void* ctx, const npa_key_t* k, void* h, const npa_key_t*
                         const power_snapshot_t* sn)
 {
     scalar_clock_client_t *c = client_for(ctx, h), *p = client_for(ctx, ph);
-    if (!valid(ctx, k, h) || !valid(ctx, pk, ph) || c->res != p->res || !snap_ok(c, p, sn))
+    if (!valid(ctx, k, h) || !valid(ctx, pk, ph) || c->res != p->res ||
+        !snapshot_matches_clients(c, p, sn))
         return 0;
     /* re-enable the original winning client before withdrawing any changed vote, then verify
      * the independent effective state after restoration. */
@@ -337,7 +340,8 @@ static int verify_restored(void* ctx, const npa_key_t* k, void* h, const npa_key
 {
     scalar_clock_client_t *c = client_for(ctx, h), *p = client_for(ctx, ph);
     const scalar_client_t *cr, *pr;
-    if (!valid(ctx, k, h) || !valid(ctx, pk, ph) || c->res != p->res || !snap_ok(c, p, sn))
+    if (!valid(ctx, k, h) || !valid(ctx, pk, ph) || c->res != p->res ||
+        !snapshot_matches_clients(c, p, sn))
         return 0;
     cr = &c->res->clients[c->scalar.slot];
     pr = &p->res->clients[p->scalar.slot];

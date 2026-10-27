@@ -36,7 +36,7 @@ int ufs_catalog_compile(ufs_catalog_t* catalog, const void* bpmd, size_t bytes)
         }
     }
     for (f = 0u; f < UFS_FSTATES; ++f) {
-        power_plan_t* p = &catalog->f_states[f];
+        power_sequence_t* p = &catalog->f_states[f];
         if (power_compile_aeo_bf_state(bpmd, bytes, "\\_SB.UFS0", 0u, f, p) != POWER_OK ||
             !valid_path(p->dev_path) || p->target_d_state != f || p->action_cnt != 3u)
             goto bad;
@@ -74,10 +74,10 @@ const power_pstate_program_t* ufs_catalog_get(const ufs_catalog_t* catalog, uint
     return p;
 }
 
-const power_plan_t* ufs_catalog_f_state(const ufs_catalog_t* catalog, uint32_t comp,
-                                        uint32_t fstate)
+const power_sequence_t* ufs_catalog_f_state(const ufs_catalog_t* catalog, uint32_t comp,
+                                            uint32_t fstate)
 {
-    const power_plan_t* p;
+    const power_sequence_t* p;
     if (!catalog || !catalog->compiled || comp != 0u || fstate >= UFS_FSTATES)
         return NULL;
     p = &catalog->f_states[fstate];

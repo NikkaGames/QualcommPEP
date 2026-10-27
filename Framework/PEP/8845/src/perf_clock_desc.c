@@ -27,11 +27,11 @@ int clock_perf_discover(clock_perf_catalog_t* out, const void* blob, size_t byte
     clock = gcc_find_req_clock(out->clock);
     domain = gcc_clock_domain(clock);
     if (!clock || !domain || domain->flags || !domain->cmd_rcgr_offset || !domain->freq_cnt ||
-        domain->freq_cnt > 32u || domain->freq_first > QcPep8845GccFreqCount ||
-        domain->freq_cnt > QcPep8845GccFreqCount - domain->freq_first)
+        domain->freq_cnt > 32u || domain->freq_first > gcc_freq_cnt ||
+        domain->freq_cnt > gcc_freq_cnt - domain->freq_first)
         goto bad;
     for (i = 0u; i < domain->freq_cnt; ++i) {
-        const gcc_freq_t* f = &QcPep8845GccFreqs[domain->freq_first + i];
+        const gcc_freq_t* f = &gcc_freqs[domain->freq_first + i];
         const gcc_freq_t* selected = NULL;
         if (!f->hz || f->src_kind > GCC_SRC_GPLL4 ||
             gcc_select_freq(clock, f->hz, &selected) != GCC_OK || !selected ||

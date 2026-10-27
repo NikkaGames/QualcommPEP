@@ -30,7 +30,7 @@ NTSTATUS pmic_gpio_send(_In_ WDFDEVICE dev, _In_ ULONG ioctl,
  * helper does not independently execute a d0/d3 program. */
 
 struct power_action;
-NTSTATUS pmic_gpio_apply_plan_action(_In_ WDFDEVICE dev, _In_ const struct power_action* action);
+NTSTATUS pmic_gpio_apply_action(_In_ WDFDEVICE dev, _In_ const struct power_action* action);
 
 /* actual Windows WDF call to the uniquely selected signed PMIC GPIO provider's
  * GET_GPIO_STATE IOCTL. opaque 8-byte response only: this is NOT a full configuration

@@ -121,7 +121,7 @@ typedef struct res_snapshot_entry {
 
 #pragma pack(pop)
 
-static VOID fill_state_ok(_Out_ state_result_st_t* s)
+static VOID init_state_result(_Out_ state_result_st_t* s)
 {
     s->pep_status = 0;
     s->status = 0;
@@ -1083,7 +1083,7 @@ static const CHAR* rsc_sw_lookup_query_name(_In_ ULONG query_type)
             return "aop_mailbox_state";
         case RSCSW_LOOKUP_QUERY_ARC_POLICY_PHASE_ID:
             return "arc_policy_phase";
-        case RSCSW_LOOKUP_QUERY_CLOCK_PLAN_STAGE_ID:
+        case RSCSW_LOOKUP_QUERY_CLOCK_CONFIG_PHASE_ID:
             return "clock_plan_stage";
         case RSCSW_LOOKUP_QUERY_CMDDB_SLAVE_REGION_ID:
             return "cmddb_slave_region";
@@ -1495,7 +1495,7 @@ static const CHAR* rsc_sw_lookup_kind_name(_In_ ULONG kind)
             return "aop_mailbox_state";
         case RSCSW_LOOKUP_KIND_ARC_POLICY_PHASE:
             return "arc_policy_phase";
-        case RSCSW_LOOKUP_KIND_CLOCK_PLAN_STAGE:
+        case RSCSW_LOOKUP_KIND_CLOCK_CONFIG_PHASE:
             return "clock_plan_stage";
         case RSCSW_LOOKUP_KIND_CMDDB_SLAVE_REGION:
             return "cmddb_slave_region";
@@ -1966,7 +1966,7 @@ NTSTATUS build_pep_stats(_In_ p_dev_ctx_t ctx, _Inout_updates_bytes_(120) PVOID 
     int req = r->base.pep_status;
 
     RtlZeroMemory(buf, 120);
-    fill_state_ok(&r->base);
+    init_state_result(&r->base);
 
     r->debugger_info = registry_query_u_long(L"DebuggerTransportSelected", 0);
     r->xo_clock_logging_enable = (unsigned __int8)registry_query_u_long(
@@ -2111,7 +2111,7 @@ NTSTATUS build_dev_info(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(15376) PVOID bu
 
     pep_dev_info_t* d = (pep_dev_info_t*)buf;
     RtlZeroMemory(buf, 15376);
-    fill_state_ok(&d->base);
+    init_state_result(&d->base);
 
     d->num_of_dev = 192;
 
@@ -3148,8 +3148,9 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
                              "rscsw_graph: ver=%lu nodes=%lu links=%lu active=0x%08X "
                              "last_plan={st=0x%08X steps=%lu fail=%lu t=%llu}\n",
                              graph.version, graph.node_cnt, graph.link_cnt, graph.active_mask,
-                             graph.last_plan_status, graph.last_plan_step_cnt,
-                             graph.last_plan_failure_cnt, graph.last_plan_tick100ns);
+                             graph.last_action_sequence_status, graph.last_action_sequence_step_cnt,
+                             graph.last_action_sequence_failure_cnt,
+                             graph.last_action_sequence_tick100ns);
 
                 ULONG link_cnt = graph.link_cnt;
                 if (link_cnt > 24u)
@@ -3169,33 +3170,36 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
         }
 
         {
-            rscsw_plan_result_t plan_hist[12];
-            ULONG plan_hist_cnt = 0;
-            ULONG plan_hist_dropped = 0;
-            RtlZeroMemory(plan_hist, sizeof(plan_hist));
-            if (NT_SUCCESS(rsc_sw_get_plan_history(plan_hist, RTL_NUMBER_OF(plan_hist),
-                                                   &plan_hist_cnt, &plan_hist_dropped))) {
+            rscsw_action_sequence_result_t action_sequence_hist[12];
+            ULONG action_sequence_hist_cnt = 0;
+            ULONG action_sequence_hist_dropped = 0;
+            RtlZeroMemory(action_sequence_hist, sizeof(action_sequence_hist));
+            if (NT_SUCCESS(rsc_sw_get_action_sequence_history(
+                    action_sequence_hist, RTL_NUMBER_OF(action_sequence_hist),
+                    &action_sequence_hist_cnt, &action_sequence_hist_dropped))) {
                 append_fmt_a(text, text_cap, &off, "rscsw_plan_history: count=%lu dropped=%lu\n",
-                             plan_hist_cnt, plan_hist_dropped);
-                for (ULONG i = 0; i < plan_hist_cnt; i++) {
+                             action_sequence_hist_cnt, action_sequence_hist_dropped);
+                for (ULONG i = 0; i < action_sequence_hist_cnt; i++) {
                     append_fmt_a(
                         text, text_cap, &off,
                         "  t=%llu req=%lu exec=%lu fail=%lu st=0x%08X last_sub=%lu(%s) tag=0x%08X "
                         "v=%lu,%lu,%lu,%lu\n",
-                        plan_hist[i].tick100ns, plan_hist[i].requested_steps,
-                        plan_hist[i].executed_steps, plan_hist[i].failed_steps,
-                        (ULONG)plan_hist[i].status, plan_hist[i].last_subsystem_id,
-                        rsc_sw_get_subsystem_name_a(plan_hist[i].last_subsystem_id),
-                        plan_hist[i].last_tag, plan_hist[i].last_value0, plan_hist[i].last_value1,
-                        plan_hist[i].last_value2, plan_hist[i].last_value3);
+                        action_sequence_hist[i].tick100ns, action_sequence_hist[i].requested_steps,
+                        action_sequence_hist[i].executed_steps,
+                        action_sequence_hist[i].failed_steps, (ULONG)action_sequence_hist[i].status,
+                        action_sequence_hist[i].last_subsystem_id,
+                        rsc_sw_get_subsystem_name_a(action_sequence_hist[i].last_subsystem_id),
+                        action_sequence_hist[i].last_tag, action_sequence_hist[i].last_value0,
+                        action_sequence_hist[i].last_value1, action_sequence_hist[i].last_value2,
+                        action_sequence_hist[i].last_value3);
                 }
             }
         }
 
         {
-            rscsw_plan_preview_snapshot_t preview;
+            rscsw_action_sequence_preview_snapshot_t preview;
             RtlZeroMemory(&preview, sizeof(preview));
-            if (NT_SUCCESS(rsc_sw_get_plan_preview_snapshot(&preview))) {
+            if (NT_SUCCESS(rsc_sw_get_action_sequence_preview_snapshot(&preview))) {
                 append_fmt_a(text, text_cap, &off,
                              "rscsw_plan_preview: ver=%lu run=%lu fail=%lu last={st=0x%08X req=%lu "
                              "exp=%lu invalid=%lu dup=%lu dep=%lu reorder=%lu "
@@ -3212,13 +3216,13 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
         }
 
         {
-            rscsw_plan_preview_result_t preview_hist[12];
+            rscsw_action_sequence_preview_result_t preview_hist[12];
             ULONG preview_hist_cnt = 0;
             ULONG preview_hist_dropped = 0;
             RtlZeroMemory(preview_hist, sizeof(preview_hist));
-            if (NT_SUCCESS(
-                    rsc_sw_get_plan_preview_history(preview_hist, RTL_NUMBER_OF(preview_hist),
-                                                    &preview_hist_cnt, &preview_hist_dropped))) {
+            if (NT_SUCCESS(rsc_sw_get_action_sequence_preview_history(
+                    preview_hist, RTL_NUMBER_OF(preview_hist), &preview_hist_cnt,
+                    &preview_hist_dropped))) {
                 append_fmt_a(text, text_cap, &off,
                              "rscsw_plan_preview_history: count=%lu dropped=%lu\n",
                              preview_hist_cnt, preview_hist_dropped);
@@ -4457,7 +4461,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
                     provision.version, provision.run_cnt, provision.failure_cnt,
                     (ULONG)provision.last_status,
                     rsc_sw_provision_mode_name(provision.last_mode_id), provision.last_mode_id,
-                    provision.last_planned_cnt, provision.last_applied_cnt,
+                    provision.last_prepared_cnt, provision.last_applied_cnt,
                     provision.last_failed_cnt, provision.last_policy_vote_cnt,
                     (ULONG)provision.last_interconnect_status, (ULONG)provision.last_domain_status,
                     provision.last_avg_confidence_permille);
@@ -4514,7 +4518,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
                                  "last={sub=%lu(%s) tag=0x%08X v=%lu,%lu,%lu,%lu} ",
                                  provision_hist[i].tick100ns, (ULONG)provision_hist[i].status,
                                  rsc_sw_provision_mode_name(provision_hist[i].mode_id),
-                                 provision_hist[i].mode_id, provision_hist[i].planned_cnt,
+                                 provision_hist[i].mode_id, provision_hist[i].prepared_cnt,
                                  provision_hist[i].applied_cnt, provision_hist[i].failed_cnt,
                                  provision_hist[i].policy_vote_cnt,
                                  (ULONG)provision_hist[i].interconnect_status,
@@ -4542,7 +4546,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
                              "domain=0x%08X confidence=%lu ",
                              rail.version, rail.run_cnt, rail.failure_cnt, (ULONG)rail.last_status,
                              rsc_sw_rail_mode_name(rail.last_mode_id), rail.last_mode_id,
-                             rail.last_planned_cnt, rail.last_applied_cnt, rail.last_failed_cnt,
+                             rail.last_prepared_cnt, rail.last_applied_cnt, rail.last_failed_cnt,
                              rail.last_rail_vote_cnt, rail.last_bandwidth_vote_cnt,
                              rail.last_policy_vote_cnt, rail.last_glink_event_cnt,
                              (ULONG)rail.last_interconnect_status, (ULONG)rail.last_domain_status,
@@ -4602,11 +4606,12 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
                         "last={sub=%lu(%s) tag=0x%08X v=%lu,%lu,%lu,%lu} ",
                         rail_hist[i].tick100ns, (ULONG)rail_hist[i].status,
                         rsc_sw_rail_mode_name(rail_hist[i].mode_id), rail_hist[i].mode_id,
-                        rail_hist[i].planned_cnt, rail_hist[i].applied_cnt, rail_hist[i].failed_cnt,
-                        rail_hist[i].rail_vote_cnt, rail_hist[i].bandwidth_vote_cnt,
-                        rail_hist[i].policy_vote_cnt, rail_hist[i].glink_event_cnt,
-                        (ULONG)rail_hist[i].interconnect_status, (ULONG)rail_hist[i].domain_status,
-                        rail_hist[i].avg_confidence_permille, rail_hist[i].last_subsystem_id,
+                        rail_hist[i].prepared_cnt, rail_hist[i].applied_cnt,
+                        rail_hist[i].failed_cnt, rail_hist[i].rail_vote_cnt,
+                        rail_hist[i].bandwidth_vote_cnt, rail_hist[i].policy_vote_cnt,
+                        rail_hist[i].glink_event_cnt, (ULONG)rail_hist[i].interconnect_status,
+                        (ULONG)rail_hist[i].domain_status, rail_hist[i].avg_confidence_permille,
+                        rail_hist[i].last_subsystem_id,
                         rsc_sw_get_subsystem_name_a(rail_hist[i].last_subsystem_id),
                         rail_hist[i].last_tag, rail_hist[i].last_value0, rail_hist[i].last_value1,
                         rail_hist[i].last_value2, rail_hist[i].last_value3);
@@ -4627,7 +4632,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
                              "confidence=%lu ",
                              tcs.version, tcs.run_cnt, tcs.failure_cnt, (ULONG)tcs.last_status,
                              rsc_sw_tcs_mode_name(tcs.last_mode_id), tcs.last_mode_id,
-                             tcs.last_planned_cnt, tcs.last_programmed_cnt, tcs.last_failed_cnt,
+                             tcs.last_prepared_cnt, tcs.last_programmed_cnt, tcs.last_failed_cnt,
                              tcs.last_policy_vote_cnt, tcs.last_queued_glink_cnt,
                              (ULONG)tcs.last_interconnect_status, (ULONG)tcs.last_domain_status,
                              tcs.last_avg_confidence_permille);
@@ -4687,10 +4692,11 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
                         "tag=0x%08X v=%lu,%lu,%lu,%lu} ",
                         tcs_hist[i].tick100ns, (ULONG)tcs_hist[i].status,
                         rsc_sw_tcs_mode_name(tcs_hist[i].mode_id), tcs_hist[i].mode_id,
-                        tcs_hist[i].planned_cnt, tcs_hist[i].programmed_cnt, tcs_hist[i].failed_cnt,
-                        tcs_hist[i].policy_vote_cnt, tcs_hist[i].queued_glink_cnt,
-                        (ULONG)tcs_hist[i].interconnect_status, (ULONG)tcs_hist[i].domain_status,
-                        tcs_hist[i].avg_confidence_permille, tcs_hist[i].last_subsystem_id,
+                        tcs_hist[i].prepared_cnt, tcs_hist[i].programmed_cnt,
+                        tcs_hist[i].failed_cnt, tcs_hist[i].policy_vote_cnt,
+                        tcs_hist[i].queued_glink_cnt, (ULONG)tcs_hist[i].interconnect_status,
+                        (ULONG)tcs_hist[i].domain_status, tcs_hist[i].avg_confidence_permille,
+                        tcs_hist[i].last_subsystem_id,
                         rsc_sw_get_subsystem_name_a(tcs_hist[i].last_subsystem_id),
                         tcs_hist[i].last_tag, tcs_hist[i].last_value0, tcs_hist[i].last_value1,
                         tcs_hist[i].last_value2, tcs_hist[i].last_value3);
@@ -4713,7 +4719,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
                     "domain=0x%08X pressure=%lu confidence=%lu ",
                     thermal.version, thermal.run_cnt, thermal.failure_cnt,
                     (ULONG)thermal.last_status, rsc_sw_thermal_mode_name(thermal.last_mode_id),
-                    thermal.last_mode_id, thermal.last_planned_cnt, thermal.last_sampled_cnt,
+                    thermal.last_mode_id, thermal.last_prepared_cnt, thermal.last_sampled_cnt,
                     thermal.last_applied_cnt, thermal.last_failed_cnt, thermal.last_mitigated_cnt,
                     thermal.last_recovered_cnt, thermal.last_policy_vote_cnt,
                     thermal.last_glink_event_cnt, (ULONG)thermal.last_interconnect_status,
@@ -4779,7 +4785,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
                         "last={sub=%lu(%s) tag=0x%08X v=%lu,%lu,%lu,%lu} ",
                         thermal_hist[i].tick100ns, (ULONG)thermal_hist[i].status,
                         rsc_sw_thermal_mode_name(thermal_hist[i].mode_id), thermal_hist[i].mode_id,
-                        thermal_hist[i].planned_cnt, thermal_hist[i].sampled_cnt,
+                        thermal_hist[i].prepared_cnt, thermal_hist[i].sampled_cnt,
                         thermal_hist[i].applied_cnt, thermal_hist[i].failed_cnt,
                         thermal_hist[i].mitigated_cnt, thermal_hist[i].recovered_cnt,
                         thermal_hist[i].policy_vote_cnt, thermal_hist[i].glink_event_cnt,
@@ -4807,7 +4813,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
                              "phases={exec=0x%08X fail=0x%08X} confidence=%lu ",
                              coord.version, coord.run_cnt, coord.failure_cnt,
                              (ULONG)coord.last_status, rsc_sw_coord_mode_name(coord.last_mode_id),
-                             coord.last_mode_id, coord.last_planned_cnt, coord.last_applied_cnt,
+                             coord.last_mode_id, coord.last_prepared_cnt, coord.last_applied_cnt,
                              coord.last_failed_cnt, coord.last_executed_phase_mask,
                              coord.last_failed_phase_mask, coord.last_avg_confidence_permille);
                 append_coord_flags_a(text, text_cap, &off, coord.last_flags);
@@ -4862,7 +4868,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
                         "last={sub=%lu(%s) tag=0x%08X v=%lu,%lu,%lu,%lu} ",
                         coord_hist[i].tick100ns, (ULONG)coord_hist[i].status,
                         rsc_sw_coord_mode_name(coord_hist[i].mode_id), coord_hist[i].mode_id,
-                        coord_hist[i].planned_cnt, coord_hist[i].applied_cnt,
+                        coord_hist[i].prepared_cnt, coord_hist[i].applied_cnt,
                         coord_hist[i].failed_cnt, coord_hist[i].executed_phase_mask,
                         coord_hist[i].failed_phase_mask, (ULONG)coord_hist[i].sync_status,
                         (ULONG)coord_hist[i].validate_status, (ULONG)coord_hist[i].sequence_status,

@@ -32,7 +32,7 @@
 #include "res_graph.h"
 #include "npa_client.h"
 #include "owner_attach_policy.h"
-#include "rpmh_oem_pnp_plan.h"
+#include "pnp_resources.h"
 #include "ufs_cxmx_owner.h"
 #include "ufs_native_provision.h"
 #include "required.h"
@@ -930,7 +930,7 @@ static int win_io_pmic_gpio_cfg(void* ctx, const pm_gpio_digital_output_t* confi
     action.u.pmic_gpio.fields[4] = config->src;
     action.u.pmic_gpio.fields[5] = config->out_buf_strength;
     action.u.pmic_gpio.fields[6] = config->i_src_pulls;
-    status = pmic_gpio_apply_plan_action(io->dev, &action);
+    status = pmic_gpio_apply_action(io->dev, &action);
     if (!NT_SUCCESS(status)) {
         InterlockedExchange(&io->pmic_gpio_provider_live, 0);
         TraceEvents(TRACE_LEVEL_WARNING, TRACE_RESOURCE,
@@ -1059,11 +1059,11 @@ static LONG clock_idx(const char* name)
     LONG i, idx;
     if (!c)
         return -1;
-    idx = (LONG)(c - QcPep8845GccClocks);
+    idx = (LONG)(c - gcc_clocks);
     /* bsp aliases of one request bit share physical votes and uncertainty. Independent
      * name-indexed owners could otherwise disable each other. */
     for (i = 0; i < idx; ++i) {
-        const gcc_clock_t* p = &QcPep8845GccClocks[i];
+        const gcc_clock_t* p = &gcc_clocks[i];
         if (p->kind == c->kind && p->cbcr_offset == c->cbcr_offset &&
             p->vote_offset == c->vote_offset && p->vote_mask == c->vote_mask &&
             (p->domain_idx == c->domain_idx || c->kind == GCC_KIND_REQ))
@@ -1141,7 +1141,7 @@ static void clock_aggregate(owners_t* o, ULONG ci, int* enabled, ULONG* max_hz)
 
 static int clock_apply_aggregate(owners_t* o, ULONG ci, int previously_enabled, ULONG previous_hz)
 {
-    const gcc_clock_t* clk = &QcPep8845GccClocks[ci];
+    const gcc_clock_t* clk = &gcc_clocks[ci];
     ULONG max_hz = 0;
     int any_enabled = 0;
     gcc_commit_result_t result;
@@ -1185,7 +1185,7 @@ static int clock_apply_aggregate(owners_t* o, ULONG ci, int previously_enabled, 
 
 static int clock_apply_freq(owners_t* o, ULONG ci, ULONG hz)
 {
-    const gcc_clock_t* clk = &QcPep8845GccClocks[ci];
+    const gcc_clock_t* clk = &gcc_clocks[ci];
     gcc_commit_result_t result;
     gcc_commit_diag_t diag;
     ULONG active_hz;
@@ -1587,10 +1587,10 @@ static int win_io_bus_readback(void* ctx, const char* master, const char* slave,
 static const char* win_io_bus_probe_route(void* ctx, uint32_t key, const char** slave)
 {
     UNREFERENCED_PARAMETER(ctx);
-    if (key >= QcPep8845DsdtRouteCount || !slave)
+    if (key >= platform_route_cnt || !slave)
         return NULL;
-    *slave = QcPep8845DsdtRoutes[key].slave;
-    return QcPep8845DsdtRoutes[key].master;
+    *slave = platform_routes[key].slave;
+    return platform_routes[key].master;
 }
 
 /* rail owner. */
@@ -1997,11 +1997,12 @@ static int group_win_restored(void* c, const char* id, uint32_t state, const pow
            b->leased.verify_restored(b->leased.ctx, id, state, a, snap);
 }
 
-static int group_win_final(void* c, const char* id, uint32_t state, const power_plan_t* plan)
+static int group_win_final(void* c, const char* id, uint32_t state,
+                           const power_sequence_t* sequence)
 {
     ufs_group_bridge_t* b = (ufs_group_bridge_t*)c;
     return b && b->lease && b->leased.verify_final &&
-           b->leased.verify_final(b->leased.ctx, id, state, plan);
+           b->leased.verify_final(b->leased.ctx, id, state, sequence);
 }
 
 /* revoke the src-owned required client only after independent readback and explicit
@@ -2310,15 +2311,15 @@ int hw_backend_win_ufs_owner_ready(const res_graph_t* graph, uint64_t epoch)
 
 /* execute a pinned descriptor program as one F/P transaction. Hold the lifecycle mutex across all
  * participating required clients and rollback. */
-static int native_ufs_program_read_locked(owners_t* o, const power_plan_t* plan)
+static int native_ufs_program_read_locked(owners_t* o, const power_sequence_t* sequence)
 {
     ufs_native_selection_t selected[UFS_PSTATE_SETS];
     ufs_group_bridge_t* bridge;
     uint32_t cnt = 0u, i;
-    if (!o || !plan || !(bridge = o->ufs_group_bridge) || !bridge->graph ||
+    if (!o || !sequence || !(bridge = o->ufs_group_bridge) || !bridge->graph ||
         !bridge->graph->sealed || bridge->graph->retired || bridge->graph->quiescing ||
         !native_ufs_owns(o, "gcc_ufs_phy_gdsc", o->os_rsc_lease.owner_epoch) ||
-        !ufs_native_select_program(&bridge->graph->ufs_catalog, plan, selected, &cnt) ||
+        !ufs_native_select_program(&bridge->graph->ufs_catalog, sequence, selected, &cnt) ||
         !group_win_lock(bridge))
         return 0;
     for (i = 0; i < cnt; ++i) {
@@ -2390,7 +2391,7 @@ static int native_ufs_program_previous(owners_t* o, const ufs_native_selection_t
 /* called from the desc-backed PoFx provider: a full, contiguous set program is submitted
  * under one Windows lifecycle lock. A partial commit is never reported successful;
  * unprovable rollback quarantines the owner. */
-power_result_t hw_backend_win_ufs_program_execute(const power_plan_t* plan, uint64_t epoch,
+power_result_t hw_backend_win_ufs_program_execute(const power_sequence_t* sequence, uint64_t epoch,
                                                   const power_dev_t* d0,
                                                   const power_dev_t* current_f,
                                                   power_execution_t* trace)
@@ -2406,7 +2407,7 @@ power_result_t hw_backend_win_ufs_program_execute(const power_plan_t* plan, uint
         RtlZeroMemory(trace, sizeof(*trace));
         trace->failure_idx = UINT32_MAX;
     }
-    if (!plan || !trace || !epoch || !d0 || !d0->state_known || d0->quarantined ||
+    if (!sequence || !trace || !epoch || !d0 || !d0->state_known || d0->quarantined ||
         d0->current_d_state != 0u ||
         (current_f &&
          (!current_f->state_known || current_f->quarantined || current_f->current_d_state > 1u)) ||
@@ -2417,22 +2418,22 @@ power_result_t hw_backend_win_ufs_program_execute(const power_plan_t* plan, uint
     o = inst ? inst->io.owners : NULL;
     if (!o || !o->ufs_group_bridge || epoch != o->os_rsc_lease.owner_epoch ||
         !native_ufs_owns(o, "gcc_ufs_phy_gdsc", epoch) ||
-        !ufs_native_select_program(&o->ufs_group_bridge->graph->ufs_catalog, plan, selected,
+        !ufs_native_select_program(&o->ufs_group_bridge->graph->ufs_catalog, sequence, selected,
                                    &cnt) ||
         !cnt)
         goto done;
     /* a call without a prior component state is only initial f0, and must enumerate all three
      * desc sets. Never fabricate an f0 proof. */
-    if (!current_f && (cnt != 3u || plan->target_d_state != 0u))
+    if (!current_f && (cnt != 3u || sequence->target_d_state != 0u))
         goto done;
     {
         uint32_t j;
         int found = 0;
         res_graph_t* graph = o->ufs_group_bridge->graph;
         for (j = 0u; j < graph->dev_cnt; ++j)
-            if (!strcmp(graph->devices[j].path, plan->dev_path) && &graph->devices[j].state == d0 &&
-                graph->devices[j].prepared && graph->devices[j].state.state_known &&
-                !graph->devices[j].state.quarantined &&
+            if (!strcmp(graph->devices[j].path, sequence->dev_path) &&
+                &graph->devices[j].state == d0 && graph->devices[j].prepared &&
+                graph->devices[j].state.state_known && !graph->devices[j].state.quarantined &&
                 graph->devices[j].state.current_d_state == 0u)
                 found = 1;
         if (!found)
@@ -2459,19 +2460,19 @@ power_result_t hw_backend_win_ufs_program_execute(const power_plan_t* plan, uint
             continue;
         }
         if (selected[i].set == 0u)
-            st = hw_backend_win_ufs_fs_transition_locked(plan->dev_path, 0u, selected[i].state, d0,
-                                                         current_f);
+            st = hw_backend_win_ufs_fs_transition_locked(sequence->dev_path, 0u, selected[i].state,
+                                                         d0, current_f);
         else
-            st = hw_backend_win_ufs_scalar_transition_locked(plan->dev_path, 0u, selected[i].set,
-                                                             selected[i].state, d0, current_f);
+            st = hw_backend_win_ufs_scalar_transition_locked(
+                sequence->dev_path, 0u, selected[i].set, selected[i].state, d0, current_f);
         if (!NT_SUCCESS(st)) {
             result = POWER_ROLLBACK_FAILED;
             break;
         }
         changed_indices[changed++] = i;
     }
-    if (i == cnt && native_ufs_program_read_locked(o, plan)) {
-        trace->applied = plan->action_cnt;
+    if (i == cnt && native_ufs_program_read_locked(o, sequence)) {
+        trace->applied = sequence->action_cnt;
         result = POWER_OK;
         goto done;
     }
@@ -2484,10 +2485,11 @@ power_result_t hw_backend_win_ufs_program_execute(const power_plan_t* plan, uint
         if (old[j] == UINT32_MAX)
             break;
         if (selected[j].set == 0u)
-            st = hw_backend_win_ufs_fs_transition_locked(plan->dev_path, 0u, old[j], d0, current_f);
+            st = hw_backend_win_ufs_fs_transition_locked(sequence->dev_path, 0u, old[j], d0,
+                                                         current_f);
         else
-            st = hw_backend_win_ufs_scalar_transition_locked(plan->dev_path, 0u, selected[j].set,
-                                                             old[j], d0, current_f);
+            st = hw_backend_win_ufs_scalar_transition_locked(
+                sequence->dev_path, 0u, selected[j].set, old[j], d0, current_f);
         if (!NT_SUCCESS(st))
             break;
         ++trace->restored;
@@ -2501,18 +2503,18 @@ done:
     return result;
 }
 
-int hw_backend_win_ufs_program_verify(const power_plan_t* plan, uint64_t epoch)
+int hw_backend_win_ufs_program_verify(const power_sequence_t* sequence, uint64_t epoch)
 {
     win_backend_instance_t* inst;
     owners_t* o;
     int result = 0;
-    if (!plan || !epoch || KeGetCurrentIrql() != PASSIVE_LEVEL || !hw_backend_ready())
+    if (!sequence || !epoch || KeGetCurrentIrql() != PASSIVE_LEVEL || !hw_backend_ready())
         return 0;
     (VOID) KeWaitForSingleObject(&g_win_lifecycle_lock, Executive, KernelMode, FALSE, NULL);
     inst = g_win_backend;
     o = inst ? inst->io.owners : NULL;
     if (o && epoch == o->os_rsc_lease.owner_epoch && !o->ufs_owner_uncertain)
-        result = native_ufs_program_read_locked(o, plan);
+        result = native_ufs_program_read_locked(o, sequence);
     (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
     return result;
 }
@@ -2931,7 +2933,7 @@ static int native_ufs_graph_bind(owners_t* o, res_graph_t* graph)
     if (!native_ufs_group_open(o, graph, epoch))
         goto failed;
     phase = 7u;
-    if (ufs_native_provision(&o->ufs_native, graph, &factory, "QcPep8845_UFS0", o,
+    if (ufs_native_provision(&o->ufs_native, graph, &factory, "ufs0", o,
                              native_ufs_gdsc_physical) != FS_OK ||
         !graph_bind_native_ufs_owner(graph, epoch, o, native_ufs_owner_attest))
         goto failed;
@@ -2958,7 +2960,7 @@ failed:
 static const char* win_io_rail_probe_name(void* ctx, uint32_t key)
 {
     UNREFERENCED_PARAMETER(ctx);
-    return key < QcPep8845DsdtRailNameCount ? QcPep8845DsdtRailNames[key] : NULL;
+    return key < platform_rail_cnt ? platform_rail_names[key] : NULL;
 }
 
 /* the caller marshals the peer's strings and output array into its own kernel-safe storage
@@ -2999,8 +3001,8 @@ static NTSTATUS win_bcm_commands_locked(_In_z_ const char* master, _In_z_ const 
 {
     win_backend_instance_t* inst = g_win_backend;
     owners_t* o;
-    /* validate route and count before touching the peer buf; planner internals are not a peer
-     * ABI guarantee. */
+    /* validate route and count before touching the peer buf; sequence builder internals are not a
+     * peer ABI guarantee. */
 
     icb_command_t staged[ICB_MAX_COMMANDS];
     uint32_t n = 0;
@@ -3036,7 +3038,7 @@ static NTSTATUS win_bcm_commands_locked(_In_z_ const char* master, _In_z_ const 
 }
 
 /* peer requests may arrive on unrelated WDF queues as the FDO releases hardware. pin the
- * backend owner until the command plan is copied out. */
+ * backend owner until the command sequence is copied out. */
 
 NTSTATUS hw_backend_win_bcm_command_cnt(_In_z_ const char* master, _In_z_ const char* slave,
                                         _Out_ ULONG* cnt)
@@ -3074,32 +3076,32 @@ static VOID owners_report_coverage(owners_t* o)
 {
     ULONG i;
 
-    o->bcms_total = QcPep8845IcbBcmNodeCount;
-    o->rails_total = QcPep8845DsdtRailNameCount;
-    o->routes_total = QcPep8845DsdtRouteCount;
-    o->clocks_total = QcPep8845DsdtClockNameCount;
+    o->bcms_total = icb_bcm_node_cnt;
+    o->rails_total = platform_rail_cnt;
+    o->routes_total = platform_route_cnt;
+    o->clocks_total = platform_clock_cnt;
     o->rails_resolved = 0;
     for (i = 0; i < o->rails.rail_cnt; ++i)
         if (o->rails.rails[i].resolved)
             ++o->rails_resolved;
     o->routes_supported = 0;
-    for (i = 0; i < QcPep8845DsdtRouteCount; ++i) {
-        const char* missing = icb_route_missing_bcm(&o->bus, QcPep8845DsdtRoutes[i].master,
-                                                    QcPep8845DsdtRoutes[i].slave);
+    for (i = 0; i < platform_route_cnt; ++i) {
+        const char* missing =
+            icb_route_missing_bcm(&o->bus, platform_routes[i].master, platform_routes[i].slave);
         if (!missing) {
             ++o->routes_supported;
             continue;
         }
         TraceEvents(TRACE_LEVEL_WARNING, TRACE_RESOURCE, "icb: route=%s->%s unsupported BCM=%s",
-                    QcPep8845DsdtRoutes[i].master, QcPep8845DsdtRoutes[i].slave, missing);
+                    platform_routes[i].master, platform_routes[i].slave, missing);
     }
     o->clocks_present = 0;
-    for (i = 0; i < QcPep8845DsdtClockNameCount; ++i)
-        if (gcc_find_clock(QcPep8845DsdtClockNames[i]))
+    for (i = 0; i < platform_clock_cnt; ++i)
+        if (gcc_find_clock(platform_clock_names[i]))
             ++o->clocks_present;
         else
-            TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_CLOCK, "clock: %s absent from GCC plan",
-                        QcPep8845DsdtClockNames[i]);
+            TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_CLOCK, "clock: %s absent from GCC table",
+                        platform_clock_names[i]);
     for (i = 0; i < o->rails.rail_cnt; ++i)
         if (!o->rails.rails[i].resolved)
             TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_RESOURCE, "pmic: rail=%s resource=%s unresolved",
@@ -3135,8 +3137,8 @@ static VOID owners_probe(owners_t* o)
              * without matching hardware withdrawals. */
 
             o->bcms_usable = icb_bus_init(&o->bus, o->cmd_db, o->cmd_db_bytes);
-            (void)rail_owner_init(&o->rails, o->cmd_db, o->cmd_db_bytes, QcPep8845DsdtRailNames,
-                                  QcPep8845DsdtRailNameCount);
+            (void)rail_owner_init(&o->rails, o->cmd_db, o->cmd_db_bytes, platform_rail_names,
+                                  platform_rail_cnt);
         } else if (!o->bus.initialized || !o->rails.initialized || o->rails.cmd_db != o->cmd_db ||
                    o->rails.cmd_db_bytes != o->cmd_db_bytes) {
             /* mixed generations cannot be repaired by destructive init: retain all client votes and
@@ -3152,7 +3154,7 @@ static VOID owners_probe(owners_t* o)
                         "icb: BCM=%-5s address=%05lX unit=%lu width=%lu vcd=%lu kind=%lu%s",
                         o->bus.bcms[i].name, o->bus.bcms[i].address, o->bus.bcms[i].unit,
                         o->bus.bcms[i].width, o->bus.bcms[i].clk_id,
-                        (i < QcPep8845IcbBcmNodeCount) ? QcPep8845IcbBcmNodes[i].kind : 0u,
+                        (i < icb_bcm_node_cnt) ? icb_bcm_nodes[i].kind : 0u,
                         o->bus.bcms[i].address_known ? "" : " (ABSENT)");
         for (i = 0; i < o->rails.rail_cnt; ++i)
             if (o->rails.rails[i].resolved)
@@ -3280,7 +3282,7 @@ skip_catalog_probe:
     }
 
     /* gpll0 lock and 5. a stable clock readback (the gate's sentinel). */
-    if (mmio_read32(&o->mmio.gcc, QcPep8845GccGpll0ModeOffset, &o->gpll0_mode)) {
+    if (mmio_read32(&o->mmio.gcc, gcc_gpll0_mode_offset, &o->gpll0_mode)) {
         if ((o->gpll0_mode & PLL_MODE_LOCK_DET) && (o->gpll0_mode & PLL_MODE_OUTCTRL))
             o->probe |= PROBE_GPLL0;
         TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_CLOCK, "clock: GCC base=%llX GPLL0=%08lX%s",
@@ -3453,10 +3455,10 @@ static owners_t* owners_create(VOID)
 {
     owners_t* o;
     NTSTATUS st;
-    if (QcPep8845GccClockCount > CLOCK_TABLE_MAX || QcPep8845IcbBcmNodeCount > ICB_MAX_BCMS) {
+    if (gcc_clock_cnt > CLOCK_TABLE_MAX || icb_bcm_node_cnt > ICB_MAX_BCMS) {
         TraceEvents(TRACE_LEVEL_WARNING, TRACE_RESOURCE,
-                    "resources: table capacity exceeded clocks=%lu BCMs=%lu",
-                    QcPep8845GccClockCount, QcPep8845IcbBcmNodeCount);
+                    "resources: table capacity exceeded clocks=%lu BCMs=%lu", gcc_clock_cnt,
+                    icb_bcm_node_cnt);
         return NULL;
     }
     o = (owners_t*)ExAllocatePool2(POOL_FLAG_NON_PAGED, sizeof(*o), POOL_TAG);
@@ -3959,7 +3961,7 @@ NTSTATUS hw_backend_win_prepare_granted_amcs(WDFDEVICE dev, ULONGLONG pnp_genera
     win_backend_instance_t* inst;
     owners_t* o;
     p_dev_ctx_t ctx;
-    rpmh_oem_pnp_plan_t plan = {0};
+    rpmh_pnp_resources_t sequence = {0};
     NTSTATUS result = STATUS_DEVICE_NOT_READY;
     ULONG slot;
     UCHAR cleanup_debt = 0u;
@@ -3978,8 +3980,8 @@ NTSTATUS hw_backend_win_prepare_granted_amcs(WDFDEVICE dev, ULONGLONG pnp_genera
         g_quarantined_backend_instance || inst->core.owner_epoch != owner_epoch ||
         ctx->rpmh_observed_pnp_generation != pnp_generation ||
         ctx->rpmh_identity_pnp_generation != pnp_generation || !ctx->rpmh_observed_wdf_interrupt ||
-        !rpmh_oem_pnp_observation_read(&ctx->rpmh_oem_pnp_observation, pnp_generation, &plan) ||
-        !rpmh_oem_exclusive_irq37_plan(&plan, pnp_generation) || !o->d0_rsc.base ||
+        !rpmh_oem_pnp_observation_read(&ctx->rpmh_oem_pnp_observation, pnp_generation, &sequence) ||
+        !rpmh_has_exclusive_irq37_resource(&sequence, pnp_generation) || !o->d0_rsc.base ||
         o->d0_rsc.pnp_generation != pnp_generation || !o->d0_gic.base ||
         o->d0_gic.pnp_generation != pnp_generation || o->mmio.rsc.base != o->d0_rsc.base ||
         !o->gic_irq37_owner.active || o->gic_irq37_owner.faulted ||
@@ -4277,7 +4279,7 @@ NTSTATUS hw_backend_win_d0_acquire_firmware_configured_rpmh(_In_ WDFDEVICE dev,
     win_backend_instance_t* inst;
     owners_t* o;
     p_dev_ctx_t ctx;
-    rpmh_oem_pnp_plan_t plan = {0};
+    rpmh_pnp_resources_t sequence = {0};
     oem_irq_mask_ops_t ops = {0};
     NTSTATUS result = STATUS_NOT_SUPPORTED;
     uint64_t epoch = 0;
@@ -4303,8 +4305,8 @@ NTSTATUS hw_backend_win_d0_acquire_firmware_configured_rpmh(_In_ WDFDEVICE dev,
         InterlockedCompareExchange(&o->os_rsc_lease.active, 0, 0) != 0 ||
         ctx->rpmh_identity_pnp_generation != pnp_generation ||
         ctx->rpmh_observed_pnp_generation != pnp_generation || !ctx->rpmh_observed_wdf_interrupt ||
-        !rpmh_oem_pnp_observation_read(&ctx->rpmh_oem_pnp_observation, pnp_generation, &plan) ||
-        !rpmh_oem_exclusive_irq37_plan(&plan, pnp_generation) || !o->d0_rsc.base ||
+        !rpmh_oem_pnp_observation_read(&ctx->rpmh_oem_pnp_observation, pnp_generation, &sequence) ||
+        !rpmh_has_exclusive_irq37_resource(&sequence, pnp_generation) || !o->d0_rsc.base ||
         o->d0_rsc.pnp_generation != pnp_generation || !o->d0_gic.base ||
         o->d0_gic.pnp_generation != pnp_generation || o->d0_rsc.bytes != RSC_DRV2_BYTES ||
         o->mmio.rsc.base != o->d0_rsc.base || o->mmio.rsc.bytes != RSC_DRV2_BYTES ||
@@ -4487,7 +4489,7 @@ hw_backend_win_prepare_gic_irq37_mask(WDFDEVICE dev, ULONGLONG pnp_generation,
     win_backend_instance_t* inst;
     owners_t* o;
     p_dev_ctx_t ctx;
-    rpmh_oem_pnp_plan_t plan = {0};
+    rpmh_pnp_resources_t sequence = {0};
     NTSTATUS status = STATUS_DEVICE_NOT_READY;
     if (!dev || !pnp_generation || !owner_epoch || !wdf_interrupt || !exclusive_owner || !ops ||
         KeGetCurrentIrql() != PASSIVE_LEVEL)
@@ -4504,8 +4506,8 @@ hw_backend_win_prepare_gic_irq37_mask(WDFDEVICE dev, ULONGLONG pnp_generation,
         ctx->rpmh_observed_wdf_interrupt == (WDFINTERRUPT)wdf_interrupt &&
         ctx->rpmh_observed_pnp_generation == pnp_generation &&
         ctx->rpmh_identity_pnp_generation == pnp_generation &&
-        rpmh_oem_pnp_observation_read(&ctx->rpmh_oem_pnp_observation, pnp_generation, &plan) &&
-        rpmh_oem_exclusive_irq37_plan(&plan, pnp_generation) &&
+        rpmh_oem_pnp_observation_read(&ctx->rpmh_oem_pnp_observation, pnp_generation, &sequence) &&
+        rpmh_has_exclusive_irq37_resource(&sequence, pnp_generation) &&
         inst->core.owner_epoch == owner_epoch && o->d0_rsc.base &&
         o->d0_rsc.pnp_generation == pnp_generation && o->d0_gic.base &&
         o->d0_gic.pnp_generation == pnp_generation && !o->gic_irq37_owner.active &&
@@ -4631,7 +4633,7 @@ NTSTATUS hw_backend_win_d0_revalidate(_In_ WDFDEVICE dev)
     owners_t* o;
     p_dev_ctx_t ctx;
     ULONGLONG generation;
-    rpmh_oem_pnp_plan_t exclusive_plan = {0};
+    rpmh_pnp_resources_t exclusive_resources = {0};
     NTSTATUS result = STATUS_DEVICE_NOT_READY;
     int reg;
     int d0_admission_closed = 0;
@@ -4670,8 +4672,8 @@ NTSTATUS hw_backend_win_d0_revalidate(_In_ WDFDEVICE dev)
 
     if (!ctx || ctx->is_control_dev || !inst->core.registered || !o || !generation ||
         !rpmh_oem_pnp_observation_read(&ctx->rpmh_oem_pnp_observation, generation,
-                                       &exclusive_plan) ||
-        !rpmh_oem_exclusive_irq37_plan(&exclusive_plan, generation) ||
+                                       &exclusive_resources) ||
+        !rpmh_has_exclusive_irq37_resource(&exclusive_resources, generation) ||
         generation != ctx->rpmh_observed_pnp_generation ||
         ctx->rpmh_oem_pnp_observation.generation != generation ||
         !ctx->rpmh_observed_wdf_interrupt ||
@@ -5412,15 +5414,15 @@ static void graph_release(void* ctx)
 static NTSTATUS hw_backend_audit_scopes_read_only(_In_ WDFDEVICE dev)
 {
     res_graph_t* graph = NULL;
-    power_plan_t* plan = NULL;
+    power_sequence_t* sequence = NULL;
     WDFWAITLOCK lock = NULL;
     NTSTATUS status;
     ULONG i;
     if (!dev || KeGetCurrentIrql() != PASSIVE_LEVEL)
         return STATUS_INVALID_DEVICE_STATE;
     graph = (res_graph_t*)ExAllocatePool2(POOL_FLAG_NON_PAGED, sizeof(*graph), POOL_TAG);
-    plan = (power_plan_t*)ExAllocatePool2(POOL_FLAG_NON_PAGED, sizeof(*plan), POOL_TAG);
-    if (!graph || !plan) {
+    sequence = (power_sequence_t*)ExAllocatePool2(POOL_FLAG_NON_PAGED, sizeof(*sequence), POOL_TAG);
+    if (!graph || !sequence) {
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto cleanup;
     }
@@ -5431,7 +5433,7 @@ static NTSTATUS hw_backend_audit_scopes_read_only(_In_ WDFDEVICE dev)
      * claimed. */
 
     graph_init(graph, lock, graph_acquire, graph_release);
-    status = acpi_populate_molokai_res_graph(dev, graph, plan);
+    status = acpi_populate_molokai_res_graph(dev, graph, sequence);
     if (NT_SUCCESS(status)) {
         TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_ACPI, "acpi: inventory scopes=%lu ownership=0",
                     graph->dev_cnt);
@@ -5450,8 +5452,8 @@ cleanup:
         (VOID) graph_retire(graph);
     if (lock)
         WdfObjectDelete(lock);
-    if (plan)
-        ExFreePool(plan);
+    if (sequence)
+        ExFreePool(sequence);
     if (graph) {
         graph_free_sources(graph);
         ExFreePool(graph);
@@ -5478,7 +5480,7 @@ static NTSTATUS hw_backend_win_try_publish_locked(_In_ WDFDEVICE dev)
 {
     res_graph_t* graph = NULL;
     npa_registry_t* npa = NULL;
-    power_plan_t* plan = NULL;
+    power_sequence_t* sequence = NULL;
     WDFWAITLOCK lock = NULL;
     npa_callbacks_t callbacks;
     NTSTATUS status;
@@ -5551,8 +5553,8 @@ static NTSTATUS hw_backend_win_try_publish_locked(_In_ WDFDEVICE dev)
     }
     graph = (res_graph_t*)ExAllocatePool2(POOL_FLAG_NON_PAGED, sizeof(*graph), POOL_TAG);
     npa = (npa_registry_t*)ExAllocatePool2(POOL_FLAG_NON_PAGED, sizeof(*npa), POOL_TAG);
-    plan = (power_plan_t*)ExAllocatePool2(POOL_FLAG_NON_PAGED, sizeof(*plan), POOL_TAG);
-    if (!graph || !npa || !plan) {
+    sequence = (power_sequence_t*)ExAllocatePool2(POOL_FLAG_NON_PAGED, sizeof(*sequence), POOL_TAG);
+    if (!graph || !npa || !sequence) {
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto fail;
     }
@@ -5570,7 +5572,7 @@ static NTSTATUS hw_backend_win_try_publish_locked(_In_ WDFDEVICE dev)
         status = STATUS_DEVICE_NOT_READY;
         goto fail;
     }
-    status = acpi_populate_molokai_res_graph(dev, graph, plan);
+    status = acpi_populate_molokai_res_graph(dev, graph, sequence);
     if (!NT_SUCCESS(status)) {
         TraceEvents(TRACE_LEVEL_WARNING, TRACE_ACPI, "acpi: graph build failed status=%08X",
                     status);
@@ -5619,7 +5621,7 @@ static NTSTATUS hw_backend_win_try_publish_locked(_In_ WDFDEVICE dev)
     g_published_graph = graph;
     g_published_npa = npa;
     g_published_graph_lock = lock;
-    ExFreePool(plan);
+    ExFreePool(sequence);
     if (graph->ufs_catalog.compiled) {
         /* a compiled AEOB table is SOURCE evidence, not a DPM ownership grant or execution result.
          * UFS still needs native PoFx V2 and a crashdump-safe set-0/1/2 physical provider. */
@@ -5660,8 +5662,8 @@ fail: {
         (VOID) graph_retire(graph);
     if (lock && !fs_retained && !npa_retained)
         WdfObjectDelete(lock);
-    if (plan)
-        ExFreePool(plan);
+    if (sequence)
+        ExFreePool(sequence);
     if (npa)
         ExFreePool(npa);
     if (graph && !fs_retained && !npa_retained) {

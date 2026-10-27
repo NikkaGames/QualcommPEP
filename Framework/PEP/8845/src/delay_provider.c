@@ -46,13 +46,15 @@ static int restore(void* ctx, const char* path, uint32_t state, const power_acti
     return 0;
 }
 
-static int final(void* ctx, const char* path, uint32_t state, const power_plan_t* plan)
+static int verify_state(void* ctx, const char* path, uint32_t state,
+                        const power_sequence_t* sequence)
 {
     uint32_t i;
-    if (!plan || plan->target_d_state != state)
+    if (!sequence || sequence->target_d_state != state)
         return 0;
-    for (i = 0; i < plan->action_cnt; ++i)
-        if (plan->actions[i].kind == POWER_DELAY && !supports(ctx, path, state, &plan->actions[i]))
+    for (i = 0; i < sequence->action_cnt; ++i)
+        if (sequence->actions[i].kind == POWER_DELAY &&
+            !supports(ctx, path, state, &sequence->actions[i]))
             return 0;
     return 1;
 }
@@ -69,6 +71,6 @@ int graph_bind_delay(res_graph_t* graph, delay_provider_t* delay)
     p.verify = verify;
     p.restore = restore;
     p.verify_restored = restore;
-    p.verify_final = final;
+    p.verify_final = verify_state;
     return graph_bind(graph, POWER_DELAY, &p);
 }

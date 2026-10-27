@@ -130,8 +130,8 @@ typedef struct wmi_exsoc {
 #define WMI_RSCSW_PROFILE_CNT 16u
 #define WMI_RSCSW_PROFILE_HISTORY_CNT 16u
 #define WMI_RSCSW_GRAPH_LINK_CNT 32u
-#define WMI_RSCSW_PLAN_HISTORY_CNT 16u
-#define WMI_RSCSW_PLAN_PREVIEW_HISTORY_CNT 16u
+#define WMI_RSCSW_ACTION_SEQUENCE_HISTORY_CNT 16u
+#define WMI_RSCSW_ACTION_SEQUENCE_PREVIEW_HISTORY_CNT 16u
 #define WMI_RSCSW_CHECKPOINT_CNT 16u
 #define WMI_RSCSW_CHECKPOINT_HISTORY_CNT 16u
 #define WMI_RSCSW_COVERAGE_HISTORY_CNT 16u
@@ -278,7 +278,7 @@ typedef struct wmi_rscsw_graph_link {
     ULONG flags;
 } wmi_rscsw_graph_link_t;
 
-typedef struct wmi_rscsw_plan_history {
+typedef struct wmi_rscsw_action_sequence_history {
     ULONG requested_steps;
     ULONG executed_steps;
     ULONG failed_steps;
@@ -290,9 +290,9 @@ typedef struct wmi_rscsw_plan_history {
     ULONG last_value2;
     ULONG last_value3;
     ULONGLONG tick100ns;
-} wmi_rscsw_plan_history_t;
+} wmi_rscsw_action_sequence_history_t;
 
-typedef struct wmi_rscsw_plan_preview_history {
+typedef struct wmi_rscsw_action_sequence_preview_history {
     ULONG requested_steps;
     ULONG flags;
     ULONG expanded_steps;
@@ -310,7 +310,7 @@ typedef struct wmi_rscsw_plan_preview_history {
     ULONG last_value2;
     ULONG last_value3;
     ULONGLONG tick100ns;
-} wmi_rscsw_plan_preview_history_t;
+} wmi_rscsw_action_sequence_preview_history_t;
 
 typedef struct wmi_rscsw_checkpoint {
     ULONG slot_id;
@@ -771,30 +771,32 @@ typedef struct wmi_rscsw {
     ULONG graph_node_cnt;
     ULONG graph_link_cnt;
     ULONG graph_active_mask;
-    LONG last_plan_status;
-    ULONG last_plan_step_cnt;
-    ULONG last_plan_failure_cnt;
-    ULONGLONG last_plan_tick100ns;
+    LONG last_action_sequence_status;
+    ULONG last_action_sequence_step_cnt;
+    ULONG last_action_sequence_failure_cnt;
+    ULONGLONG last_action_sequence_tick100ns;
     ULONG graph_entry_cnt;
     wmi_rscsw_graph_link_t graph[WMI_RSCSW_GRAPH_LINK_CNT];
-    ULONG plan_history_entry_cnt;
-    wmi_rscsw_plan_history_t plan_history[WMI_RSCSW_PLAN_HISTORY_CNT];
-    ULONG plan_preview_run_cnt;
-    ULONG plan_preview_failure_cnt;
-    LONG plan_preview_last_status;
-    ULONG plan_preview_last_requested_steps;
-    ULONG plan_preview_last_expanded_steps;
-    ULONG plan_preview_last_invalid_steps;
-    ULONG plan_preview_last_duplicate_steps;
-    ULONG plan_preview_last_dependency_edges;
-    ULONG plan_preview_last_reordered_steps;
-    ULONG plan_preview_last_active_mask_before;
-    ULONG plan_preview_last_active_mask_after;
-    ULONG plan_preview_last_flags;
-    ULONGLONG plan_preview_last_tick100ns;
-    ULONG plan_preview_history_entry_cnt;
-    ULONG plan_preview_history_dropped;
-    wmi_rscsw_plan_preview_history_t plan_preview_history[WMI_RSCSW_PLAN_PREVIEW_HISTORY_CNT];
+    ULONG action_sequence_history_entry_cnt;
+    wmi_rscsw_action_sequence_history_t
+        action_sequence_history[WMI_RSCSW_ACTION_SEQUENCE_HISTORY_CNT];
+    ULONG action_sequence_preview_run_cnt;
+    ULONG action_sequence_preview_failure_cnt;
+    LONG action_sequence_preview_last_status;
+    ULONG action_sequence_preview_last_requested_steps;
+    ULONG action_sequence_preview_last_expanded_steps;
+    ULONG action_sequence_preview_last_invalid_steps;
+    ULONG action_sequence_preview_last_duplicate_steps;
+    ULONG action_sequence_preview_last_dependency_edges;
+    ULONG action_sequence_preview_last_reordered_steps;
+    ULONG action_sequence_preview_last_active_mask_before;
+    ULONG action_sequence_preview_last_active_mask_after;
+    ULONG action_sequence_preview_last_flags;
+    ULONGLONG action_sequence_preview_last_tick100ns;
+    ULONG action_sequence_preview_history_entry_cnt;
+    ULONG action_sequence_preview_history_dropped;
+    wmi_rscsw_action_sequence_preview_history_t
+        action_sequence_preview_history[WMI_RSCSW_ACTION_SEQUENCE_PREVIEW_HISTORY_CNT];
     ULONG checkpoint_slot_cnt;
     ULONG checkpoint_valid_cnt;
     ULONG checkpoint_capture_cnt;
@@ -2149,10 +2151,10 @@ static NTSTATUS wmi_query_instance(_In_ WDFWMIINSTANCE wmi_instance, _In_ ULONG 
                 p->rsc_sw.graph_node_cnt = graph.node_cnt;
                 p->rsc_sw.graph_link_cnt = graph.link_cnt;
                 p->rsc_sw.graph_active_mask = graph.active_mask;
-                p->rsc_sw.last_plan_status = (LONG)graph.last_plan_status;
-                p->rsc_sw.last_plan_step_cnt = graph.last_plan_step_cnt;
-                p->rsc_sw.last_plan_failure_cnt = graph.last_plan_failure_cnt;
-                p->rsc_sw.last_plan_tick100ns = graph.last_plan_tick100ns;
+                p->rsc_sw.last_action_sequence_status = (LONG)graph.last_action_sequence_status;
+                p->rsc_sw.last_action_sequence_step_cnt = graph.last_action_sequence_step_cnt;
+                p->rsc_sw.last_action_sequence_failure_cnt = graph.last_action_sequence_failure_cnt;
+                p->rsc_sw.last_action_sequence_tick100ns = graph.last_action_sequence_tick100ns;
 
                 ULONG graph_cnt = graph.link_cnt;
                 if (graph_cnt > RTL_NUMBER_OF(p->rsc_sw.graph))
@@ -2169,90 +2171,116 @@ static NTSTATUS wmi_query_instance(_In_ WDFWMIINSTANCE wmi_instance, _In_ ULONG 
         }
 
         {
-            rscsw_plan_result_t plan_history[WMI_RSCSW_PLAN_HISTORY_CNT];
-            ULONG plan_history_cnt = 0;
-            ULONG plan_history_dropped = 0;
-            RtlZeroMemory(plan_history, sizeof(plan_history));
-            if (NT_SUCCESS(rsc_sw_get_plan_history(plan_history, RTL_NUMBER_OF(plan_history),
-                                                   &plan_history_cnt, &plan_history_dropped))) {
-                UNREFERENCED_PARAMETER(plan_history_dropped);
-                p->rsc_sw.plan_history_entry_cnt = plan_history_cnt;
-                for (ULONG i = 0; i < plan_history_cnt && i < RTL_NUMBER_OF(p->rsc_sw.plan_history);
+            rscsw_action_sequence_result_t
+                action_sequence_history[WMI_RSCSW_ACTION_SEQUENCE_HISTORY_CNT];
+            ULONG action_sequence_history_cnt = 0;
+            ULONG action_sequence_history_dropped = 0;
+            RtlZeroMemory(action_sequence_history, sizeof(action_sequence_history));
+            if (NT_SUCCESS(rsc_sw_get_action_sequence_history(
+                    action_sequence_history, RTL_NUMBER_OF(action_sequence_history),
+                    &action_sequence_history_cnt, &action_sequence_history_dropped))) {
+                UNREFERENCED_PARAMETER(action_sequence_history_dropped);
+                p->rsc_sw.action_sequence_history_entry_cnt = action_sequence_history_cnt;
+                for (ULONG i = 0; i < action_sequence_history_cnt &&
+                                  i < RTL_NUMBER_OF(p->rsc_sw.action_sequence_history);
                      i++) {
-                    p->rsc_sw.plan_history[i].requested_steps = plan_history[i].requested_steps;
-                    p->rsc_sw.plan_history[i].executed_steps = plan_history[i].executed_steps;
-                    p->rsc_sw.plan_history[i].failed_steps = plan_history[i].failed_steps;
-                    p->rsc_sw.plan_history[i].status = plan_history[i].status;
-                    p->rsc_sw.plan_history[i].last_subsystem_id = plan_history[i].last_subsystem_id;
-                    p->rsc_sw.plan_history[i].last_tag = plan_history[i].last_tag;
-                    p->rsc_sw.plan_history[i].last_value0 = plan_history[i].last_value0;
-                    p->rsc_sw.plan_history[i].last_value1 = plan_history[i].last_value1;
-                    p->rsc_sw.plan_history[i].last_value2 = plan_history[i].last_value2;
-                    p->rsc_sw.plan_history[i].last_value3 = plan_history[i].last_value3;
-                    p->rsc_sw.plan_history[i].tick100ns = plan_history[i].tick100ns;
+                    p->rsc_sw.action_sequence_history[i].requested_steps =
+                        action_sequence_history[i].requested_steps;
+                    p->rsc_sw.action_sequence_history[i].executed_steps =
+                        action_sequence_history[i].executed_steps;
+                    p->rsc_sw.action_sequence_history[i].failed_steps =
+                        action_sequence_history[i].failed_steps;
+                    p->rsc_sw.action_sequence_history[i].status = action_sequence_history[i].status;
+                    p->rsc_sw.action_sequence_history[i].last_subsystem_id =
+                        action_sequence_history[i].last_subsystem_id;
+                    p->rsc_sw.action_sequence_history[i].last_tag =
+                        action_sequence_history[i].last_tag;
+                    p->rsc_sw.action_sequence_history[i].last_value0 =
+                        action_sequence_history[i].last_value0;
+                    p->rsc_sw.action_sequence_history[i].last_value1 =
+                        action_sequence_history[i].last_value1;
+                    p->rsc_sw.action_sequence_history[i].last_value2 =
+                        action_sequence_history[i].last_value2;
+                    p->rsc_sw.action_sequence_history[i].last_value3 =
+                        action_sequence_history[i].last_value3;
+                    p->rsc_sw.action_sequence_history[i].tick100ns =
+                        action_sequence_history[i].tick100ns;
                 }
             }
         }
 
         {
-            rscsw_plan_preview_snapshot_t preview;
+            rscsw_action_sequence_preview_snapshot_t preview;
             RtlZeroMemory(&preview, sizeof(preview));
-            if (NT_SUCCESS(rsc_sw_get_plan_preview_snapshot(&preview))) {
-                p->rsc_sw.plan_preview_run_cnt = preview.run_cnt;
-                p->rsc_sw.plan_preview_failure_cnt = preview.failure_cnt;
-                p->rsc_sw.plan_preview_last_status = preview.last_status;
-                p->rsc_sw.plan_preview_last_requested_steps = preview.last_requested_steps;
-                p->rsc_sw.plan_preview_last_expanded_steps = preview.last_expanded_steps;
-                p->rsc_sw.plan_preview_last_invalid_steps = preview.last_invalid_steps;
-                p->rsc_sw.plan_preview_last_duplicate_steps = preview.last_duplicate_steps;
-                p->rsc_sw.plan_preview_last_dependency_edges = preview.last_dependency_edges;
-                p->rsc_sw.plan_preview_last_reordered_steps = preview.last_reordered_steps;
-                p->rsc_sw.plan_preview_last_active_mask_before = preview.last_active_mask_before;
-                p->rsc_sw.plan_preview_last_active_mask_after = preview.last_active_mask_after;
-                p->rsc_sw.plan_preview_last_flags = preview.last_flags;
-                p->rsc_sw.plan_preview_last_tick100ns = preview.last_tick100ns;
+            if (NT_SUCCESS(rsc_sw_get_action_sequence_preview_snapshot(&preview))) {
+                p->rsc_sw.action_sequence_preview_run_cnt = preview.run_cnt;
+                p->rsc_sw.action_sequence_preview_failure_cnt = preview.failure_cnt;
+                p->rsc_sw.action_sequence_preview_last_status = preview.last_status;
+                p->rsc_sw.action_sequence_preview_last_requested_steps =
+                    preview.last_requested_steps;
+                p->rsc_sw.action_sequence_preview_last_expanded_steps = preview.last_expanded_steps;
+                p->rsc_sw.action_sequence_preview_last_invalid_steps = preview.last_invalid_steps;
+                p->rsc_sw.action_sequence_preview_last_duplicate_steps =
+                    preview.last_duplicate_steps;
+                p->rsc_sw.action_sequence_preview_last_dependency_edges =
+                    preview.last_dependency_edges;
+                p->rsc_sw.action_sequence_preview_last_reordered_steps =
+                    preview.last_reordered_steps;
+                p->rsc_sw.action_sequence_preview_last_active_mask_before =
+                    preview.last_active_mask_before;
+                p->rsc_sw.action_sequence_preview_last_active_mask_after =
+                    preview.last_active_mask_after;
+                p->rsc_sw.action_sequence_preview_last_flags = preview.last_flags;
+                p->rsc_sw.action_sequence_preview_last_tick100ns = preview.last_tick100ns;
             }
         }
 
         {
-            rscsw_plan_preview_result_t preview_history[WMI_RSCSW_PLAN_PREVIEW_HISTORY_CNT];
+            rscsw_action_sequence_preview_result_t
+                preview_history[WMI_RSCSW_ACTION_SEQUENCE_PREVIEW_HISTORY_CNT];
             ULONG preview_history_cnt = 0;
             ULONG preview_history_dropped = 0;
             RtlZeroMemory(preview_history, sizeof(preview_history));
-            if (NT_SUCCESS(rsc_sw_get_plan_preview_history(
+            if (NT_SUCCESS(rsc_sw_get_action_sequence_preview_history(
                     preview_history, RTL_NUMBER_OF(preview_history), &preview_history_cnt,
                     &preview_history_dropped))) {
-                p->rsc_sw.plan_preview_history_entry_cnt = preview_history_cnt;
-                p->rsc_sw.plan_preview_history_dropped = preview_history_dropped;
-                for (ULONG i = 0;
-                     i < preview_history_cnt && i < RTL_NUMBER_OF(p->rsc_sw.plan_preview_history);
+                p->rsc_sw.action_sequence_preview_history_entry_cnt = preview_history_cnt;
+                p->rsc_sw.action_sequence_preview_history_dropped = preview_history_dropped;
+                for (ULONG i = 0; i < preview_history_cnt &&
+                                  i < RTL_NUMBER_OF(p->rsc_sw.action_sequence_preview_history);
                      i++) {
-                    p->rsc_sw.plan_preview_history[i].requested_steps =
+                    p->rsc_sw.action_sequence_preview_history[i].requested_steps =
                         preview_history[i].requested_steps;
-                    p->rsc_sw.plan_preview_history[i].flags = preview_history[i].flags;
-                    p->rsc_sw.plan_preview_history[i].expanded_steps =
+                    p->rsc_sw.action_sequence_preview_history[i].flags = preview_history[i].flags;
+                    p->rsc_sw.action_sequence_preview_history[i].expanded_steps =
                         preview_history[i].expanded_steps;
-                    p->rsc_sw.plan_preview_history[i].invalid_steps =
+                    p->rsc_sw.action_sequence_preview_history[i].invalid_steps =
                         preview_history[i].invalid_steps;
-                    p->rsc_sw.plan_preview_history[i].duplicate_steps =
+                    p->rsc_sw.action_sequence_preview_history[i].duplicate_steps =
                         preview_history[i].duplicate_steps;
-                    p->rsc_sw.plan_preview_history[i].dependency_edges =
+                    p->rsc_sw.action_sequence_preview_history[i].dependency_edges =
                         preview_history[i].dependency_edges;
-                    p->rsc_sw.plan_preview_history[i].reordered_steps =
+                    p->rsc_sw.action_sequence_preview_history[i].reordered_steps =
                         preview_history[i].reordered_steps;
-                    p->rsc_sw.plan_preview_history[i].active_mask_before =
+                    p->rsc_sw.action_sequence_preview_history[i].active_mask_before =
                         preview_history[i].active_mask_before;
-                    p->rsc_sw.plan_preview_history[i].active_mask_after =
+                    p->rsc_sw.action_sequence_preview_history[i].active_mask_after =
                         preview_history[i].active_mask_after;
-                    p->rsc_sw.plan_preview_history[i].status = preview_history[i].status;
-                    p->rsc_sw.plan_preview_history[i].last_subsystem_id =
+                    p->rsc_sw.action_sequence_preview_history[i].status = preview_history[i].status;
+                    p->rsc_sw.action_sequence_preview_history[i].last_subsystem_id =
                         preview_history[i].last_subsystem_id;
-                    p->rsc_sw.plan_preview_history[i].last_tag = preview_history[i].last_tag;
-                    p->rsc_sw.plan_preview_history[i].last_value0 = preview_history[i].last_value0;
-                    p->rsc_sw.plan_preview_history[i].last_value1 = preview_history[i].last_value1;
-                    p->rsc_sw.plan_preview_history[i].last_value2 = preview_history[i].last_value2;
-                    p->rsc_sw.plan_preview_history[i].last_value3 = preview_history[i].last_value3;
-                    p->rsc_sw.plan_preview_history[i].tick100ns = preview_history[i].tick100ns;
+                    p->rsc_sw.action_sequence_preview_history[i].last_tag =
+                        preview_history[i].last_tag;
+                    p->rsc_sw.action_sequence_preview_history[i].last_value0 =
+                        preview_history[i].last_value0;
+                    p->rsc_sw.action_sequence_preview_history[i].last_value1 =
+                        preview_history[i].last_value1;
+                    p->rsc_sw.action_sequence_preview_history[i].last_value2 =
+                        preview_history[i].last_value2;
+                    p->rsc_sw.action_sequence_preview_history[i].last_value3 =
+                        preview_history[i].last_value3;
+                    p->rsc_sw.action_sequence_preview_history[i].tick100ns =
+                        preview_history[i].tick100ns;
                 }
             }
         }

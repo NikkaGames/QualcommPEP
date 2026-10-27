@@ -2,10 +2,10 @@
 #include "aeob_idx.h"
 #include <string.h>
 
-/* the compiled plans are retained in nonpaged memory after the runtime provider
+/* the compiled sequences are retained in nonpaged memory after the runtime provider
  * submission. */
 
-static uint64_t plan_fingerprint(const power_plan_t* a, const power_plan_t* b)
+static uint64_t sequence_fingerprint(const power_sequence_t* a, const power_sequence_t* b)
 {
     const unsigned char* p;
     size_t i;
@@ -54,7 +54,7 @@ int peer_comp_compile(peer_comp_t* scope, const void* data, size_t bytes, const 
         !scope->f0.action_cnt || !scope->f1.action_cnt)
         goto bad;
     memcpy(scope->path, idx.path, sizeof(scope->path));
-    scope->compiled_plan_fingerprint = plan_fingerprint(&scope->f0, &scope->f1);
+    scope->compiled_sequence_fingerprint = sequence_fingerprint(&scope->f0, &scope->f1);
     scope->valid = 1u;
     return 1;
 bad:
@@ -66,21 +66,21 @@ power_result_t peer_comp_transition(peer_comp_t* scope, uint32_t fs, const power
                                     power_execution_t* trace, power_scratch_t* scratch)
 {
     power_result_t r;
-    const power_plan_t* plan;
+    const power_sequence_t* sequence;
     if (!trace)
         return POWER_BAD_INPUT;
     memset(trace, 0, sizeof(*trace));
     trace->failure_idx = UINT32_MAX;
     if (!scope || !scope->valid || fs > 1u || !backend || !scratch || scope->quarantined)
         return (trace->result = POWER_UNSUPPORTED);
-    plan = fs == 0u ? &scope->f0 : &scope->f1;
-    if (scope->compiled_plan_fingerprint != plan_fingerprint(&scope->f0, &scope->f1) ||
-        strcmp(plan->dev_path, scope->path) || strcmp(scope->f0.dev_path, scope->path) ||
-        strcmp(scope->f1.dev_path, scope->path) || plan->target_d_state != fs ||
-        scope->f0.target_d_state != 0u || scope->f1.target_d_state != 1u || !plan->action_cnt ||
-        plan->action_cnt > POWER_MAX_ACTIONS)
+    sequence = fs == 0u ? &scope->f0 : &scope->f1;
+    if (scope->compiled_sequence_fingerprint != sequence_fingerprint(&scope->f0, &scope->f1) ||
+        strcmp(sequence->dev_path, scope->path) || strcmp(scope->f0.dev_path, scope->path) ||
+        strcmp(scope->f1.dev_path, scope->path) || sequence->target_d_state != fs ||
+        scope->f0.target_d_state != 0u || scope->f1.target_d_state != 1u || !sequence->action_cnt ||
+        sequence->action_cnt > POWER_MAX_ACTIONS)
         return (trace->result = POWER_INVALID_PROGRAM);
-    r = power_execute_f_state(plan, &scope->state, backend, trace, scratch);
+    r = power_execute_f_state(sequence, &scope->state, backend, trace, scratch);
     if (r == POWER_ROLLBACK_FAILED || scope->state.quarantined)
         scope->quarantined = 1u;
     return r;

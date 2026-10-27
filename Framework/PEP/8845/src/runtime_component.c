@@ -117,14 +117,14 @@ SNAPSHOT_CALLBACK(snapshot, snapshot, )
 SNAPSHOT_CALLBACK(restore, restore, const)
 SNAPSHOT_CALLBACK(restored, verify_restored, const)
 
-static int matches(runtime_comp_t* s, const power_plan_t* p)
+static int matches(runtime_comp_t* s, const power_sequence_t* p)
 {
     return p && p->action_cnt == s->expected.action_cnt &&
            !strcmp(p->dev_path, s->expected.dev_path) &&
            !memcmp(p->actions, s->expected.actions, p->action_cnt * sizeof(p->actions[0]));
 }
 
-static int final(void* v, const power_plan_t* p)
+static int verify_state(void* v, const power_sequence_t* p)
 {
     runtime_comp_t* s = v;
     uint32_t lane, i;
@@ -146,7 +146,7 @@ static int final(void* v, const power_plan_t* p)
     return live(s);
 }
 
-static power_result_t execute(void* v, const power_plan_t* p, power_execution_t* trace)
+static power_result_t execute(void* v, const power_sequence_t* p, power_execution_t* trace)
 {
     runtime_comp_t* s = v;
     power_result_t result;
@@ -166,7 +166,7 @@ static power_result_t execute(void* v, const power_plan_t* p, power_execution_t*
     return result;
 }
 
-static int append(runtime_comp_t* s, const power_plan_t* p, uint32_t lane)
+static int append(runtime_comp_t* s, const power_sequence_t* p, uint32_t lane)
 {
     uint32_t i;
     if (!p || lane > 32u || p->action_cnt > POWER_MAX_ACTIONS - s->expected.action_cnt)
@@ -334,7 +334,7 @@ power_result_t runtime_comp_f(runtime_comp_t* s, uint32_t comp, uint32_t state,
     if (repeated) {
         if (!enter(s))
             return POWER_UNSUPPORTED;
-        ok = final(s, &s->expected);
+        ok = verify_state(s, &s->expected);
         release_provider(s);
         memset(trace, 0, sizeof(*trace));
         trace->failure_idx = UINT32_MAX;
@@ -392,7 +392,7 @@ int runtime_comp_dx(runtime_comp_t* s, uint32_t target, comp_state_work_t* w)
             !enter(s))
             return 0;
         {
-            int ok = final(s, &s->expected);
+            int ok = verify_state(s, &s->expected);
             release_provider(s);
             if (!ok)
                 return 0;
@@ -457,7 +457,7 @@ int runtime_comp_bind(runtime_comp_t* s, const void* blob, size_t bytes, const c
     s->adapter.lock = enter;
     s->adapter.unlock = release_provider;
     s->adapter.supports = supports;
-    s->adapter.verify_current_state = final;
+    s->adapter.verify_current_state = verify_state;
     s->adapter.execute_owned_program = execute;
     s->inner = s->adapter;
     s->inner.lock = held;

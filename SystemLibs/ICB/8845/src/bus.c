@@ -45,22 +45,21 @@ static const icb_node_t* node_by_id(const icb_node_t* t, unsigned n, uint32_t id
 
 const icb_node_t* icb_find_master(const char* symbol)
 {
-    return find_node(QcPep8845IcbMasterNodes, QcPep8845IcbMasterNodeCount, symbol);
+    return find_node(icb_master_nodes, icb_master_node_cnt, symbol);
 }
 
 const icb_node_t* icb_find_slave(const char* symbol)
 {
-    return find_node(QcPep8845IcbSlaveNodes, QcPep8845IcbSlaveNodeCount, symbol);
+    return find_node(icb_slave_nodes, icb_slave_node_cnt, symbol);
 }
 
 static int node_votes_bcm(const icb_node_t* n, uint32_t bcm)
 {
     uint32_t i;
-    if (!n || n->bcm_first > QcPep8845IcbNodeBcmCount ||
-        n->bcm_cnt > QcPep8845IcbNodeBcmCount - n->bcm_first)
+    if (!n || n->bcm_first > icb_node_bcm_cnt || n->bcm_cnt > icb_node_bcm_cnt - n->bcm_first)
         return 0;
     for (i = 0; i < n->bcm_cnt; ++i)
-        if (QcPep8845IcbNodeBcms[n->bcm_first + i] == bcm)
+        if (icb_node_bcms[n->bcm_first + i] == bcm)
             return 1;
     return 0;
 }
@@ -76,10 +75,8 @@ static uint32_t route_nodes_by_id(uint32_t master_id, uint32_t slave_id, const i
         return 0;
     for (i = 0; i < r->hop_cnt; ++i) {
         const icb_hop_t* h = &icb_hops[r->hop_offset + i];
-        const icb_node_t* m =
-            node_by_id(QcPep8845IcbMasterNodes, QcPep8845IcbMasterNodeCount, h->master_id);
-        const icb_node_t* s =
-            node_by_id(QcPep8845IcbSlaveNodes, QcPep8845IcbSlaveNodeCount, h->slave_id);
+        const icb_node_t* m = node_by_id(icb_master_nodes, icb_master_node_cnt, h->master_id);
+        const icb_node_t* s = node_by_id(icb_slave_nodes, icb_slave_node_cnt, h->slave_id);
         if (!m || !s || n + 2u > cap)
             return 0;
         out[n++] = m;
@@ -108,8 +105,8 @@ uint32_t icb_bus_init(icb_bus_t* bus, const uint8_t* cmd_db, size_t cmd_db_bytes
     if (!bus)
         return 0;
     memset(bus, 0, sizeof(*bus));
-    for (i = 0; i < QcPep8845IcbBcmNodeCount && bus->bcm_cnt < ICB_MAX_BCMS; ++i) {
-        const icb_bcm_node_t* node = &QcPep8845IcbBcmNodes[i];
+    for (i = 0; i < icb_bcm_node_cnt && bus->bcm_cnt < ICB_MAX_BCMS; ++i) {
+        const icb_bcm_node_t* node = &icb_bcm_nodes[i];
         icb_bcm_t* b = &bus->bcms[bus->bcm_cnt++];
         cmddb_entry_t e;
         bcm_aux_t aux;
@@ -140,9 +137,9 @@ static int bcm_usable(const icb_bus_t* bus, uint32_t idx)
 {
     const icb_bcm_node_t* node;
     const icb_bcm_t* b;
-    if (idx >= bus->bcm_cnt || idx >= QcPep8845IcbBcmNodeCount)
+    if (idx >= bus->bcm_cnt || idx >= icb_bcm_node_cnt)
         return 0;
-    node = &QcPep8845IcbBcmNodes[idx];
+    node = &icb_bcm_nodes[idx];
     b = &bus->bcms[idx];
     /* every kind needs a physical VCD identity for COMMIT ordering. */
     if (!b->votable || !b->address_known || !b->aux_known)
@@ -163,14 +160,12 @@ static const char* route_missing(const icb_bus_t* bus, const char* ms, const cha
         return "(no route)";
     for (i = 0; i < n; ++i) {
         const icb_node_t* ep = nodes[i];
-        if (ep->bcm_first > QcPep8845IcbNodeBcmCount ||
-            ep->bcm_cnt > QcPep8845IcbNodeBcmCount - ep->bcm_first)
+        if (ep->bcm_first > icb_node_bcm_cnt || ep->bcm_cnt > icb_node_bcm_cnt - ep->bcm_first)
             return "(bad topology)";
         for (j = 0; j < ep->bcm_cnt; ++j) {
-            uint32_t idx = QcPep8845IcbNodeBcms[ep->bcm_first + j];
+            uint32_t idx = icb_node_bcms[ep->bcm_first + j];
             if (!bcm_usable(bus, idx))
-                return (idx < QcPep8845IcbBcmNodeCount) ? QcPep8845IcbBcmNodes[idx].name
-                                                        : "(bad index)";
+                return (idx < icb_bcm_node_cnt) ? icb_bcm_nodes[idx].name : "(bad index)";
         }
     }
     return 0;
@@ -321,8 +316,8 @@ uint32_t icb_encode_vote(uint64_t scaled_ib, uint64_t scaled_ab)
 
 static int bcm_active(const icb_bus_t* bus, uint32_t idx, const icb_client_t* only)
 {
-    const icb_node_t* tables[2] = {QcPep8845IcbMasterNodes, QcPep8845IcbSlaveNodes};
-    unsigned counts[2] = {QcPep8845IcbMasterNodeCount, QcPep8845IcbSlaveNodeCount};
+    const icb_node_t* tables[2] = {icb_master_nodes, icb_slave_nodes};
+    unsigned counts[2] = {icb_master_node_cnt, icb_slave_node_cnt};
     uint64_t ab, ib;
     unsigned t, i;
     for (t = 0; t < 2u; ++t)
@@ -340,10 +335,10 @@ static int bcm_active(const icb_bus_t* bus, uint32_t idx, const icb_client_t* on
 /* the 32-bit word for one BCM node, per its kind. */
 static uint32_t bcm_vote(const icb_bus_t* bus, uint32_t idx, const icb_client_t* only)
 {
-    const icb_bcm_node_t* node = &QcPep8845IcbBcmNodes[idx];
+    const icb_bcm_node_t* node = &icb_bcm_nodes[idx];
     const icb_bcm_t* b = &bus->bcms[idx];
-    const icb_node_t* tables[2] = {QcPep8845IcbMasterNodes, QcPep8845IcbSlaveNodes};
-    unsigned counts[2] = {QcPep8845IcbMasterNodeCount, QcPep8845IcbSlaveNodeCount};
+    const icb_node_t* tables[2] = {icb_master_nodes, icb_slave_nodes};
+    unsigned counts[2] = {icb_master_node_cnt, icb_slave_node_cnt};
     uint64_t ib = 0u, ab = 0u, nab, nib, sab, sib, qib, qab;
     unsigned t, i;
     uint32_t val, r;
@@ -351,13 +346,13 @@ static uint32_t bcm_vote(const icb_bus_t* bus, uint32_t idx, const icb_client_t*
     if (node->kind == BCM_KIND_VECTOR) {
 
         val = (node->keep_alive || bcm_active(bus, idx, only)) ? node->output : 0u;
-        if (node->relative_first <= QcPep8845IcbBcmRelativeCount &&
-            node->relative_cnt <= QcPep8845IcbBcmRelativeCount - node->relative_first) {
+        if (node->relative_first <= icb_bcm_relative_cnt &&
+            node->relative_cnt <= icb_bcm_relative_cnt - node->relative_first) {
             for (r = 0; r < node->relative_cnt; ++r) {
-                uint32_t rel = QcPep8845IcbBcmRelatives[node->relative_first + r];
-                if (rel < QcPep8845IcbBcmNodeCount &&
-                    (QcPep8845IcbBcmNodes[rel].keep_alive || bcm_active(bus, rel, only)))
-                    val |= QcPep8845IcbBcmNodes[rel].output;
+                uint32_t rel = icb_bcm_relatives[node->relative_first + r];
+                if (rel < icb_bcm_node_cnt &&
+                    (icb_bcm_nodes[rel].keep_alive || bcm_active(bus, rel, only)))
+                    val |= icb_bcm_nodes[rel].output;
             }
         }
         if (val)
@@ -414,7 +409,7 @@ static int route_commands(const icb_bus_t* bus, const char* ms, const char* ss,
     for (i = 0; i < n; ++i) {
         const icb_node_t* ep = nodes[i];
         for (j = 0; j < ep->bcm_cnt; ++j) {
-            uint32_t idx = QcPep8845IcbNodeBcms[ep->bcm_first + j];
+            uint32_t idx = icb_node_bcms[ep->bcm_first + j];
             int dup = 0;
             for (k = 0; k < used; ++k)
                 if (list[k] == idx || bus->bcms[list[k]].address == bus->bcms[idx].address) {

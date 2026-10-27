@@ -95,27 +95,27 @@ int program_idx_describe(const void* data, size_t bytes, const char* path,
 
 power_result_t program_idx_compile(const program_idx_t* idx, const void* data, size_t bytes,
                                    program_class_t cls, uint32_t comp, uint32_t set, uint32_t state,
-                                   power_plan_t* plan, power_pstate_program_t* pprogram)
+                                   power_sequence_t* sequence, power_pstate_program_t* pprogram)
 {
     if (!idx || !idx->valid || !data || !path_equal(idx->path, idx->path) ||
         bytes != idx->desc_bytes || fingerprint(data, bytes) != idx->desc_fingerprint)
         return POWER_INVALID_PROGRAM;
     if (cls == PROGRAM_D_STATE) {
-        if (!plan || pprogram || comp || set || state > 3u ||
+        if (!sequence || pprogram || comp || set || state > 3u ||
             !(idx->d_state_mask & (uint8_t)(1u << state)))
             return POWER_UNSUPPORTED;
-        return power_compile_aeo_b(data, bytes, idx->path, state, plan);
+        return power_compile_aeo_b(data, bytes, idx->path, state, sequence);
     }
     if (comp >= 32u || !(idx->comp_mask & (UINT32_C(1) << comp)))
         return POWER_UNSUPPORTED;
     if (cls == PROGRAM_F_STATE) {
-        if (!plan || pprogram || set || state >= 32u ||
+        if (!sequence || pprogram || set || state >= 32u ||
             !(idx->f_state_mask[comp] & (UINT32_C(1) << state)))
             return POWER_UNSUPPORTED;
-        return power_compile_aeo_bf_state(data, bytes, idx->path, comp, state, plan);
+        return power_compile_aeo_bf_state(data, bytes, idx->path, comp, state, sequence);
     }
     if (cls == PROGRAM_P_STATE) {
-        if (plan || !pprogram || set >= 32u || state >= 32u ||
+        if (sequence || !pprogram || set >= 32u || state >= 32u ||
             !(idx->p_state_set_mask[comp] & (UINT32_C(1) << set)) ||
             !(idx->p_state_mask[comp][set] & (UINT32_C(1) << state)))
             return POWER_UNSUPPORTED;

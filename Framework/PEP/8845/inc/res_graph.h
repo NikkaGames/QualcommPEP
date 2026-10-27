@@ -1,7 +1,7 @@
 #ifndef RES_GRAPH_H
 #define RES_GRAPH_H
 /* molokai device -> D-state -> provider binding, independent of PoFx. No global device
- * ownership is inferred from an ACPI method or plan. */
+ * ownership is inferred from an ACPI method or sequence. */
 
 #include "state_txn.h"
 #include "ufs_catalog.h"
@@ -33,12 +33,12 @@ typedef struct graph_provider {
     int (*verify_restored)(void*, const char*, uint32_t, const power_action_t*,
                            const power_snapshot_t*);
     /* check FINAL provider-owned votes, not replay intermediate reset GPIO steps. */
-    int (*verify_final)(void*, const char*, uint32_t, const power_plan_t*);
+    int (*verify_final)(void*, const char*, uint32_t, const power_sequence_t*);
 } graph_provider_t;
 
 typedef struct graph_dev {
     char path[256];
-    power_plan_t d0, d3;
+    power_sequence_t d0, d3;
     uint8_t has_d0, has_d3, prepared;
     /* distinguish PREPARE admission from the first provider transaction. ABANDON before the
      * first d0 is metadata-only; after an attempted d0 it must never discard ownership without
@@ -101,7 +101,7 @@ typedef struct res_graph {
  * Windows kernel stack. */
 
 void graph_init(res_graph_t*, void*, int (*)(void*), void (*)(void*));
-int graph_add_plan(res_graph_t*, const power_plan_t*);
+int graph_add_sequence(res_graph_t*, const power_sequence_t*);
 int graph_bind(res_graph_t*, power_action_kind_t, const graph_provider_t*);
 int graph_seal(res_graph_t*);
 /* takes the nonrecursive graph lock. Cannot replace a provider or mutate an
@@ -197,7 +197,7 @@ typedef struct graph_build_workspace {
 } graph_build_workspace_t;
 
 int graph_build_from_descriptors(res_graph_t* graph, const graph_desc_t* descriptors,
-                                 uint32_t desc_cnt, power_plan_t* plan_scratch,
+                                 uint32_t desc_cnt, power_sequence_t* sequence_scratch,
                                  graph_build_workspace_t* workspace);
 
 #ifdef __cplusplus

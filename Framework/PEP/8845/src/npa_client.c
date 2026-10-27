@@ -2,7 +2,7 @@
 #include "molokai_catalog.h"
 #include <string.h>
 
-static int safe_copy(char* out, size_t capacity, const char* from)
+static int copy_key_name(char* out, size_t capacity, const char* from)
 {
     size_t n = 0;
     if (!out || !from || !capacity)
@@ -110,7 +110,7 @@ static int make_key(npa_key_t* key, const char* path, uint32_t state, const powe
     if (!key || !path || !action)
         return 0;
     memset(key, 0, sizeof(*key));
-    if (!safe_copy(key->dev_path, sizeof(key->dev_path), path))
+    if (!copy_key_name(key->dev_path, sizeof(key->dev_path), path))
         return 0;
     key->kind = action->kind;
     key->d_state = state;
@@ -120,14 +120,14 @@ static int make_key(npa_key_t* key, const char* path, uint32_t state, const powe
         if (action->u.clock.vote >= 32u)
             return 0;
         key->clock_mode_bits = 1u << action->u.clock.vote;
-        return safe_copy(key->res, sizeof(key->res), action->u.clock.name);
+        return copy_key_name(key->res, sizeof(key->res), action->u.clock.name);
     }
     if (action->kind == POWER_PMIC_REGULATOR)
-        return safe_copy(key->res, sizeof(key->res), action->u.pmic_regulator.name);
+        return copy_key_name(key->res, sizeof(key->res), action->u.pmic_regulator.name);
     if (action->kind == POWER_ICB) {
         key->client = action->u.icb.client;
-        if (!safe_copy(key->res, sizeof(key->res), action->u.icb.master) ||
-            !safe_copy(key->slave, sizeof(key->slave), action->u.icb.slave) ||
+        if (!copy_key_name(key->res, sizeof(key->res), action->u.icb.master) ||
+            !copy_key_name(key->slave, sizeof(key->slave), action->u.icb.slave) ||
             !resolve_icb_endpoint(key->res, 1, &key->icb_master_id) ||
             !resolve_icb_endpoint(key->slave, 0, &key->icb_slave_id) ||
             !lookup_icb_route(key->icb_master_id, key->icb_slave_id))
@@ -188,7 +188,7 @@ int npa_inventory(npa_registry_t* reg, const res_graph_t* graph)
         if (!d->has_d0 || !d->has_d3)
             goto fail;
         for (s = 0; s < 2u; ++s) {
-            const power_plan_t* p = s ? &d->d3 : &d->d0;
+            const power_sequence_t* p = s ? &d->d3 : &d->d0;
             if (!terminated(d->path, sizeof(d->path)) ||
                 !terminated(p->dev_path, sizeof(p->dev_path)) ||
                 p->target_d_state != (s ? 3u : 0u) || strcmp(p->dev_path, d->path) ||

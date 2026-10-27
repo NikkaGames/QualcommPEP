@@ -145,9 +145,9 @@ case QCPEP_RSCSW_DRIVERA_LOOKUP_KIND_CLOCK_NPA_QUERY: /* QCPEP_RSCSW_DRIVERA_LOO
     *ValuesBySubsystem = g_rsc_sw_clock_npa_query_by_subsystem;
     return TRUE;
 case QCPEP_RSCSW_DRIVERA_LOOKUP_KIND_CLOCK_PLAN_STAGE: /* QCPEP_RSCSW_DRIVERA_LOOKUP_QUERY_CLOCK_PLAN_STAGE_ID */
-    *Entries = g_rsc_sw_clock_plan_stage_types;
-    *EntryCount = RTL_NUMBER_OF(g_rsc_sw_clock_plan_stage_types);
-    *ValuesBySubsystem = g_rsc_sw_clock_plan_stage_by_subsystem;
+    *Entries = g_rsc_sw_clock_config_phase_types;
+    *EntryCount = RTL_NUMBER_OF(g_rsc_sw_clock_config_phase_types);
+    *ValuesBySubsystem = g_rsc_sw_clock_config_phase_by_subsystem;
     return TRUE;
 case QCPEP_RSCSW_DRIVERA_LOOKUP_KIND_CLOCK_PLL_FRAC_MODE: /* QCPEP_RSCSW_DRIVERA_LOOKUP_QUERY_CLOCK_PLL_FRAC_MODE_ID */
     *Entries = g_rsc_sw_clock_pll_frac_mode_types;

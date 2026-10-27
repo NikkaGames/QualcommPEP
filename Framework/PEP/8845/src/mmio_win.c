@@ -96,9 +96,9 @@ NTSTATUS mmio_d0_map_peripherals(_Inout_ mmio_t* mmio)
         goto rollback;
     /* verify two stable GPLL0 and GPIO52 samples without writes. */
 
-    if (!mmio_read32(&mmio->gcc, QcPep8845GccGpll0ModeOffset, &gcc_a) ||
+    if (!mmio_read32(&mmio->gcc, gcc_gpll0_mode_offset, &gcc_a) ||
         !mmio_read32(&mmio->tlmm, TLMM_CTL(52u), &pin_a) ||
-        !mmio_read32(&mmio->gcc, QcPep8845GccGpll0ModeOffset, &gcc_b) ||
+        !mmio_read32(&mmio->gcc, gcc_gpll0_mode_offset, &gcc_b) ||
         !mmio_read32(&mmio->tlmm, TLMM_CTL(52u), &pin_b) || gcc_a != gcc_b || pin_a != pin_b ||
         gcc_a == 0xFFFFFFFFu || pin_a == 0xFFFFFFFFu) {
         TraceEvents(TRACE_LEVEL_WARNING, TRACE_RESOURCE,

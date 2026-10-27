@@ -15,14 +15,14 @@
 #include "state_txn.h"
 #include "ufs_pstate_graph_bridge.h"
 
-/* physical component plan admission is separate from DEVICE d0/d3. plans and backend are
+/* physical component sequence admission is separate from DEVICE d0/d3. sequences and backend are
  * owned by the reviewed Windows hardware provider and remain alive until PoFx has
  * unregistered and all requests are drained. */
 typedef struct pep_comp_fstate_scope {
     ULONG comp_cnt;
-    ULONG plan_slots;
+    ULONG sequence_slots;
     char dev_path[256];
-    const power_plan_t* const* plans;
+    const power_sequence_t* const* sequences;
     power_dev_t* verified_states;   /* one per component, provider proof. */
     const power_backend_t* backend; /* full snapshot/apply/readback. */
     /* all of these pointers belong to the SAME attested owner/scope epoch. The owner must not

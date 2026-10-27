@@ -299,8 +299,8 @@ static int verify_f1_release(const pofx_producer_t* p, uint32_t comp, comp_state
 }
 
 int po_fx_producer_release(pofx_producer_t* p, const power_dev_t* d3, const void* d3blob,
-                           size_t d3bytes, runtime_desc_info_t* desc_work, power_plan_t* plan_work,
-                           comp_state_work_t* work, uint64_t epoch)
+                           size_t d3bytes, runtime_desc_info_t* desc_work,
+                           power_sequence_t* sequence_work, comp_state_work_t* work, uint64_t epoch)
 {
     program_idx_t d3index;
     uint32_t comp;
@@ -309,7 +309,7 @@ int po_fx_producer_release(pofx_producer_t* p, const power_dev_t* d3, const void
         !p->provider || !p->owner.bound || p->owner.quarantined || !epoch ||
         epoch != p->owner_epoch || p->owner.owner_epoch != epoch || !d3 || !d3->state_known ||
         d3->quarantined || d3->current_d_state != 3u || !d3blob || !d3bytes || !desc_work ||
-        !plan_work || !work || !p->provider->lock || !p->provider->unlock ||
+        !sequence_work || !work || !p->provider->lock || !p->provider->unlock ||
         !p->provider->verify_current_state)
         return 0;
     for (comp = 0u; comp < 32u; ++comp) {
@@ -324,19 +324,19 @@ int po_fx_producer_release(pofx_producer_t* p, const power_dev_t* d3, const void
     }
     if (!program_idx_describe(d3blob, d3bytes, p->owner.idx.path, desc_work, &d3index) ||
         !d3index.has_d3 || !(d3index.d_state_mask & 8u) ||
-        program_idx_compile(&d3index, d3blob, d3bytes, PROGRAM_D_STATE, 0u, 0u, 3u, plan_work,
+        program_idx_compile(&d3index, d3blob, d3bytes, PROGRAM_D_STATE, 0u, 0u, 3u, sequence_work,
                             NULL) != POWER_OK ||
-        !plan_work->action_cnt || plan_work->target_d_state != 3u ||
-        strcmp(plan_work->dev_path, p->owner.idx.path))
+        !sequence_work->action_cnt || sequence_work->target_d_state != 3u ||
+        strcmp(sequence_work->dev_path, p->owner.idx.path))
         return 0;
     /* d3 can carry nested PSTATE_ADJUST resources. Expand only when exactly one component owns
      * every referenced set, with verified final selectors. The provider must never receive raw
      * nested actions. */
     {
         uint32_t refs = 0u;
-        const power_plan_t* physical_plan = plan_work;
-        for (comp = 0u; comp < plan_work->action_cnt; ++comp) {
-            const power_action_t* action = &plan_work->actions[comp];
+        const power_sequence_t* physical_sequence = sequence_work;
+        for (comp = 0u; comp < sequence_work->action_cnt; ++comp) {
+            const power_action_t* action = &sequence_work->actions[comp];
             uint32_t set, state;
             if (action->kind != POWER_PSTATE_ADJUST)
                 continue;
@@ -355,16 +355,16 @@ int po_fx_producer_release(pofx_producer_t* p, const power_dev_t* d3, const void
         }
         if (refs) {
             power_pstate_selection_t selection;
-            if (power_expand_comp_f_state(plan_work, 0u, work->program_refs, refs, 32u,
+            if (power_expand_comp_f_state(sequence_work, 0u, work->program_refs, refs, 32u,
                                           &work->expanded, &selection) != POWER_OK ||
                 !work->expanded.action_cnt)
                 return 0;
-            physical_plan = &work->expanded;
+            physical_sequence = &work->expanded;
         }
         if (!p->provider->lock(p->provider->ctx))
             return 0;
         verified = p->owner.owner_epoch == epoch && !p->owner.quarantined &&
-                   p->provider->verify_current_state(p->provider->ctx, physical_plan);
+                   p->provider->verify_current_state(p->provider->ctx, physical_sequence);
     }
     p->provider->unlock(p->provider->ctx);
     if (!verified)

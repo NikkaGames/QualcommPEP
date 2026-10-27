@@ -8,18 +8,18 @@ static int supported_action(const power_action_t* a)
 }
 
 static int append(pofx_required_catalog_t* c, program_class_t kind, uint32_t comp, uint32_t set,
-                  uint32_t state, const power_plan_t* plan)
+                  uint32_t state, const power_sequence_t* sequence)
 {
     uint32_t i;
-    if (!c || !plan || plan->action_cnt > POWER_MAX_ACTIONS ||
-        c->cnt > POFX_REQUIRED_MAX_ACTIONS - plan->action_cnt)
+    if (!c || !sequence || sequence->action_cnt > POWER_MAX_ACTIONS ||
+        c->cnt > POFX_REQUIRED_MAX_ACTIONS - sequence->action_cnt)
         return 0;
-    for (i = 0u; i < plan->action_cnt; ++i) {
+    for (i = 0u; i < sequence->action_cnt; ++i) {
         pofx_required_action_t* dst;
-        if (!supported_action(&plan->actions[i]))
+        if (!supported_action(&sequence->actions[i]))
             return 0;
         dst = &c->actions[c->cnt++];
-        dst->action = plan->actions[i];
+        dst->action = sequence->actions[i];
         dst->program_class = (uint8_t)kind;
         dst->comp = comp;
         dst->set = set;
@@ -29,14 +29,14 @@ static int append(pofx_required_catalog_t* c, program_class_t kind, uint32_t com
 }
 
 int po_fx_required_compile(pofx_required_catalog_t* c, const program_idx_t* idx, const void* blob,
-                           size_t bytes, power_plan_t* plan, power_pstate_program_t* ps)
+                           size_t bytes, power_sequence_t* sequence, power_pstate_program_t* ps)
 {
     uint32_t comp, set, state;
     if (!c)
         return 0;
     memset(c, 0, sizeof(*c));
     if (!idx || !idx->valid || !idx->comp_mask || !blob || !bytes || idx->desc_bytes != bytes ||
-        !plan || !ps)
+        !sequence || !ps)
         return 0;
     for (comp = 0u; comp < 32u; ++comp) {
         if (!(idx->comp_mask & (UINT32_C(1) << comp)))
@@ -49,14 +49,14 @@ int po_fx_required_compile(pofx_required_catalog_t* c, const program_idx_t* idx,
         for (state = 0u; state < 32u; ++state) {
             if (!(idx->f_state_mask[comp] & (UINT32_C(1) << state)))
                 continue;
-            if (program_idx_compile(idx, blob, bytes, PROGRAM_F_STATE, comp, 0u, state, plan,
+            if (program_idx_compile(idx, blob, bytes, PROGRAM_F_STATE, comp, 0u, state, sequence,
                                     NULL) != POWER_OK)
                 goto fail;
             {
                 uint32_t i, seen = 0u;
                 uint32_t kept = 0u;
-                for (i = 0u; i < plan->action_cnt; ++i) {
-                    const power_action_t* a = &plan->actions[i];
+                for (i = 0u; i < sequence->action_cnt; ++i) {
+                    const power_action_t* a = &sequence->actions[i];
                     if (a->kind == POWER_PSTATE_ADJUST) {
                         const uint32_t selector = a->u.pstate_adjust.fields[0];
                         const uint32_t target = a->u.pstate_adjust.fields[1];
@@ -69,14 +69,14 @@ int po_fx_required_compile(pofx_required_catalog_t* c, const program_idx_t* idx,
                     } else {
                         if (!supported_action(a))
                             goto fail;
-                        plan->actions[kept++] = *a;
+                        sequence->actions[kept++] = *a;
                     }
                 }
                 /* a nested F-state must resolve every advertised set. */
                 if (seen != idx->p_state_set_mask[comp])
                     goto fail;
-                plan->action_cnt = kept;
-                if (!append(c, PROGRAM_F_STATE, comp, 0u, state, plan))
+                sequence->action_cnt = kept;
+                if (!append(c, PROGRAM_F_STATE, comp, 0u, state, sequence))
                     goto fail;
             }
         }

@@ -53,23 +53,23 @@ static int next_string(const uint8_t* b, uint32_t len, uint32_t* pos, char* name
     return 1;
 }
 
-typedef struct plan_builder {
-    power_plan_t* plan;
+typedef struct sequence_builder {
+    power_sequence_t* sequence;
     int overflow;
     int comp_p_state;
-} plan_builder_t;
+} sequence_builder_t;
 
 static int compile_action(const aeob_action_t* a, void* ctx)
 {
-    plan_builder_t* build = (plan_builder_t*)ctx;
+    sequence_builder_t* build = (sequence_builder_t*)ctx;
     power_action_t* out;
     uint64_t n;
     uint32_t pos = 0, i, want;
-    if (build->plan->action_cnt >= POWER_MAX_ACTIONS) {
+    if (build->sequence->action_cnt >= POWER_MAX_ACTIONS) {
         build->overflow = 1;
         return 0;
     }
-    out = &build->plan->actions[build->plan->action_cnt];
+    out = &build->sequence->actions[build->sequence->action_cnt];
     memset(out, 0, sizeof(*out));
     if (strcmp(a->kind, "CLOCK") == 0) {
         out->kind = POWER_CLOCK;
@@ -185,56 +185,56 @@ static int compile_action(const aeob_action_t* a, void* ctx)
         out->u.delay.ms = (uint32_t)n;
     } else
         return 0;
-    build->plan->action_cnt++;
+    build->sequence->action_cnt++;
     return 1;
 }
 
 power_result_t power_compile_aeo_b(const void* buf, size_t length, const char* path, uint32_t state,
-                                   power_plan_t* plan)
+                                   power_sequence_t* sequence)
 {
     aeob_validation_t validation;
     aeob_status_t status;
-    plan_builder_t builder;
+    sequence_builder_t builder;
     uint32_t visits = 0;
     size_t path_len;
-    if (!plan || !buf || !path || state > 3u)
+    if (!sequence || !buf || !path || state > 3u)
         return POWER_BAD_INPUT;
-    memset(plan, 0, sizeof(*plan));
-    for (path_len = 0; path_len < sizeof(plan->dev_path) && path[path_len]; ++path_len) {
+    memset(sequence, 0, sizeof(*sequence));
+    for (path_len = 0; path_len < sizeof(sequence->dev_path) && path[path_len]; ++path_len) {
     }
-    if (path_len < 5u || path_len >= sizeof(plan->dev_path))
+    if (path_len < 5u || path_len >= sizeof(sequence->dev_path))
         return POWER_BAD_INPUT;
     status = aeo_b_validate_molokai_dev_d_state(buf, length, path, state, &validation);
     if (status != AEO_B_OK)
         return POWER_INVALID_PROGRAM;
-    memcpy(plan->dev_path, path, path_len + 1u);
-    plan->target_d_state = state;
-    builder.plan = plan;
+    memcpy(sequence->dev_path, path, path_len + 1u);
+    sequence->target_d_state = state;
+    builder.sequence = sequence;
     builder.overflow = 0;
     builder.comp_p_state = 0;
     status = aeo_b_visit_dev_d_state(buf, length, path, state, compile_action, &builder, &visits);
-    if (status != AEO_B_OK || visits != plan->action_cnt) {
-        /* a failed compile must not expose a partial plan. */
-        memset(plan, 0, sizeof(*plan));
+    if (status != AEO_B_OK || visits != sequence->action_cnt) {
+        /* a failed compile must not expose a partial sequence. */
+        memset(sequence, 0, sizeof(*sequence));
         return builder.overflow ? POWER_TOO_MANY_ACTIONS : POWER_INVALID_PROGRAM;
     }
-    /* empty plans can only reverify a committed nonempty plan under its provider lease. They cannot
-     * establish initial power or final withdrawal. */
+    /* empty sequences can only reverify a committed nonempty sequence under its provider lease.
+     * They cannot establish initial power or final withdrawal. */
 
-    if (plan->action_cnt == 0u && (state == 0u || state == 3u)) {
-        memset(plan, 0, sizeof(*plan));
+    if (sequence->action_cnt == 0u && (state == 0u || state == 3u)) {
+        memset(sequence, 0, sizeof(*sequence));
         return POWER_INVALID_PROGRAM;
     }
     /* executing arbitrarily long ACPI delays on the PoFx worker could deadlock unrelated
      * device power. */
 
     uint32_t accumulated_delay = 0;
-    for (uint32_t i = 0; i < plan->action_cnt; ++i) {
-        if (plan->actions[i].kind != POWER_DELAY)
+    for (uint32_t i = 0; i < sequence->action_cnt; ++i) {
+        if (sequence->actions[i].kind != POWER_DELAY)
             continue;
-        uint32_t ms = plan->actions[i].u.delay.ms;
+        uint32_t ms = sequence->actions[i].u.delay.ms;
         if (ms > 5000u || accumulated_delay > 10000u - ms) {
-            memset(plan, 0, sizeof(*plan));
+            memset(sequence, 0, sizeof(*sequence));
             return POWER_INVALID_PROGRAM;
         }
         accumulated_delay += ms;
@@ -243,43 +243,44 @@ power_result_t power_compile_aeo_b(const void* buf, size_t length, const char* p
 }
 
 power_result_t power_compile_aeo_bf_state(const void* buf, size_t length, const char* path,
-                                          uint32_t comp, uint32_t fstate, power_plan_t* plan)
+                                          uint32_t comp, uint32_t fstate,
+                                          power_sequence_t* sequence)
 {
     aeob_validation_t validation;
     aeob_status_t status;
-    plan_builder_t builder;
+    sequence_builder_t builder;
     uint32_t visits = 0, accumulated_delay = 0, i;
     size_t path_len;
-    if (!buf || !path || !plan || comp >= 32u || fstate >= 32u)
+    if (!buf || !path || !sequence || comp >= 32u || fstate >= 32u)
         return POWER_BAD_INPUT;
-    memset(plan, 0, sizeof(*plan));
-    for (path_len = 0; path_len < sizeof(plan->dev_path) && path[path_len]; ++path_len) {
+    memset(sequence, 0, sizeof(*sequence));
+    for (path_len = 0; path_len < sizeof(sequence->dev_path) && path[path_len]; ++path_len) {
     }
-    if (path_len < 5u || path_len >= sizeof(plan->dev_path) || path[0] != '\\')
+    if (path_len < 5u || path_len >= sizeof(sequence->dev_path) || path[0] != '\\')
         return POWER_BAD_INPUT;
     /* never compile unreviewed bytes solely because the parser finds a matching label. */
 
     status = aeo_b_validate_molokai_comp_f_state(buf, length, path, comp, fstate, &validation);
     if (status != AEO_B_OK || validation.failure != AEO_B_RES_NONE)
         return POWER_INVALID_PROGRAM;
-    memcpy(plan->dev_path, path, path_len + 1u);
-    plan->target_d_state = fstate; /* f-state selector, never Dx execution. */
-    builder.plan = plan;
+    memcpy(sequence->dev_path, path, path_len + 1u);
+    sequence->target_d_state = fstate; /* f-state selector, never Dx execution. */
+    builder.sequence = sequence;
     builder.overflow = 0;
     builder.comp_p_state = 0;
     status = aeo_b_visit_comp_f_state(buf, length, path, comp, fstate, compile_action, &builder,
                                       &visits);
-    if (status != AEO_B_OK || visits != plan->action_cnt) {
-        memset(plan, 0, sizeof(*plan));
+    if (status != AEO_B_OK || visits != sequence->action_cnt) {
+        memset(sequence, 0, sizeof(*sequence));
         return builder.overflow ? POWER_TOO_MANY_ACTIONS : POWER_INVALID_PROGRAM;
     }
-    for (i = 0; i < plan->action_cnt; ++i) {
+    for (i = 0; i < sequence->action_cnt; ++i) {
         uint32_t ms;
-        if (plan->actions[i].kind != POWER_DELAY)
+        if (sequence->actions[i].kind != POWER_DELAY)
             continue;
-        ms = plan->actions[i].u.delay.ms;
+        ms = sequence->actions[i].u.delay.ms;
         if (ms > 5000u || accumulated_delay > 10000u - ms) {
-            memset(plan, 0, sizeof(*plan));
+            memset(sequence, 0, sizeof(*sequence));
             return POWER_INVALID_PROGRAM;
         }
         accumulated_delay += ms;
@@ -296,37 +297,37 @@ power_result_t power_compile_aeo_bp_state(const void* buf, size_t length, const 
 {
     aeob_validation_t validation;
     aeob_status_t status;
-    plan_builder_t builder;
-    power_plan_t* plan;
+    sequence_builder_t builder;
+    power_sequence_t* sequence;
     uint32_t visits = 0, delay = 0, i;
     size_t path_len;
     if (!program || !buf || !path || comp >= 32u || set >= 32u || state >= 32u)
         return POWER_BAD_INPUT;
     memset(program, 0, sizeof(*program));
-    plan = &program->resources;
-    for (path_len = 0; path_len < sizeof(plan->dev_path) && path[path_len]; ++path_len) {
+    sequence = &program->resources;
+    for (path_len = 0; path_len < sizeof(sequence->dev_path) && path[path_len]; ++path_len) {
     }
-    if (path_len < 5u || path_len >= sizeof(plan->dev_path) || path[0] != '\\')
+    if (path_len < 5u || path_len >= sizeof(sequence->dev_path) || path[0] != '\\')
         return POWER_BAD_INPUT;
     status = aeo_b_validate_molokai_comp_p_state(buf, length, path, comp, set, state, &validation);
     if (status != AEO_B_OK || validation.failure != AEO_B_RES_NONE)
         return POWER_INVALID_PROGRAM;
-    memcpy(plan->dev_path, path, path_len + 1u);
-    plan->target_d_state = state;
-    builder.plan = plan;
+    memcpy(sequence->dev_path, path, path_len + 1u);
+    sequence->target_d_state = state;
+    builder.sequence = sequence;
     builder.overflow = 0;
     builder.comp_p_state = 1;
     status = aeo_b_visit_comp_p_state(buf, length, path, comp, set, state, compile_action, &builder,
                                       &visits);
-    if (status != AEO_B_OK || visits != plan->action_cnt || !visits) {
+    if (status != AEO_B_OK || visits != sequence->action_cnt || !visits) {
         memset(program, 0, sizeof(*program));
         return builder.overflow ? POWER_TOO_MANY_ACTIONS : POWER_INVALID_PROGRAM;
     }
-    for (i = 0; i < plan->action_cnt; ++i) {
+    for (i = 0; i < sequence->action_cnt; ++i) {
         uint32_t ms;
-        if (plan->actions[i].kind != POWER_DELAY)
+        if (sequence->actions[i].kind != POWER_DELAY)
             continue;
-        ms = plan->actions[i].u.delay.ms;
+        ms = sequence->actions[i].u.delay.ms;
         if (ms > 5000u || delay > 10000u - ms) {
             memset(program, 0, sizeof(*program));
             return POWER_INVALID_PROGRAM;
@@ -339,9 +340,10 @@ power_result_t power_compile_aeo_bp_state(const void* buf, size_t length, const 
     return POWER_OK;
 }
 
-static power_result_t rollback(const power_plan_t* p, power_dev_t* dev, const power_backend_t* be,
-                               const power_snapshot_t* snapshots, uint32_t started,
-                               power_execution_t* trace, power_result_t original_failure)
+static power_result_t rollback(const power_sequence_t* p, power_dev_t* dev,
+                               const power_backend_t* be, const power_snapshot_t* snapshots,
+                               uint32_t started, power_execution_t* trace,
+                               power_result_t original_failure)
 {
     uint32_t i;
     int failed = 0;
@@ -364,7 +366,7 @@ static power_result_t rollback(const power_plan_t* p, power_dev_t* dev, const po
     return original_failure;
 }
 
-static power_result_t power_execute_mode(const power_plan_t* plan, power_dev_t* dev,
+static power_result_t power_execute_mode(const power_sequence_t* sequence, power_dev_t* dev,
                                          const power_backend_t* be, power_execution_t* trace,
                                          power_scratch_t* scratch, int is_comp, int force_actions)
 {
@@ -374,14 +376,14 @@ static power_result_t power_execute_mode(const power_plan_t* plan, power_dev_t* 
         return POWER_BAD_INPUT;
     memset(trace, 0, sizeof(*trace));
     trace->failure_idx = UINT32_MAX;
-    if (!plan || !dev || !scratch || !be || !be->lock || !be->unlock ||
+    if (!sequence || !dev || !scratch || !be || !be->lock || !be->unlock ||
         (!be->execute_owned_program &&
          (!be->snapshot || !be->apply || !be->verify || !be->restore || !be->verify_restored)) ||
         !be->supports || !be->verify_current_state ||
-        (plan->action_cnt == 0u && !is_comp &&
-         (plan->target_d_state == 0u || plan->target_d_state == 3u)) ||
-        plan->action_cnt > POWER_MAX_ACTIONS ||
-        (is_comp ? plan->target_d_state >= 32u : (plan->target_d_state > 3u))) {
+        (sequence->action_cnt == 0u && !is_comp &&
+         (sequence->target_d_state == 0u || sequence->target_d_state == 3u)) ||
+        sequence->action_cnt > POWER_MAX_ACTIONS ||
+        (is_comp ? sequence->target_d_state >= 32u : (sequence->target_d_state > 3u))) {
         trace->result = POWER_BAD_INPUT;
         return trace->result;
     }
@@ -398,9 +400,9 @@ static power_result_t power_execute_mode(const power_plan_t* plan, power_dev_t* 
         goto done;
     }
     /* it needs a previously *verified* D-state and the native verify_current_state callback
-     * must prove that last nonempty plan is still held. */
+     * must prove that last nonempty sequence is still held. */
 
-    if (!is_comp && plan->action_cnt == 0u && !dev->state_known) {
+    if (!is_comp && sequence->action_cnt == 0u && !dev->state_known) {
         result = POWER_NO_KNOWN_STATE;
         goto done;
     }
@@ -408,7 +410,7 @@ static power_result_t power_execute_mode(const power_plan_t* plan, power_dev_t* 
      * restore attempted writes on failure. Unknown -> D3 could drop a boot-critical vote. */
 
     if (!force_actions && !dev->state_known) {
-        if (plan->target_d_state != 0u) {
+        if (sequence->target_d_state != 0u) {
             result = POWER_NO_KNOWN_STATE;
             goto done;
         }
@@ -420,8 +422,8 @@ static power_result_t power_execute_mode(const power_plan_t* plan, power_dev_t* 
     /* the missing Molokai AOP/PPP/CLOCKS/ICB backends must never look like a successful
      * transaction that programmed only an initial prefix. */
 
-    for (i = 0; i < plan->action_cnt; ++i) {
-        if (!be->supports(be->ctx, &plan->actions[i])) {
+    for (i = 0; i < sequence->action_cnt; ++i) {
+        if (!be->supports(be->ctx, &sequence->actions[i])) {
             trace->failure_idx = i;
             result = POWER_UNSUPPORTED;
             goto done;
@@ -430,12 +432,12 @@ static power_result_t power_execute_mode(const power_plan_t* plan, power_dev_t* 
     /* never claim a cached D-state is still true without checking the provider-owned logical
      * votes and current ownership. */
 
-    if (!force_actions && dev->state_known && dev->current_d_state == plan->target_d_state) {
+    if (!force_actions && dev->state_known && dev->current_d_state == sequence->target_d_state) {
         if (!be->verify_current_state) {
             result = POWER_UNSUPPORTED;
             goto done;
         }
-        if (!be->verify_current_state(be->ctx, plan)) {
+        if (!be->verify_current_state(be->ctx, sequence)) {
             dev->state_known = 0u;
             dev->quarantined = 1u;
             result = POWER_STATE_DRIFT;
@@ -446,17 +448,17 @@ static power_result_t power_execute_mode(const power_plan_t* plan, power_dev_t* 
         goto done;
     }
     /* native F/P grouped resources cannot be programmed action-by-action: CLOCK
-     * enable/config/rate share one client, and a multi-set plan must preserve old votes until
+     * enable/config/rate share one client, and a multi-set sequence must preserve old votes until
      * every incoming state is physically verified. */
     if (be->execute_owned_program) {
-        result = be->execute_owned_program(be->ctx, plan, trace);
-        if (result == POWER_OK && !be->verify_current_state(be->ctx, plan)) {
+        result = be->execute_owned_program(be->ctx, sequence, trace);
+        if (result == POWER_OK && !be->verify_current_state(be->ctx, sequence)) {
             result = POWER_FINAL_STATE_FAILED;
             dev->state_known = 0u;
             dev->quarantined = 1u;
         } else if (result == POWER_OK) {
             if (!force_actions) {
-                dev->current_d_state = plan->target_d_state;
+                dev->current_d_state = sequence->target_d_state;
                 dev->state_known = 1u;
             }
             trace->failure_idx = UINT32_MAX;
@@ -466,37 +468,37 @@ static power_result_t power_execute_mode(const power_plan_t* plan, power_dev_t* 
         }
         goto done;
     }
-    for (i = 0; i < plan->action_cnt; ++i) {
-        const power_action_t* a = &plan->actions[i];
+    for (i = 0; i < sequence->action_cnt; ++i) {
+        const power_action_t* a = &sequence->actions[i];
         trace->failure_idx = i;
         if (a->kind == POWER_DELAY) {
             /* preserve execution order but do not treat elapsed time as a hardware vote with a
              * restorable prior state. */
 
             if (!be->apply(be->ctx, a)) {
-                result =
-                    rollback(plan, dev, be, scratch->snapshots, started, trace, POWER_APPLY_FAILED);
+                result = rollback(sequence, dev, be, scratch->snapshots, started, trace,
+                                  POWER_APPLY_FAILED);
                 goto done;
             }
             ++trace->applied;
             continue;
         }
         if (!be->snapshot(be->ctx, a, &scratch->snapshots[i])) {
-            result =
-                rollback(plan, dev, be, scratch->snapshots, started, trace, POWER_SNAPSHOT_FAILED);
+            result = rollback(sequence, dev, be, scratch->snapshots, started, trace,
+                              POWER_SNAPSHOT_FAILED);
             goto done;
         }
 
         started = i + 1u;
         if (!be->apply(be->ctx, a)) {
             result =
-                rollback(plan, dev, be, scratch->snapshots, started, trace, POWER_APPLY_FAILED);
+                rollback(sequence, dev, be, scratch->snapshots, started, trace, POWER_APPLY_FAILED);
             goto done;
         }
         ++trace->applied;
         if (!be->verify(be->ctx, a)) {
-            result =
-                rollback(plan, dev, be, scratch->snapshots, started, trace, POWER_VERIFY_FAILED);
+            result = rollback(sequence, dev, be, scratch->snapshots, started, trace,
+                              POWER_VERIFY_FAILED);
             goto done;
         }
     }
@@ -504,14 +506,14 @@ static power_result_t power_execute_mode(const power_plan_t* plan, power_dev_t* 
      * before publishing a new D-state. Verification must be read-only and performed by the
      * authoritative res owner, not a cached TCS ACK. */
 
-    if (!be->verify_current_state(be->ctx, plan)) {
-        trace->failure_idx = plan->action_cnt;
-        result =
-            rollback(plan, dev, be, scratch->snapshots, started, trace, POWER_FINAL_STATE_FAILED);
+    if (!be->verify_current_state(be->ctx, sequence)) {
+        trace->failure_idx = sequence->action_cnt;
+        result = rollback(sequence, dev, be, scratch->snapshots, started, trace,
+                          POWER_FINAL_STATE_FAILED);
         goto done;
     }
     if (!force_actions) {
-        dev->current_d_state = plan->target_d_state;
+        dev->current_d_state = sequence->target_d_state;
         dev->state_known = 1u;
     }
     result = POWER_OK;
@@ -522,24 +524,24 @@ done:
     return result;
 }
 
-power_result_t power_execute(const power_plan_t* plan, power_dev_t* dev,
+power_result_t power_execute(const power_sequence_t* sequence, power_dev_t* dev,
                              const power_backend_t* backend, power_execution_t* trace,
                              power_scratch_t* scratch)
 {
-    return power_execute_mode(plan, dev, backend, trace, scratch, 0, 0);
+    return power_execute_mode(sequence, dev, backend, trace, scratch, 0, 0);
 }
 
-power_result_t power_execute_f_state(const power_plan_t* plan, power_dev_t* comp,
+power_result_t power_execute_f_state(const power_sequence_t* sequence, power_dev_t* comp,
                                      const power_backend_t* backend, power_execution_t* trace,
                                      power_scratch_t* scratch)
 {
-    return power_execute_mode(plan, comp, backend, trace, scratch, 1, 0);
+    return power_execute_mode(sequence, comp, backend, trace, scratch, 1, 0);
 }
 
 /* batch callers verify D0/F0 and every constituent P-state. One provider lock covers the
  * transaction; no batch state is cached. */
 
-power_result_t power_execute_action_batch(const power_plan_t* actions,
+power_result_t power_execute_action_batch(const power_sequence_t* actions,
                                           const power_backend_t* backend, power_execution_t* trace,
                                           power_scratch_t* scratch)
 {
@@ -558,8 +560,9 @@ power_result_t power_execute_action_batch(const power_plan_t* actions,
     return power_execute_mode(actions, &transient, backend, trace, scratch, 1, 1);
 }
 
-power_result_t power_execute_clock_rate(const power_plan_t* actions, const power_backend_t* backend,
-                                        power_execution_t* trace, power_scratch_t* scratch)
+power_result_t power_execute_clock_rate(const power_sequence_t* actions,
+                                        const power_backend_t* backend, power_execution_t* trace,
+                                        power_scratch_t* scratch)
 {
     power_dev_t transient = {0};
     const power_action_t* a;

@@ -129,26 +129,27 @@ static int verify_restored(void* ctx, const char* path, uint32_t state,
            gpio == snap->opaque[1];
 }
 
-static int final_state(void* ctx, const char* path, uint32_t state, const power_plan_t* plan)
+static int final_state(void* ctx, const char* path, uint32_t state,
+                       const power_sequence_t* sequence)
 {
     uint32_t i, j;
     int seen = 0;
-    if (!plan || !path || strcmp(path, plan->dev_path) || state != plan->target_d_state)
+    if (!sequence || !path || strcmp(path, sequence->dev_path) || state != sequence->target_d_state)
         return 0;
-    for (i = 0; i < plan->action_cnt; ++i) {
+    for (i = 0; i < sequence->action_cnt; ++i) {
         tlmm_gpio_t cfg;
-        const power_action_t* a = &plan->actions[i];
+        const power_action_t* a = &sequence->actions[i];
         int superseded = 0;
         if (a->kind != POWER_TLMM_GPIO)
             continue;
         seen = 1;
         if (!action_config(a, &cfg))
             return 0;
-        for (j = i + 1u; j < plan->action_cnt; ++j) {
+        for (j = i + 1u; j < sequence->action_cnt; ++j) {
             tlmm_gpio_t newer;
-            if (plan->actions[j].kind != POWER_TLMM_GPIO)
+            if (sequence->actions[j].kind != POWER_TLMM_GPIO)
                 continue;
-            if (!action_config(&plan->actions[j], &newer))
+            if (!action_config(&sequence->actions[j], &newer))
                 return 0;
             if (newer.pin == cfg.pin) {
                 superseded = 1;

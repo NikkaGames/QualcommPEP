@@ -1,7 +1,7 @@
 #include "required.h"
 #include <string.h>
 
-static int name_ok(const char* name, size_t cap)
+static int valid_domain_name(const char* name, size_t cap)
 {
     size_t i;
     if (!name || !cap)
@@ -17,7 +17,7 @@ static int name_ok(const char* name, size_t cap)
     return 0;
 }
 
-static int epoch_ok(pofx_fs_required_t* s)
+static int owns_current_epoch(pofx_fs_required_t* s)
 {
     uint64_t current = 0u;
     return s && s->bound && !s->quarantined && s->epoch && s->native.owns_domain &&
@@ -27,9 +27,9 @@ static int epoch_ok(pofx_fs_required_t* s)
 
 static int physical(pofx_fs_required_t* s, uint32_t* actual)
 {
-    return actual && epoch_ok(s) && s->read_physical &&
+    return actual && owns_current_epoch(s) && s->read_physical &&
            s->read_physical(s->physical_ctx, s->domain, s->epoch, actual) &&
-           (*actual == 1u || *actual == 2u) && epoch_ok(s);
+           (*actual == 1u || *actual == 2u) && owns_current_epoch(s);
 }
 
 static int owns(void* ctx, const pofx_required_action_t* a)
@@ -46,7 +46,7 @@ static pofx_fs_required_slot_t* lookup(pofx_fs_required_t* s, const pofx_require
 {
     uintptr_t cookie = (uintptr_t)handle;
     uint32_t i;
-    if (!cookie || !a || !s || !epoch_ok(s))
+    if (!cookie || !a || !s || !owns_current_epoch(s))
         return NULL;
     for (i = 0u; i < POFX_FS_REQUIRED_SLOTS; ++i)
         if (s->slots[i].active && s->slots[i].cookie == cookie && s->slots[i].action == a &&
@@ -59,7 +59,7 @@ static int read_native(pofx_fs_required_t* s, pofx_fs_required_slot_t* slot, uin
                        uint32_t* scalar)
 {
     uint32_t actual = 0u;
-    return slot && present && scalar && s->native.read_client && epoch_ok(s) &&
+    return slot && present && scalar && s->native.read_client && owns_current_epoch(s) &&
            s->native.read_client(s->native.ctx, s->res, slot->native, present, scalar) &&
            *present <= 1u && (!*present || *scalar == slot->action->action.u.footswitch.action) &&
            physical(s, &actual);
@@ -88,7 +88,7 @@ static void* create(void* ctx, const pofx_required_action_t* a)
     /* client names are bounded identifiers, not ad hoc ACPI device paths. */
     memset(client, 0, sizeof(client));
     {
-        const char prefix[] = "QcPep8845_FpFs_";
+        const char prefix[] = "ufs_fs_";
         size_t p = sizeof(prefix) - 1u;
         uint32_t v = i;
         memcpy(client, prefix, p);
@@ -126,7 +126,7 @@ static int validate(void* ctx, const pofx_required_action_t* a, void* h)
 static int read_epoch(void* ctx, uint64_t* value)
 {
     pofx_fs_required_t* s = (pofx_fs_required_t*)ctx;
-    if (!value || !epoch_ok(s))
+    if (!value || !owns_current_epoch(s))
         return 0;
     *value = s->epoch;
     return 1;
@@ -181,7 +181,8 @@ int po_fx_fs_required_bind(pofx_fs_required_t* s, const fs_factory_provider_t* n
         !n->issue_client || !n->can_complete_client || !n->complete_client ||
         !n->close_idle_client || !n->client_gone || !n->can_retire_off_client ||
         !n->retire_off_client || !n->owns_domain(n->ctx, domain) ||
-        !n->read_owner_epoch(n->ctx, domain, &ep) || ep != epoch || !name_ok(domain, FS_NAME_BYTES))
+        !n->read_owner_epoch(n->ctx, domain, &ep) || ep != epoch ||
+        !valid_domain_name(domain, FS_NAME_BYTES))
         return 0;
     length = strlen(domain);
     if (length + sizeof("/fs//enable") > FS_FACTORY_NAME_BYTES)
@@ -277,7 +278,7 @@ int po_fx_fs_required_handoff(pofx_fs_required_t* s, const pofx_required_action_
         !s->native.complete_client(s->native.ctx, s->res, old_slot->native) ||
         !read_native(s, old_slot, &old_present, &old_value) || old_present != 0u ||
         !read_native(s, new_slot, &new_present, &new_value) || new_present != 1u ||
-        new_value != to || !physical(s, &actual) || actual != to || !epoch_ok(s)) {
+        new_value != to || !physical(s, &actual) || actual != to || !owns_current_epoch(s)) {
         if (issued)
             s->quarantined = 1u;
         return 0;
@@ -319,7 +320,7 @@ int po_fx_fs_required_retire_off(pofx_fs_required_t* s, const pofx_required_acti
 int po_fx_fs_required_unbind(pofx_fs_required_t* s)
 {
     uint32_t i;
-    if (!s || !epoch_ok(s))
+    if (!s || !owns_current_epoch(s))
         return 0;
     for (i = 0u; i < POFX_FS_REQUIRED_SLOTS; ++i)
         if (s->slots[i].active)

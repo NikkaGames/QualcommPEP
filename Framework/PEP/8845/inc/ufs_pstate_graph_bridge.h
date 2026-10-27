@@ -18,8 +18,8 @@ typedef struct ufs_pstate_graph_bridge {
     int (*owner_acquire)(void*);
     void (*owner_release)(void*);
     uint64_t serial;
-    power_plan_t* combined;
-    power_plan_t* final;
+    power_sequence_t* combined;
+    power_sequence_t* final;
     uint8_t action_states[POWER_MAX_ACTIONS];
     uint32_t expected_actions;
     uint8_t executing;
@@ -30,8 +30,9 @@ typedef struct ufs_pstate_graph_bridge {
  * callbacks. native FOOTSWITCH must be bound before Seal. */
 
 int ufs_pstate_graph_bridge_bind(ufs_pstate_graph_bridge_t* bridge, res_graph_t* graph,
-                                 power_plan_t* combined, power_plan_t* final, void* owner_ctx,
-                                 int (*owner_acquire)(void*), void (*owner_release)(void*));
+                                 power_sequence_t* combined, power_sequence_t* final,
+                                 void* owner_ctx, int (*owner_acquire)(void*),
+                                 void (*owner_release)(void*));
 
 /* execute the exact BPMD f0/f1 PSTATE_ADJUST trio as ONE owner-locked operation. The
  * component cache advances only on full verified success. */

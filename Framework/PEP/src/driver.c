@@ -123,6 +123,6 @@ NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT driver_object, _In_ PUNICODE_STRING reg
 
     (VOID) etw_reg();
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "driver: build rev=410 wpp-native-build");
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "driver: build rev=411 resource-naming");
     return STATUS_SUCCESS;
 }

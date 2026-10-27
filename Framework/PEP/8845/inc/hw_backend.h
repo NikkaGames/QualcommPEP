@@ -37,7 +37,7 @@ typedef struct hw_backend {
                    const power_snapshot_t*);
     int (*verify_restored)(void* ctx, const char* path, uint32_t d_state, const power_action_t*,
                            const power_snapshot_t*);
-    int (*verify_final)(void* ctx, const char* path, uint32_t d_state, const power_plan_t*);
+    int (*verify_final)(void* ctx, const char* path, uint32_t d_state, const power_sequence_t*);
 
     /* mandatory independent hardware readback. Reads the *effective* current state of (domain,
      * key) directly from the owning controller - not a replay of the PEP's own intended vote,

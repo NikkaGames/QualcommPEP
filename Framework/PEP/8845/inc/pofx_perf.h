@@ -50,10 +50,10 @@ int po_fx_producer_prepare(pofx_producer_t* producer, const void* pinned_desc, s
  * never claims res release or deletes a provider vote. */
 void po_fx_producer_close(pofx_producer_t* producer);
 /* d3 may be in a separate BSMD desc. Recompile it before accepting external physical
- * readback; a caller-supplied plan is not provenance. */
+ * readback; a caller-supplied sequence is not provenance. */
 int po_fx_producer_release(pofx_producer_t* producer, const power_dev_t* verified_d3,
                            const void* pinned_d3_desc, size_t d3_desc_bytes,
-                           runtime_desc_info_t* desc_work, power_plan_t* plan_work,
+                           runtime_desc_info_t* desc_work, power_sequence_t* sequence_work,
                            comp_state_work_t* nonpaged_work, uint64_t live_epoch);
 
 void po_fx_endpoint_retire(pofx_perf_endpoint_t* endpoint);

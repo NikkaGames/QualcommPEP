@@ -44,7 +44,7 @@
     <TargetName>qcpep</TargetName>
     <ProjectGuid>{D2F81A45-C46C-429F-BF98-EC53BCA6616A}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>QcPep8845</RootNamespace>
+    <RootNamespace>qcpep</RootNamespace>
     <VcpkgEnabled>false</VcpkgEnabled>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -86,7 +86,7 @@
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
     </DriverSign>
     <Inf>
-      <TimeStamp>700.32000.0.410</TimeStamp>
+      <TimeStamp>700.32000.0.411</TimeStamp>
     </Inf>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
@@ -107,7 +107,7 @@
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
     </DriverSign>
     <Inf>
-      <TimeStamp>700.32000.0.410</TimeStamp>
+      <TimeStamp>700.32000.0.411</TimeStamp>
     </Inf>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -196,8 +196,8 @@
     <ClCompile Include="..\SystemLibs\clock\8845\src\commit.c">
       <ObjectFileName>$(IntDir)commit_32434925.obj</ObjectFileName>
     </ClCompile>
-    <ClCompile Include="..\SystemLibs\clock\8845\src\plan_gen.c">
-      <ObjectFileName>$(IntDir)plan_gen_47e4e54f.obj</ObjectFileName>
+    <ClCompile Include="..\SystemLibs\clock\8845\src\clock_data.c">
+      <ObjectFileName>$(IntDir)clock_data_47e4e54f.obj</ObjectFileName>
     </ClCompile>
     <ClCompile Include="..\SystemLibs\ICB\8845\src\bus.c">
       <ObjectFileName>$(IntDir)bus_543e2b42.obj</ObjectFileName>
@@ -460,8 +460,8 @@
     <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_oem_irq_group.c">
       <ObjectFileName>$(IntDir)rpmh_oem_irq_group_f718b67e.obj</ObjectFileName>
     </ClCompile>
-    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_oem_pnp_plan.c">
-      <ObjectFileName>$(IntDir)rpmh_oem_pnp_plan_630815ef.obj</ObjectFileName>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\pnp_resources.c">
+      <ObjectFileName>$(IntDir)pnp_resources_630815ef.obj</ObjectFileName>
     </ClCompile>
     <ClCompile Include="..\Framework\PEP\8845\src\irq\rpmh_wdf_lifecycle.c">
       <ObjectFileName>$(IntDir)rpmh_wdf_lifecycle_cfa7f300.obj</ObjectFileName>
@@ -748,7 +748,7 @@
     <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_irq_pipeline.h" />
     <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_irq_rundown.h" />
     <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_oem_irq_group.h" />
-    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_oem_pnp_plan.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\pnp_resources.h" />
     <ClInclude Include="..\Framework\PEP\8845\inc\rpmh_oem_pnp_win.h" />
     <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_oem_read_sequence.h" />
     <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_oem_work.h" />
@@ -801,7 +801,6 @@
     <ClInclude Include="..\api\thermalioct.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\SystemLibs\ICB\8845\data\icb_policy.json" />
     <None Include="..\Framework\PEP\data\aop_subsystem_aliases.inc" />
     <None Include="..\Framework\PEP\data\arc_resource_aliases.inc" />
     <None Include="..\Framework\PEP\data\cmddb_slv_aliases.inc" />

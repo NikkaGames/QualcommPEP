@@ -5426,10 +5426,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->NodeCount = snap.node_cnt;
             out->LinkCount = snap.link_cnt;
             out->ActiveMask = snap.active_mask;
-            out->LastPlanStatus = snap.last_plan_status;
-            out->LastPlanStepCount = snap.last_plan_step_cnt;
-            out->LastPlanFailureCount = snap.last_plan_failure_cnt;
-            out->LastPlanTick100ns = snap.last_plan_tick100ns;
+            out->LastPlanStatus = snap.last_action_sequence_status;
+            out->LastPlanStepCount = snap.last_action_sequence_step_cnt;
+            out->LastPlanFailureCount = snap.last_action_sequence_failure_cnt;
+            out->LastPlanTick100ns = snap.last_action_sequence_tick100ns;
 
             ULONG take = snap.link_cnt;
             if (take > QCPEP_RSCSW_GRAPH_LINK_INFO_CAPACITY)
@@ -5469,10 +5469,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 break;
             }
 
-            rscsw_plan_result_t result;
+            rscsw_action_sequence_result_t result;
             RtlZeroMemory(&result, sizeof(result));
-            status = rsc_sw_execute_plan((const rscsw_plan_step_t*)in->Steps, in->StepCount,
-                                         in->Flags, &result);
+            status = rsc_sw_execute_action_sequence((const rscsw_action_sequence_step_t*)in->Steps,
+                                                    in->StepCount, in->Flags, &result);
 
             QCPEP_RSCSW_PLAN_EXECUTE_OUT* out = NULL;
             size_t out_sz = 0;
@@ -5520,12 +5520,12 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             if (cap > QCPEP_RSCSW_PLAN_HISTORY_INFO_CAPACITY)
                 cap = QCPEP_RSCSW_PLAN_HISTORY_INFO_CAPACITY;
 
-            rscsw_plan_result_t hist[QCPEP_RSCSW_PLAN_HISTORY_INFO_CAPACITY];
+            rscsw_action_sequence_result_t hist[QCPEP_RSCSW_PLAN_HISTORY_INFO_CAPACITY];
             ULONG count = 0;
             ULONG dropped = 0;
             RtlZeroMemory(hist, sizeof(hist));
 
-            status = rsc_sw_get_plan_history(hist, cap, &count, &dropped);
+            status = rsc_sw_get_action_sequence_history(hist, cap, &count, &dropped);
             if (!NT_SUCCESS(status))
                 break;
 
@@ -5560,9 +5560,9 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             if (!NT_SUCCESS(status))
                 break;
 
-            rscsw_plan_preview_snapshot_t snap;
+            rscsw_action_sequence_preview_snapshot_t snap;
             RtlZeroMemory(&snap, sizeof(snap));
-            status = rsc_sw_get_plan_preview_snapshot(&snap);
+            status = rsc_sw_get_action_sequence_preview_snapshot(&snap);
             if (!NT_SUCCESS(status))
                 break;
 
@@ -5605,10 +5605,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 break;
             }
 
-            rscsw_plan_preview_result_t result;
+            rscsw_action_sequence_preview_result_t result;
             RtlZeroMemory(&result, sizeof(result));
-            status = rsc_sw_preview_plan((const rscsw_plan_step_t*)in->Steps, in->StepCount,
-                                         in->Flags, &result);
+            status = rsc_sw_preview_action_sequence((const rscsw_action_sequence_step_t*)in->Steps,
+                                                    in->StepCount, in->Flags, &result);
 
             QCPEP_RSCSW_PLAN_PREVIEW_OUT* out = NULL;
             size_t out_sz = 0;
@@ -5662,12 +5662,13 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             if (cap > QCPEP_RSCSW_PLAN_PREVIEW_HISTORY_INFO_CAPACITY)
                 cap = QCPEP_RSCSW_PLAN_PREVIEW_HISTORY_INFO_CAPACITY;
 
-            rscsw_plan_preview_result_t hist[QCPEP_RSCSW_PLAN_PREVIEW_HISTORY_INFO_CAPACITY];
+            rscsw_action_sequence_preview_result_t
+                hist[QCPEP_RSCSW_PLAN_PREVIEW_HISTORY_INFO_CAPACITY];
             ULONG count = 0;
             ULONG dropped = 0;
             RtlZeroMemory(hist, sizeof(hist));
 
-            status = rsc_sw_get_plan_preview_history(hist, cap, &count, &dropped);
+            status = rsc_sw_get_action_sequence_preview_history(hist, cap, &count, &dropped);
             if (!NT_SUCCESS(status))
                 break;
 
@@ -8257,7 +8258,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastStatus = snap.last_status;
             out->LastModeId = snap.last_mode_id;
             out->LastFlags = snap.last_flags;
-            out->LastPlannedCount = snap.last_planned_cnt;
+            out->LastPlannedCount = snap.last_prepared_cnt;
             out->LastAppliedCount = snap.last_applied_cnt;
             out->LastFailedCount = snap.last_failed_cnt;
             out->LastPolicyVoteCount = snap.last_policy_vote_cnt;
@@ -8323,7 +8324,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 out->Result.ModeId = result.mode_id;
                 out->Result.Flags = result.flags;
                 out->Result.Status = result.status;
-                out->Result.PlannedCount = result.planned_cnt;
+                out->Result.PlannedCount = result.prepared_cnt;
                 out->Result.AppliedCount = result.applied_cnt;
                 out->Result.FailedCount = result.failed_cnt;
                 out->Result.PolicyVoteCount = result.policy_vote_cnt;
@@ -8384,7 +8385,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 out->Entries[i].ModeId = hist[i].mode_id;
                 out->Entries[i].Flags = hist[i].flags;
                 out->Entries[i].Status = hist[i].status;
-                out->Entries[i].PlannedCount = hist[i].planned_cnt;
+                out->Entries[i].PlannedCount = hist[i].prepared_cnt;
                 out->Entries[i].AppliedCount = hist[i].applied_cnt;
                 out->Entries[i].FailedCount = hist[i].failed_cnt;
                 out->Entries[i].PolicyVoteCount = hist[i].policy_vote_cnt;
@@ -8425,7 +8426,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastStatus = snap.last_status;
             out->LastModeId = snap.last_mode_id;
             out->LastFlags = snap.last_flags;
-            out->LastPlannedCount = snap.last_planned_cnt;
+            out->LastPlannedCount = snap.last_prepared_cnt;
             out->LastAppliedCount = snap.last_applied_cnt;
             out->LastFailedCount = snap.last_failed_cnt;
             out->LastRailVoteCount = snap.last_rail_vote_cnt;
@@ -8498,7 +8499,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 out->Result.ModeId = result.mode_id;
                 out->Result.Flags = result.flags;
                 out->Result.Status = result.status;
-                out->Result.PlannedCount = result.planned_cnt;
+                out->Result.PlannedCount = result.prepared_cnt;
                 out->Result.AppliedCount = result.applied_cnt;
                 out->Result.FailedCount = result.failed_cnt;
                 out->Result.RailVoteCount = result.rail_vote_cnt;
@@ -8562,7 +8563,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 out->Entries[i].ModeId = hist[i].mode_id;
                 out->Entries[i].Flags = hist[i].flags;
                 out->Entries[i].Status = hist[i].status;
-                out->Entries[i].PlannedCount = hist[i].planned_cnt;
+                out->Entries[i].PlannedCount = hist[i].prepared_cnt;
                 out->Entries[i].AppliedCount = hist[i].applied_cnt;
                 out->Entries[i].FailedCount = hist[i].failed_cnt;
                 out->Entries[i].RailVoteCount = hist[i].rail_vote_cnt;
@@ -8606,7 +8607,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastStatus = snap.last_status;
             out->LastModeId = snap.last_mode_id;
             out->LastFlags = snap.last_flags;
-            out->LastPlannedCount = snap.last_planned_cnt;
+            out->LastPlannedCount = snap.last_prepared_cnt;
             out->LastProgrammedCount = snap.last_programmed_cnt;
             out->LastFailedCount = snap.last_failed_cnt;
             out->LastPolicyVoteCount = snap.last_policy_vote_cnt;
@@ -8679,7 +8680,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 out->Result.ModeId = result.mode_id;
                 out->Result.Flags = result.flags;
                 out->Result.Status = result.status;
-                out->Result.PlannedCount = result.planned_cnt;
+                out->Result.PlannedCount = result.prepared_cnt;
                 out->Result.ProgrammedCount = result.programmed_cnt;
                 out->Result.FailedCount = result.failed_cnt;
                 out->Result.PolicyVoteCount = result.policy_vote_cnt;
@@ -8741,7 +8742,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 out->Entries[i].ModeId = hist[i].mode_id;
                 out->Entries[i].Flags = hist[i].flags;
                 out->Entries[i].Status = hist[i].status;
-                out->Entries[i].PlannedCount = hist[i].planned_cnt;
+                out->Entries[i].PlannedCount = hist[i].prepared_cnt;
                 out->Entries[i].ProgrammedCount = hist[i].programmed_cnt;
                 out->Entries[i].FailedCount = hist[i].failed_cnt;
                 out->Entries[i].PolicyVoteCount = hist[i].policy_vote_cnt;
@@ -8783,7 +8784,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastStatus = snap.last_status;
             out->LastModeId = snap.last_mode_id;
             out->LastFlags = snap.last_flags;
-            out->LastPlannedCount = snap.last_planned_cnt;
+            out->LastPlannedCount = snap.last_prepared_cnt;
             out->LastSampledCount = snap.last_sampled_cnt;
             out->LastAppliedCount = snap.last_applied_cnt;
             out->LastFailedCount = snap.last_failed_cnt;
@@ -8862,7 +8863,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 out->Result.ModeId = result.mode_id;
                 out->Result.Flags = result.flags;
                 out->Result.Status = result.status;
-                out->Result.PlannedCount = result.planned_cnt;
+                out->Result.PlannedCount = result.prepared_cnt;
                 out->Result.SampledCount = result.sampled_cnt;
                 out->Result.AppliedCount = result.applied_cnt;
                 out->Result.FailedCount = result.failed_cnt;
@@ -8928,7 +8929,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 out->Entries[i].ModeId = hist[i].mode_id;
                 out->Entries[i].Flags = hist[i].flags;
                 out->Entries[i].Status = hist[i].status;
-                out->Entries[i].PlannedCount = hist[i].planned_cnt;
+                out->Entries[i].PlannedCount = hist[i].prepared_cnt;
                 out->Entries[i].SampledCount = hist[i].sampled_cnt;
                 out->Entries[i].AppliedCount = hist[i].applied_cnt;
                 out->Entries[i].FailedCount = hist[i].failed_cnt;
@@ -8974,7 +8975,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastStatus = snap.last_status;
             out->LastModeId = snap.last_mode_id;
             out->LastFlags = snap.last_flags;
-            out->LastPlannedCount = snap.last_planned_cnt;
+            out->LastPlannedCount = snap.last_prepared_cnt;
             out->LastAppliedCount = snap.last_applied_cnt;
             out->LastFailedCount = snap.last_failed_cnt;
             out->LastExecutedPhaseMask = snap.last_executed_phase_mask;
@@ -9034,7 +9035,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 out->Result.ModeId = result.mode_id;
                 out->Result.Flags = result.flags;
                 out->Result.Status = result.status;
-                out->Result.PlannedCount = result.planned_cnt;
+                out->Result.PlannedCount = result.prepared_cnt;
                 out->Result.AppliedCount = result.applied_cnt;
                 out->Result.FailedCount = result.failed_cnt;
                 out->Result.ExecutedPhaseMask = result.executed_phase_mask;
@@ -9104,7 +9105,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 out->Entries[i].ModeId = hist[i].mode_id;
                 out->Entries[i].Flags = hist[i].flags;
                 out->Entries[i].Status = hist[i].status;
-                out->Entries[i].PlannedCount = hist[i].planned_cnt;
+                out->Entries[i].PlannedCount = hist[i].prepared_cnt;
                 out->Entries[i].AppliedCount = hist[i].applied_cnt;
                 out->Entries[i].FailedCount = hist[i].failed_cnt;
                 out->Entries[i].ExecutedPhaseMask = hist[i].executed_phase_mask;

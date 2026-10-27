@@ -1,4 +1,4 @@
-/* the runtime ACPI -> provider graph bridge. This code only builds plans; no DEVICE is
+/* the runtime ACPI -> provider graph bridge. This code only builds sequences; no DEVICE is
  * prepared and no GPIO, RPMh, ACPI power or PoFx vote is sent. */
 
 #include "res_graph.h"
@@ -23,7 +23,7 @@ static int inspect_fstate_action(const aeob_action_t* action, void* ctx)
     return 1;
 }
 
-/* these remain READ-ONLY plans: no provider owns UFS and PoFx admission stays denied. */
+/* these remain READ-ONLY sequences: no provider owns UFS and PoFx admission stays denied. */
 
 typedef struct ufs_pstate_audit {
     uint32_t set_id, state_id, calls;
@@ -84,7 +84,7 @@ static int audit_ufs_pstate_action(const aeob_action_t* a, void* ctx)
 }
 
 int graph_build_from_descriptors(res_graph_t* graph, const graph_desc_t* descriptors, uint32_t cnt,
-                                 power_plan_t* scratch, graph_build_workspace_t* workspace)
+                                 power_sequence_t* scratch, graph_build_workspace_t* workspace)
 {
     uint32_t dev_cnt = 0, i, j, state;
     if (!graph || !descriptors || !scratch || !workspace || cnt == 0u ||
@@ -136,7 +136,7 @@ int graph_build_from_descriptors(res_graph_t* graph, const graph_desc_t* descrip
                     goto fail;
                 if (power_compile_aeo_b(descriptors[j].buf, descriptors[j].bytes,
                                         workspace->paths[i], state, scratch) != POWER_OK ||
-                    !graph_add_plan(graph, scratch))
+                    !graph_add_sequence(graph, scratch))
                     goto fail;
             }
             if (hits != 1)

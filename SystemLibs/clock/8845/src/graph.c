@@ -207,20 +207,20 @@ static int restored(void* v, const char* path, uint32_t st, const power_action_t
            before.freq_slot == now.freq_slot;
 }
 
-static int final(void* v, const char* path, uint32_t st, const power_plan_t* plan)
+static int verify_state(void* v, const char* path, uint32_t st, const power_sequence_t* sequence)
 {
     hybrid_clock_ctx_t* c = v;
     uint32_t i, extended = 0u;
-    power_plan_t* filtered;
-    if (!c || !plan || !path || !c->filter_scratch || strcmp(path, plan->dev_path) ||
-        st != plan->target_d_state || plan->action_cnt > POWER_MAX_ACTIONS)
+    power_sequence_t* filtered;
+    if (!c || !sequence || !path || !c->filter_scratch || strcmp(path, sequence->dev_path) ||
+        st != sequence->target_d_state || sequence->action_cnt > POWER_MAX_ACTIONS)
         return 0;
     filtered = c->filter_scratch;
     memset(filtered, 0, sizeof(*filtered));
     memcpy(filtered->dev_path, path, strlen(path) + 1u);
     filtered->target_d_state = st;
-    for (i = 0; i < plan->action_cnt; ++i) {
-        const power_action_t* a = &plan->actions[i];
+    for (i = 0; i < sequence->action_cnt; ++i) {
+        const power_action_t* a = &sequence->actions[i];
         hybrid_clock_entry_t* e;
         if (a->kind != POWER_CLOCK)
             continue;
@@ -240,7 +240,7 @@ static int final(void* v, const char* path, uint32_t st, const power_plan_t* pla
     return 1;
 }
 
-static int cnt_action(const power_plan_t* p, const hybrid_clock_entry_t* e, uint32_t st)
+static int cnt_action(const power_sequence_t* p, const hybrid_clock_entry_t* e, uint32_t st)
 {
     uint32_t i;
     int cnt = 0;
@@ -397,7 +397,7 @@ int clock_hybrid_discover(const res_graph_t* g, clock_composite_resolve_t resolv
 
 int clock_hybrid_make_provider(hybrid_clock_ctx_t* c, const res_graph_t* g,
                                const graph_provider_t* simple, const hybrid_clock_entry_t* entries,
-                               uint32_t cnt, power_plan_t* scratch,
+                               uint32_t cnt, power_sequence_t* scratch,
                                clock_native_match_query_t query, void* query_ctx,
                                graph_provider_t* out)
 {
@@ -456,6 +456,6 @@ int clock_hybrid_make_provider(hybrid_clock_ctx_t* c, const res_graph_t* g,
     out->verify = verify;
     out->restore = restore;
     out->verify_restored = restored;
-    out->verify_final = final;
+    out->verify_final = verify_state;
     return 1;
 }

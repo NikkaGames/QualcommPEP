@@ -2,7 +2,7 @@
 #include <string.h>
 #include <limits.h>
 
-static int safe_name(const char* name)
+static int valid_scalar_name(const char* name)
 {
     unsigned i;
     if (!name)
@@ -158,7 +158,7 @@ static int native_clock_name(const char* name, uint32_t mode)
      * and must never enter the freq client transport. implements only simple hz and /enable
      * classes. */
 
-    if (!safe_name(name) || strncmp(name, "/clk/", 5) != 0)
+    if (!valid_scalar_name(name) || strncmp(name, "/clk/", 5) != 0)
         return 0;
     base = name + 5;
     slash = strchr(base, '/');
@@ -243,7 +243,7 @@ int scalar_attach_with_baseline(scalar_res_t* r, const char* name, const scalar_
 {
     uint32_t state = UINT32_MAX;
     if (!r || !io || !io->owns_exclusive || !io->write_effective || !io->read_effective ||
-        !io->allows_vote || !safe_name(name) || r->active || r->quarantined ||
+        !io->allows_vote || !valid_scalar_name(name) || r->active || r->quarantined ||
         r->generation == UINT32_MAX)
         return 0;
     /* nonzero initialization cannot be inferred just because a clock is on: a different

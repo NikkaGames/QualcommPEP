@@ -20,8 +20,8 @@ int ufs_catalog_verify_pinned_desc(const ufs_catalog_t* authoritative, const voi
     if (!ufs_catalog_compile(candidate, desc, bytes))
         return 0;
     for (state = 0u; state < UFS_FSTATES; ++state) {
-        const power_plan_t* a = &authoritative->f_states[state];
-        const power_plan_t* b = &candidate->f_states[state];
+        const power_sequence_t* a = &authoritative->f_states[state];
+        const power_sequence_t* b = &candidate->f_states[state];
         if (a->action_cnt != b->action_cnt || a->target_d_state != b->target_d_state ||
             memcmp(a->dev_path, b->dev_path, sizeof(a->dev_path)))
             return 0;

@@ -26,13 +26,14 @@ int rpmh_wdf_lifecycle_prepare(rpmh_wdf_lifecycle_t* life, uint64_t generation)
 int rpmh_wdf_lifecycle_observe(rpmh_wdf_lifecycle_t* life,
                                const rpmh_oem_pnp_observation_t* observation)
 {
-    rpmh_oem_pnp_plan_t plan = {0};
+    rpmh_pnp_resources_t sequence = {0};
     const rpmh_oem_pnp_match_t* m;
     if (!life || !observation || life->phase != RPMH_WDF_PREPARED || life->candidate_observed ||
         !life->pnp_generation ||
-        !rpmh_oem_pnp_observation_read(observation, life->pnp_generation, &plan) || plan.cnt != 1u)
+        !rpmh_oem_pnp_observation_read(observation, life->pnp_generation, &sequence) ||
+        sequence.cnt != 1u)
         return 0;
-    m = &plan.matches[0];
+    m = &sequence.matches[0];
     if (m->driver_id != RPMH_OEM_8480_DRIVER_ID || m->gic_intid != RPMH_OEM_8480_INTID ||
         m->owner_epoch != life->pnp_generation || !m->win_vector || !m->win_level)
         return 0;

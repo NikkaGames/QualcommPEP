@@ -9,7 +9,7 @@
 #include "etw.h"
 #include "resource_ddi.h"
 #include "rsc_irq_snapshot.h"
-#include "rpmh_oem_pnp_plan.h"
+#include "pnp_resources.h"
 #include "rpmh_wdf_lifecycle.h"
 #include "oem_pnp_d0_lease.h"
 #include "oem_rsc_identity_win.h"

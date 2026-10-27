@@ -35,7 +35,7 @@ rsc_irq_result_t rsc_irq_process(rsc_completion_t* ledger, const rsc_irq_io_t* i
                                  uint32_t owner_epoch, uint8_t slot, uint32_t req_id,
                                  uint16_t expected_command_mask);
 
-/* both masks must match the immutable ticket and committed hardware plan. The owner serializes
+/* both masks must match the immutable ticket and committed hardware sequence. The owner serializes
  * ISR/worker access. */
 
 rsc_irq_result_t rsc_irq_process_with_dependencies(rsc_completion_t* ledger, const rsc_irq_io_t* io,

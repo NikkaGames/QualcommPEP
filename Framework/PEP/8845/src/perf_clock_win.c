@@ -9,7 +9,7 @@ struct clock_perf_scope {
 };
 
 typedef struct clock_perf_work {
-    power_plan_t plan;
+    power_sequence_t sequence;
     power_scratch_t scratch;
 } clock_perf_work_t;
 
@@ -107,9 +107,9 @@ static int req(clock_perf_scope_t* s, pep_req_comp_perf_state_t* r)
     if (!work)
         return 1;
     RtlZeroMemory(work, sizeof(*work));
-    RtlCopyMemory(work->plan.dev_path, s->catalog.path, sizeof(s->catalog.path));
-    work->plan.action_cnt = 1u;
-    action = &work->plan.actions[0];
+    RtlCopyMemory(work->sequence.dev_path, s->catalog.path, sizeof(s->catalog.path));
+    work->sequence.action_cnt = 1u;
+    action = &work->sequence.actions[0];
     action->kind = POWER_CLOCK;
     RtlCopyMemory(action->u.clock.name, s->catalog.clock, sizeof(s->catalog.clock));
     action->u.clock.vote = 3u;
@@ -124,11 +124,12 @@ static int req(clock_perf_scope_t* s, pep_req_comp_perf_state_t* r)
             ExFreePool(work);
             return 1;
         }
-        work->plan.target_d_state = target;
+        work->sequence.target_d_state = target;
         /* the existing transaction engine snapshots the original client vote, commits the named
          * clock through its owner and verifies physical readback. An uncertain rollback is
          * retained across later requests. */
-        result = power_execute_clock_rate(&work->plan, s->binding.backend, &trace, &work->scratch);
+        result =
+            power_execute_clock_rate(&work->sequence, s->binding.backend, &trace, &work->scratch);
         if (result == POWER_ROLLBACK_FAILED)
             InterlockedExchange(&s->quarantined, 1);
         if (result == POWER_OK) {

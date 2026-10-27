@@ -279,7 +279,7 @@
     <ClCompile Include="..\SystemLibs\clock\8845\src\commit.c">
       <Filter>SystemLibs\clock\8845\src</Filter>
     </ClCompile>
-    <ClCompile Include="..\SystemLibs\clock\8845\src\plan_gen.c">
+    <ClCompile Include="..\SystemLibs\clock\8845\src\clock_data.c">
       <Filter>SystemLibs\clock\8845\src</Filter>
     </ClCompile>
     <ClCompile Include="..\SystemLibs\ICB\8845\src\bus.c">
@@ -540,7 +540,7 @@
     <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_oem_irq_group.c">
       <Filter>SystemLibs\RPMh\8845\src</Filter>
     </ClCompile>
-    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_oem_pnp_plan.c">
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\pnp_resources.c">
       <Filter>SystemLibs\RPMh\8845\src</Filter>
     </ClCompile>
     <ClCompile Include="..\Framework\PEP\8845\src\irq\rpmh_wdf_lifecycle.c">
@@ -1076,7 +1076,7 @@
     <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_oem_irq_group.h">
       <Filter>SystemLibs\RPMh\8845\inc</Filter>
     </ClInclude>
-    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_oem_pnp_plan.h">
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\pnp_resources.h">
       <Filter>SystemLibs\RPMh\8845\inc</Filter>
     </ClInclude>
     <ClInclude Include="..\Framework\PEP\8845\inc\rpmh_oem_pnp_win.h">
@@ -1294,9 +1294,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\SystemLibs\ICB\8845\data\icb_policy.json">
-      <Filter>SystemLibs\ICB\8845\data</Filter>
-    </None>
     <None Include="..\Framework\PEP\data\aop_subsystem_aliases.inc">
       <Filter>Framework\PEP\data</Filter>
     </None>

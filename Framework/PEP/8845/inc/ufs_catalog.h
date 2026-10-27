@@ -13,7 +13,7 @@ extern "C" {
 #define UFS_FSTATES 2u
 
 typedef struct ufs_catalog {
-    power_plan_t f_states[UFS_FSTATES];
+    power_sequence_t f_states[UFS_FSTATES];
     power_pstate_program_t p_states[UFS_PSTATE_SETS][UFS_STATES_PER_SET];
     uint8_t compiled;
 } ufs_catalog_t;
@@ -29,8 +29,8 @@ int ufs_catalog_verify_pinned_desc(const ufs_catalog_t* authoritative, const voi
 
 const power_pstate_program_t* ufs_catalog_get(const ufs_catalog_t* catalog, uint32_t comp,
                                               uint32_t set, uint32_t state);
-const power_plan_t* ufs_catalog_f_state(const ufs_catalog_t* catalog, uint32_t comp,
-                                        uint32_t fstate);
+const power_sequence_t* ufs_catalog_f_state(const ufs_catalog_t* catalog, uint32_t comp,
+                                            uint32_t fstate);
 #ifdef __cplusplus
 }
 #endif

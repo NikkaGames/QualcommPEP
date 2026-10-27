@@ -1,7 +1,7 @@
 #include "oem_direct_rsc_map.h"
 #include <string.h>
 
-static int owner_ok(const oem_direct_rsc_map_t* s)
+static int owns_mapping(const oem_direct_rsc_map_t* s)
 {
     return s->io.owns && s->io.owns(s->io.ctx, s->owner_epoch) == 1 &&
            s->io.owns(s->io.ctx, s->owner_epoch) == 1;
@@ -15,7 +15,7 @@ int oem_direct_rsc_map_acquire(oem_direct_rsc_map_t* s, const oem_rsc_map_io_t* 
         return 0;
     s->io = *io;
     s->owner_epoch = epoch;
-    if (!owner_ok(s)) {
+    if (!owns_mapping(s)) {
         s->phase = OEM_RSC_MAP_FAULT;
         return 0;
     }
@@ -25,7 +25,7 @@ int oem_direct_rsc_map_acquire(oem_direct_rsc_map_t* s, const oem_rsc_map_io_t* 
         return 0;
     }
 
-    if (!owner_ok(s)) {
+    if (!owns_mapping(s)) {
         io->unmap(io->ctx, mapped, OEM_RSC_DIRECT_BYTES);
         s->phase = OEM_RSC_MAP_FAULT;
         return 0;
@@ -40,7 +40,7 @@ void* oem_direct_rsc_map_borrow(oem_direct_rsc_map_t* s, uint64_t epoch)
     if (!s || s->phase != OEM_RSC_MAP_LIVE || !s->mapped || epoch != s->owner_epoch ||
         s->borrowers == UINT32_MAX)
         return 0;
-    if (!owner_ok(s)) {
+    if (!owns_mapping(s)) {
         s->phase = OEM_RSC_MAP_FAULT;
         return 0;
     }

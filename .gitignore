@@ -24,6 +24,13 @@
 *.lastbuildstate
 *.binlog
 *.log
+*.sys
+*.cat
+*.cer
+*.etl
+*.json
+*.jsonc
+*.json5
 
 # Python caches and external signing keys
 __pycache__/

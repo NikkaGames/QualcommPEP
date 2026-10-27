@@ -110,7 +110,7 @@ static int peer_apply(void* v, const power_action_t* a);
 static int peer_verify(void* v, const power_action_t* a);
 static int peer_restore(void* v, const power_action_t* a, const power_snapshot_t* snap);
 static int peer_verify_restored(void* v, const power_action_t* a, const power_snapshot_t* snap);
-static int peer_verify_final(void* v, const power_plan_t* plan);
+static int peer_verify_final(void* v, const power_sequence_t* sequence);
 static VOID peer_init_adapter(peer_native_scope_t* s);
 BOOLEAN runtime_acpi_path(const UNICODE_STRING* id, char out[256]);
 static int runtime_d_lock(void* v);
@@ -123,7 +123,7 @@ static int runtime_d_verify(void* v, const power_action_t* a);
 static int runtime_d_restore(void* v, const power_action_t* a, const power_snapshot_t* snap);
 static int runtime_d_verify_restored(void* v, const power_action_t* a,
                                      const power_snapshot_t* snap);
-static int runtime_d_verify_final(void* v, const power_plan_t* plan);
+static int runtime_d_verify_final(void* v, const power_sequence_t* sequence);
 static VOID runtime_d_init_adapter(runtime_dstate_native_t* s);
 static int runtime_d_ready(void* ctx);
 power_result_t pep_runtime_d_execute(runtime_dstate_native_t* scope, ULONG target);
@@ -143,8 +143,8 @@ BOOLEAN pep_ufs_comp_desc_matches_graph(const char* path);
 int pep_native_owner_lock(void* ctx);
 void pep_native_owner_unlock(void* ctx);
 static int pep_native_owner_supports(void* ctx, const power_action_t* action);
-static int pep_native_owner_verify(void* ctx, const power_plan_t* plan);
-static power_result_t pep_native_owner_execute(void* ctx, const power_plan_t* plan,
+static int pep_native_owner_verify(void* ctx, const power_sequence_t* sequence);
+static power_result_t pep_native_owner_execute(void* ctx, const power_sequence_t* sequence,
                                                power_execution_t* trace);
 static graph_dev_t* pep_native_ufs_graph_dev(res_graph_t* graph);
 BOOLEAN pep_prepare_native_ufs_scope(pep_devnode_t* n, const char* path);
@@ -1263,13 +1263,13 @@ power_result_t pep_run_molokai_lifecycle(_In_ const UNICODE_STRING* dev_id, _In_
     return result;
 }
 
-/* execute D-state plans on PoFx transitions without repeating PREPARE's verified D0. Providers
+/* execute D-state sequences on PoFx transitions without repeating PREPARE's verified D0. Providers
  * retain their authorization and lifetime requirements. */
 
 static power_result_t pep_run_molokai_d_state(_In_ const UNICODE_STRING* dev_id, _In_ ULONG state)
 {
     power_scratch_t* scratch;
-    power_plan_t* expanded = NULL;
+    power_sequence_t* expanded = NULL;
     power_execution_t trace;
     power_result_t result;
     ULONG i, nested = 0u;
@@ -1308,7 +1308,7 @@ BOOLEAN pep_is_molokai_dpm_execution_ready(_In_ const UNICODE_STRING* dev_id)
     return TRUE;
 }
 
-/* native execution of SMMC f0/f1 through the same epoch-verified provider as DSDT plans.
+/* native execution of SMMC f0/f1 through the same epoch-verified provider as DSDT sequences.
  * The entire F-state transaction owns ONE provider rundown lease; every hardware callback
  * receives the exact peer path. */
 
@@ -1404,7 +1404,7 @@ power_result_t pep_run_peer_f_state(peer_native_scope_t* s, ULONG state, power_e
 static power_result_t pep_run_peer_d_state(peer_native_scope_t* s, ULONG target)
 {
     power_result_t result = POWER_UNSUPPORTED;
-    const power_plan_t* plan;
+    const power_sequence_t* sequence;
     ULONG state;
     if (!s || (target != 0u && target != 3u) ||
         !pep_claim_res_transaction(&s->target_f_state, 0, s, peer_ready))
@@ -1430,10 +1430,10 @@ static power_result_t pep_run_peer_d_state(peer_native_scope_t* s, ULONG target)
     if (state > 1u || (target == 3u && state != 1u))
         goto done;
     InterlockedExchange(&s->target_f_state, (LONG)state);
-    plan = state == 0u ? &s->comp.f0 : &s->comp.f1;
+    sequence = state == 0u ? &s->comp.f0 : &s->comp.f1;
     if (s->adapter.lock && s->adapter.unlock && s->adapter.verify_current_state &&
         s->adapter.lock(s)) {
-        if (s->adapter.verify_current_state(s, plan))
+        if (s->adapter.verify_current_state(s, sequence))
             result = POWER_OK;
         else
             s->comp.state.state_known = 0u;
@@ -1487,11 +1487,11 @@ static int peer_verify_restored(void* v, const power_action_t* a, const power_sn
                                      snap);
 }
 
-static int peer_verify_final(void* v, const power_plan_t* plan)
+static int peer_verify_final(void* v, const power_sequence_t* sequence)
 {
     peer_native_scope_t* s = v;
-    return s && s->lease_state == 2 && s->leased.verify_final && plan &&
-           s->leased.verify_final(s->leased.ctx, s->comp.path, plan->target_d_state, plan);
+    return s && s->lease_state == 2 && s->leased.verify_final && sequence &&
+           s->leased.verify_final(s->leased.ctx, s->comp.path, sequence->target_d_state, sequence);
 }
 
 static VOID peer_init_adapter(peer_native_scope_t* s)
@@ -1629,16 +1629,17 @@ static int runtime_d_verify_restored(void* v, const power_action_t* a, const pow
            s->leased.verify_restored(s->leased.ctx, s->program.idx.path, (uint32_t)state, a, snap);
 }
 
-static int runtime_d_verify_final(void* v, const power_plan_t* plan)
+static int runtime_d_verify_final(void* v, const power_sequence_t* sequence)
 {
     runtime_dstate_native_t* s = v;
     int state = runtime_d_state(s);
-    if (state < 0 || !plan || !s->leased.verify_final)
+    if (state < 0 || !sequence || !s->leased.verify_final)
         return 0;
-    if (plan->action_cnt) {
-        return s->leased.verify_final(s->leased.ctx, s->program.idx.path, (uint32_t)state, plan);
+    if (sequence->action_cnt) {
+        return s->leased.verify_final(s->leased.ctx, s->program.idx.path, (uint32_t)state,
+                                      sequence);
     }
-    /* under the owner/graph lock, verify the last resource-voting plan. Empty actions cannot
+    /* under the owner/graph lock, verify the last resource-voting sequence. Empty actions cannot
      * establish success or authorize inferred withdrawals. */
 
     if ((state != 1 && state != 2) || !s->program.physical.state_known ||
@@ -1646,10 +1647,10 @@ static int runtime_d_verify_final(void* v, const power_plan_t* plan)
         return 0;
     {
         const ULONG prev = s->program.last_nonempty_target;
-        const power_plan_t* prior = (prev == 0u)   ? &s->program.d0
-                                    : (prev == 1u) ? &s->program.d1
-                                    : (prev == 2u) ? &s->program.d2
-                                                   : &s->program.d3;
+        const power_sequence_t* prior = (prev == 0u)   ? &s->program.d0
+                                        : (prev == 1u) ? &s->program.d1
+                                        : (prev == 2u) ? &s->program.d2
+                                                       : &s->program.d3;
         return prior->action_cnt && prior->target_d_state == prev &&
                s->leased.verify_final(s->leased.ctx, s->program.idx.path, prev, prior);
     }
@@ -1702,10 +1703,10 @@ power_result_t pep_runtime_d_execute(runtime_dstate_native_t* scope, ULONG targe
     if (result != POWER_OK &&
         (!(scope->program.quarantined || scope->program.physical.quarantined) ||
          InterlockedCompareExchange(&scope->terminal_failure_reported, 1, 0) == 0)) {
-        const power_plan_t* plan = (target == 0u)   ? &scope->program.d0
-                                   : (target == 1u) ? &scope->program.d1
-                                   : (target == 2u) ? &scope->program.d2
-                                                    : &scope->program.d3;
+        const power_sequence_t* sequence = (target == 0u)   ? &scope->program.d0
+                                           : (target == 1u) ? &scope->program.d1
+                                           : (target == 2u) ? &scope->program.d2
+                                                            : &scope->program.d3;
         TraceEvents(TRACE_LEVEL_WARNING, TRACE_POWER,
                     "dpm: path=%s D%lu result=%d action=%lu applied=%lu restored=%lu",
                     scope->program.idx.path, target, (int)result, trace.failure_idx, trace.applied,
@@ -1713,8 +1714,8 @@ power_result_t pep_runtime_d_execute(runtime_dstate_native_t* scope, ULONG targe
         /* an unsupported preflight action never touches MMIO. report its desc identity rather than
          * guessing which native provider failed. This is diagnostic only and never changes
          * admission. */
-        if (result == POWER_UNSUPPORTED && trace.failure_idx < plan->action_cnt) {
-            const power_action_t* a = &plan->actions[trace.failure_idx];
+        if (result == POWER_UNSUPPORTED && trace.failure_idx < sequence->action_cnt) {
+            const power_action_t* a = &sequence->actions[trace.failure_idx];
             if (a->kind == POWER_CLOCK)
                 TraceEvents(TRACE_LEVEL_WARNING, TRACE_CLOCK, "clock: unsupported name=%s vote=%lu",
                             a->u.clock.name, (ULONG)a->u.clock.vote);
@@ -2198,33 +2199,34 @@ static int pep_native_owner_supports(void* ctx, const power_action_t* action)
     return 0;
 }
 
-static int pep_native_owner_verify(void* ctx, const power_plan_t* plan)
+static int pep_native_owner_verify(void* ctx, const power_sequence_t* sequence)
 {
     pep_native_producer_scope_t* scope = ctx;
     res_graph_t* graph;
     ULONG i, j;
     BOOLEAN desc_matches = FALSE;
-    if (!scope || !scope->serial || !(graph = scope->graph) || !plan ||
+    if (!scope || !scope->serial || !(graph = scope->graph) || !sequence ||
         graph->native_ufs_owner_epoch != scope->serial ||
         scope->serial != hw_backend_verified_serial())
         return 0;
-    if (plan->target_d_state != 3u)
-        return hw_backend_win_ufs_program_verify(plan, scope->serial);
+    if (sequence->target_d_state != 3u)
+        return hw_backend_win_ufs_program_verify(sequence, scope->serial);
     /* producerrelease must prove the d3 program is the retained graph d3. A matching path and
      * physical readback are insufficient provenance. */
     if (!graph->acquire || !graph->release || !graph->acquire(graph->lock_ctx))
         return 0;
     if (graph->sealed && !graph->retired && !graph->quiescing &&
-        graph->dev_cnt <= GRAPH_MAX_DEVICES && plan->action_cnt &&
-        plan->action_cnt <= POWER_MAX_ACTIONS) {
+        graph->dev_cnt <= GRAPH_MAX_DEVICES && sequence->action_cnt &&
+        sequence->action_cnt <= POWER_MAX_ACTIONS) {
         for (i = 0u; i < graph->dev_cnt; ++i) {
             const graph_dev_t* dev = &graph->devices[i];
             if (strcmp(dev->path, "\\_SB.UFS0") || !dev->has_d3 ||
-                plan->action_cnt != dev->d3.action_cnt || strcmp(plan->dev_path, dev->d3.dev_path))
+                sequence->action_cnt != dev->d3.action_cnt ||
+                strcmp(sequence->dev_path, dev->d3.dev_path))
                 continue;
             desc_matches = TRUE;
-            for (j = 0u; j < plan->action_cnt; ++j)
-                if (RtlCompareMemory(&plan->actions[j], &dev->d3.actions[j],
+            for (j = 0u; j < sequence->action_cnt; ++j)
+                if (RtlCompareMemory(&sequence->actions[j], &dev->d3.actions[j],
                                      sizeof(power_action_t)) != sizeof(power_action_t)) {
                     desc_matches = FALSE;
                     break;
@@ -2236,7 +2238,7 @@ static int pep_native_owner_verify(void* ctx, const power_plan_t* plan)
     return desc_matches && graph_verify_native_ufs_d3(graph, "\\_SB.UFS0", scope->serial);
 }
 
-static power_result_t pep_native_owner_execute(void* ctx, const power_plan_t* plan,
+static power_result_t pep_native_owner_execute(void* ctx, const power_sequence_t* sequence,
                                                power_execution_t* trace)
 {
     pep_native_producer_scope_t* scope = ctx;
@@ -2247,7 +2249,7 @@ static power_result_t pep_native_owner_execute(void* ctx, const power_plan_t* pl
     fstate = &scope->producer.owner.comp[0];
     if (!fstate->state_known)
         fstate = NULL; /* initial F0 requires verified D0. */
-    return hw_backend_win_ufs_program_execute(plan, scope->serial, scope->verified_d0, fstate,
+    return hw_backend_win_ufs_program_execute(sequence, scope->serial, scope->verified_d0, fstate,
                                               trace);
 }
 
@@ -2417,7 +2419,7 @@ BOOLEAN pep_native_ufs_retire(pep_devnode_t* n, const UNICODE_STRING* dev_id)
     pep_native_producer_scope_t* scope;
     comp_state_work_t* work;
     runtime_desc_info_t* d3_info = NULL;
-    power_plan_t* d3_plan = NULL;
+    power_sequence_t* d3_sequence = NULL;
     program_idx_t* d3_idx = NULL;
     UCHAR* d3_blob = NULL;
     ULONG d3_bytes = 0u;
@@ -2447,10 +2449,10 @@ BOOLEAN pep_native_ufs_retire(pep_devnode_t* n, const UNICODE_STRING* dev_id)
         return FALSE;
     d3_blob = ExAllocatePool2(POOL_FLAG_NON_PAGED, d3_bytes, POOL_TAG);
     d3_info = ExAllocatePool2(POOL_FLAG_NON_PAGED, sizeof(*d3_info), POOL_TAG);
-    d3_plan = ExAllocatePool2(POOL_FLAG_NON_PAGED, sizeof(*d3_plan), POOL_TAG);
+    d3_sequence = ExAllocatePool2(POOL_FLAG_NON_PAGED, sizeof(*d3_sequence), POOL_TAG);
     d3_idx = ExAllocatePool2(POOL_FLAG_NON_PAGED, sizeof(*d3_idx), POOL_TAG);
     work = ExAllocatePool2(POOL_FLAG_NON_PAGED, sizeof(*work), POOL_TAG);
-    if (!d3_blob || !d3_info || !d3_plan || !d3_idx || !work)
+    if (!d3_blob || !d3_info || !d3_sequence || !d3_idx || !work)
         goto release_done;
     status = pep_ufs_src_copy("BSMD", d3_blob, d3_bytes, &d3_bytes);
     if (!NT_SUCCESS(status))
@@ -2458,9 +2460,9 @@ BOOLEAN pep_native_ufs_retire(pep_devnode_t* n, const UNICODE_STRING* dev_id)
     /* fail before f1/d3 if the recovered D-state desc cannot compile. */
     if (!program_idx_describe(d3_blob, d3_bytes, "\\_SB.UFS0", d3_info, d3_idx) ||
         !d3_idx->has_d3 ||
-        program_idx_compile(d3_idx, d3_blob, d3_bytes, PROGRAM_D_STATE, 0u, 0u, 3u, d3_plan,
+        program_idx_compile(d3_idx, d3_blob, d3_bytes, PROGRAM_D_STATE, 0u, 0u, 3u, d3_sequence,
                             NULL) != POWER_OK ||
-        !d3_plan->action_cnt)
+        !d3_sequence->action_cnt)
         goto release_done;
     if (!scope->f1_release_verified) {
         if (!scope->verified_d0->state_known || scope->verified_d0->current_d_state != 0u)
@@ -2481,14 +2483,14 @@ BOOLEAN pep_native_ufs_retire(pep_devnode_t* n, const UNICODE_STRING* dev_id)
             goto release_done;
     }
     released = (BOOLEAN)po_fx_producer_release(&scope->producer, scope->verified_d0, d3_blob,
-                                               d3_bytes, d3_info, d3_plan, work, scope->serial);
+                                               d3_bytes, d3_info, d3_sequence, work, scope->serial);
 release_done:
     if (work)
         ExFreePool(work);
     if (d3_idx)
         ExFreePool(d3_idx);
-    if (d3_plan)
-        ExFreePool(d3_plan);
+    if (d3_sequence)
+        ExFreePool(d3_sequence);
     if (d3_info)
         ExFreePool(d3_info);
     if (d3_blob)
