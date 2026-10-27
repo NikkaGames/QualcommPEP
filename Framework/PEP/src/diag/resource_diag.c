@@ -3454,16 +3454,16 @@ static const rscsw_stabilization_lane_desc_t g_rsc_sw_stabilization_lane_descrip
      RSCSW_SUBSYS_BIT(RSC_SW_SUBSYSTEM_AOP) | RSCSW_SUBSYS_BIT(RSC_SW_SUBSYSTEM_ARC) |
          RSCSW_SUBSYS_BIT(RSC_SW_SUBSYSTEM_PCU) | RSCSW_SUBSYS_BIT(RSC_SW_SUBSYSTEM_PDC) |
          RSCSW_SUBSYS_BIT(RSC_SW_SUBSYSTEM_RSC) | RSCSW_SUBSYS_BIT(RSC_SW_SUBSYSTEM_ARC_MGR),
-     RSCSW_PROFILE_BRINGUP, QCPEP_RSCSW_STABILIZATION_FLAG_INCLUDE_CONTROL_LANE},
+     RSCSW_PROFILE_BRINGUP, IOCTL_RSC_STABILIZATION_FLAG_INCLUDE_CONTROL_LANE},
     {RSCSW_STAB_LANE_INTERCONNECT, "INTERCONNECT",
      RSCSW_SUBSYS_BIT(RSC_SW_SUBSYSTEM_CMD_DB) | RSCSW_SUBSYS_BIT(RSC_SW_SUBSYSTEM_GLINK) |
          RSCSW_SUBSYS_BIT(RSC_SW_SUBSYSTEM_ICB) | RSCSW_SUBSYS_BIT(RSC_SW_SUBSYSTEM_NPA) |
          RSCSW_SUBSYS_BIT(RSC_SW_SUBSYSTEM_PPP) | RSCSW_SUBSYS_BIT(RSC_SW_SUBSYSTEM_RPMH),
-     RSCSW_PROFILE_INTERCONNECT, QCPEP_RSCSW_STABILIZATION_FLAG_INCLUDE_INTERCONNECT_LANE},
+     RSCSW_PROFILE_INTERCONNECT, IOCTL_RSC_STABILIZATION_FLAG_INCLUDE_INTERCONNECT_LANE},
     {RSCSW_STAB_LANE_THERMAL, "THERMAL",
      RSCSW_SUBSYS_BIT(RSC_SW_SUBSYSTEM_CLOCK) | RSCSW_SUBSYS_BIT(RSC_SW_SUBSYSTEM_DAL) |
          RSCSW_SUBSYS_BIT(RSC_SW_SUBSYSTEM_TLMM) | RSCSW_SUBSYS_BIT(RSC_SW_SUBSYSTEM_TSENS),
-     RSCSW_PROFILE_THERMAL, QCPEP_RSCSW_STABILIZATION_FLAG_INCLUDE_THERMAL_LANE},
+     RSCSW_PROFILE_THERMAL, IOCTL_RSC_STABILIZATION_FLAG_INCLUDE_THERMAL_LANE},
 };
 
 static const rscsw_graph_link_t g_rsc_sw_dependency_links[] = {
@@ -3505,45 +3505,45 @@ static const ULONG g_rsc_sw_conformance_expected_dependency_out[RSCSW_NODE_CAPAC
 
 static const rscsw_catalog_entry_t g_rsc_sw_catalog[RSCSW_NODE_CAPACITY] = {
     {RSC_SW_SUBSYSTEM_AOP, "AOP", RSCSW_CAP_STATE | RSCSW_CAP_QUERY | RSCSW_CAP_BATCH, 0, 0, 0,
-     0x304F5041u, IOCTL_QCPEP_SUBSYS_ADSP_STATE, 0, 0},
+     0x304F5041u, IOCTL_PEP_SUBSYS_ADSP_STATE, 0, 0},
     {RSC_SW_SUBSYSTEM_ARC, "ARC",
      RSCSW_CAP_STATE | RSCSW_CAP_CLOCK | RSCSW_CAP_QUERY | RSCSW_CAP_BATCH, 0, 0, 0, 0x30435241u,
-     IOCTL_QCPEP_MMRM_SNAPSHOT, 0, 0},
+     IOCTL_PEP_MMRM_SNAPSHOT, 0, 0},
     {RSC_SW_SUBSYSTEM_CLOCK, "CLOCK",
      RSCSW_CAP_STATE | RSCSW_CAP_CLOCK | RSCSW_CAP_QUERY | RSCSW_CAP_BATCH, 0, 0, 0, 0x304B4C43u,
-     IOCTL_QCPEP_VENDOR_88882058, 0, 0},
+     IOCTL_PEP_VENDOR_88882058, 0, 0},
     {RSC_SW_SUBSYSTEM_CMD_DB, "CMDDB", RSCSW_CAP_STATE | RSCSW_CAP_QUERY | RSCSW_CAP_BATCH, 0, 0, 0,
-     0x42444D43u, IOCTL_QCPEP_SUBSYS_CDSP_STATE, 0, 0},
+     0x42444D43u, IOCTL_PEP_SUBSYS_CDSP_STATE, 0, 0},
     {RSC_SW_SUBSYSTEM_DAL, "DAL", RSCSW_CAP_STATE | RSCSW_CAP_QUERY | RSCSW_CAP_BATCH, 0, 0, 0,
-     0x304C4144u, IOCTL_QCPEP_VENDOR_88882084, 0, 0},
+     0x304C4144u, IOCTL_PEP_VENDOR_88882084, 0, 0},
     {RSC_SW_SUBSYSTEM_GLINK, "GLINK", RSCSW_CAP_STATE | RSCSW_CAP_QUERY | RSCSW_CAP_BATCH, 0, 0, 0,
-     0x4B4E4C47u, IOCTL_QCPEP_SUBSYS_ADSP_CTRL, 0, 0},
+     0x4B4E4C47u, IOCTL_PEP_SUBSYS_ADSP_CTRL, 0, 0},
     {RSC_SW_SUBSYSTEM_ICB, "ICB", RSCSW_CAP_STATE | RSCSW_CAP_QUERY | RSCSW_CAP_BATCH, 0, 0, 0,
-     0x30424349u, IOCTL_QCPEP_INTERRUPT_SNAPSHOT, 0, 0},
+     0x30424349u, IOCTL_PEP_INTERRUPT_SNAPSHOT, 0, 0},
     {RSC_SW_SUBSYSTEM_NPA, "NPA",
      RSCSW_CAP_STATE | RSCSW_CAP_VOTE | RSCSW_CAP_QUERY | RSCSW_CAP_BATCH, 0, 0, 0, 0x3041504Eu,
-     IOCTL_QCPEP_BMS_QUERY, 0, 0},
+     IOCTL_PEP_BMS_QUERY, 0, 0},
     {RSC_SW_SUBSYSTEM_PCU, "PCU",
      RSCSW_CAP_STATE | RSCSW_CAP_CLOCK | RSCSW_CAP_QUERY | RSCSW_CAP_BATCH, 0, 0, 0, 0x30554350u,
-     IOCTL_QCPEP_DCVS_SNAPSHOT, 0, 0},
+     IOCTL_PEP_DCVS_SNAPSHOT, 0, 0},
     {RSC_SW_SUBSYSTEM_PDC, "PDC", RSCSW_CAP_STATE | RSCSW_CAP_QUERY | RSCSW_CAP_BATCH, 0, 0, 0,
-     0x30434450u, IOCTL_QCPEP_DEEPSTANDBY_SNAPSHOT, 0, 0},
+     0x30434450u, IOCTL_PEP_DEEPSTANDBY_SNAPSHOT, 0, 0},
     {RSC_SW_SUBSYSTEM_PPP, "PPP",
      RSCSW_CAP_STATE | RSCSW_CAP_VOTE | RSCSW_CAP_QUERY | RSCSW_CAP_BATCH, 0, 0, 0, 0x30505050u,
-     IOCTL_QCPEP_PPP_RESOURCE_VOTE, 0, 0},
+     IOCTL_PEP_PPP_RESOURCE_VOTE, 0, 0},
     {RSC_SW_SUBSYSTEM_RPMH, "RPMH",
      RSCSW_CAP_STATE | RSCSW_CAP_VOTE | RSCSW_CAP_QUERY | RSCSW_CAP_BATCH, 0, 0, 0, 0x484D5052u,
-     IOCTL_QCPEP_PPP_GET_RPMH_COMMAND_SET, 0, 0},
+     IOCTL_PEP_PPP_GET_RPMH_COMMAND_SET, 0, 0},
     {RSC_SW_SUBSYSTEM_RSC, "RSC", RSCSW_CAP_STATE | RSCSW_CAP_QUERY | RSCSW_CAP_BATCH, 0, 0, 0,
-     0x30435352u, IOCTL_QCPEP_SOC_SUBSYS_QUERY, 0, 0},
+     0x30435352u, IOCTL_PEP_SOC_SUBSYS_QUERY, 0, 0},
     {RSC_SW_SUBSYSTEM_TLMM, "TLMM",
      RSCSW_CAP_STATE | RSCSW_CAP_VOTE | RSCSW_CAP_QUERY | RSCSW_CAP_BATCH, 0, 0, 0, 0x4D4D4C54u,
-     IOCTL_QCPEP_GPIO_CONFIG, 0, 0},
+     IOCTL_PEP_GPIO_CONFIG, 0, 0},
     {RSC_SW_SUBSYSTEM_TSENS, "TSENS",
      RSCSW_CAP_STATE | RSCSW_CAP_QUERY | RSCSW_CAP_BATCH | RSCSW_CAP_THERMAL, 0, 0, 0, 0x534E4554u,
-     IOCTL_QCPEP_TSENS_SNAPSHOT, 0, 0},
+     IOCTL_PEP_TSENS_SNAPSHOT, 0, 0},
     {RSC_SW_SUBSYSTEM_ARC_MGR, "ARCMGR", RSCSW_CAP_STATE | RSCSW_CAP_QUERY | RSCSW_CAP_BATCH, 0, 0,
-     0, 0x52414D41u, IOCTL_QCPEP_MMRM_DOMAIN_QUERY, 0, 0},
+     0, 0x52414D41u, IOCTL_PEP_MMRM_DOMAIN_QUERY, 0, 0},
 };
 
 static __forceinline ULONGLONG rsc_sw_now100ns(VOID)
@@ -4413,7 +4413,7 @@ static VOID rsc_sw_refresh_derived(VOID)
         d[RSC_SW_SUBSYSTEM_TLMM].last_status = st;
 
         k.res_id = 0x4F535845u;
-        k.sub_type = IOCTL_QCPEP_SUBSYS_ADSP_STATE;
+        k.sub_type = IOCTL_PEP_SUBSYS_ADSP_STATE;
         st = res_get(k, &v);
         d[RSC_SW_SUBSYSTEM_CMD_DB].state = NT_SUCCESS(st) ? 1u : 0u;
         d[RSC_SW_SUBSYSTEM_CMD_DB].clock_khz = v.value2;
@@ -5258,7 +5258,7 @@ static NTSTATUS rsc_sw_execute_scenario_node(_In_ ULONG subsystem_id, _In_ ULONG
     rsc_sw_build_scenario_node(subsystem_id, scenario_id, iteration, flags, &node);
     ioctl_code = g_rsc_sw_catalog[subsystem_id].suggested_ioctl;
     if (ioctl_code == 0u)
-        ioctl_code = IOCTL_QCPEP_RSCSW_SET_NODE;
+        ioctl_code = IOCTL_PEP_RSC_SET_NODE;
 
     st = rsc_sw_apply_node(subsystem_id, node.state, node.clock_khz, node.flags, node.tag,
                            node.value0, node.value1, node.value2, node.value3, ioctl_code);
@@ -6009,7 +6009,7 @@ NTSTATUS rsc_sw_execute_action_sequence(_In_reads_(step_cnt)
             st = STATUS_INVALID_PARAMETER;
         } else {
             if (ioctl_code == 0u)
-                ioctl_code = IOCTL_QCPEP_RSCSW_SET_NODE;
+                ioctl_code = IOCTL_PEP_RSC_SET_NODE;
 
             st = rsc_sw_apply_node(sid, work[i].step.state, work[i].step.clock_khz,
                                    work[i].step.flags, work[i].step.tag, work[i].step.value0,
@@ -6559,10 +6559,10 @@ NTSTATUS rsc_sw_apply_checkpoint(_In_ ULONG slot_id, _In_ ULONG flags,
     final_status = STATUS_SUCCESS;
 
     for (ULONG i = 0; i < RSCSW_NODE_CAPACITY; i++) {
-        NTSTATUS st = rsc_sw_apply_node(i, nodes[i].state, nodes[i].clock_khz, nodes[i].flags,
-                                        nodes[i].last_tag, nodes[i].last_value0,
-                                        nodes[i].last_value1, nodes[i].last_value2,
-                                        nodes[i].last_value3, IOCTL_QCPEP_RSCSW_SET_NODE);
+        NTSTATUS st =
+            rsc_sw_apply_node(i, nodes[i].state, nodes[i].clock_khz, nodes[i].flags,
+                              nodes[i].last_tag, nodes[i].last_value0, nodes[i].last_value1,
+                              nodes[i].last_value2, nodes[i].last_value3, IOCTL_PEP_RSC_SET_NODE);
 
         local.last_subsystem_id = i;
         local.last_tag = nodes[i].last_tag;
@@ -6681,7 +6681,7 @@ static ULONG rsc_sw_coverage_threshold_permille(_In_ ULONG flags)
         threshold = 100u;
     if (threshold > 1000u)
         threshold = 1000u;
-    if ((flags & QCPEP_RSCSW_COVERAGE_FLAG_STRICT_THRESHOLD) != 0 && threshold < 900u) {
+    if ((flags & IOCTL_RSC_COVERAGE_FLAG_STRICT_THRESHOLD) != 0 && threshold < 900u) {
         threshold = 900u;
     }
     return threshold;
@@ -6862,22 +6862,22 @@ NTSTATUS rsc_sw_analyze_coverage(_In_ ULONG flags, _Out_opt_ rscsw_coverage_resu
             health_acc += row.health_score;
             activity_acc += row.activity_score;
 
-            if ((flags & QCPEP_RSCSW_COVERAGE_FLAG_REQUIRE_ACTIVE) != 0 && row.active == 0u) {
+            if ((flags & IOCTL_RSC_COVERAGE_FLAG_REQUIRE_ACTIVE) != 0 && row.active == 0u) {
                 local.warning_cnt++;
             }
 
-            if ((flags & QCPEP_RSCSW_COVERAGE_FLAG_REQUIRE_SUCCESS_THRESHOLD) != 0 &&
+            if ((flags & IOCTL_RSC_COVERAGE_FLAG_REQUIRE_SUCCESS_THRESHOLD) != 0 &&
                 row.success_permille < threshold) {
                 local.error_cnt++;
                 local.below_threshold_cnt++;
             }
 
-            if ((flags & QCPEP_RSCSW_COVERAGE_FLAG_REQUIRE_RECENT_ACTIVITY) != 0 &&
+            if ((flags & IOCTL_RSC_COVERAGE_FLAG_REQUIRE_RECENT_ACTIVITY) != 0 &&
                 (row.flags & 0x2u) == 0u) {
                 local.warning_cnt++;
             }
 
-            if ((flags & QCPEP_RSCSW_COVERAGE_FLAG_INCLUDE_DEPENDENCY_LOAD) != 0 &&
+            if ((flags & IOCTL_RSC_COVERAGE_FLAG_INCLUDE_DEPENDENCY_LOAD) != 0 &&
                 row.active == 0u && row.dependency_out != 0u) {
                 local.warning_cnt++;
             }
@@ -6978,24 +6978,24 @@ NTSTATUS rsc_sw_get_coverage_history(_Out_writes_to_(capacity, *cnt)
 
 static ULONG rsc_sw_remediation_default_flags(VOID)
 {
-    return QCPEP_RSCSW_REMEDIATION_FLAG_TARGET_INACTIVE |
-           QCPEP_RSCSW_REMEDIATION_FLAG_TARGET_LOW_SUCCESS |
-           QCPEP_RSCSW_REMEDIATION_FLAG_TARGET_STALE_ACTIVITY |
-           QCPEP_RSCSW_REMEDIATION_FLAG_INCLUDE_DEPENDENCY_LOAD;
+    return IOCTL_RSC_REMEDIATION_FLAG_TARGET_INACTIVE |
+           IOCTL_RSC_REMEDIATION_FLAG_TARGET_LOW_SUCCESS |
+           IOCTL_RSC_REMEDIATION_FLAG_TARGET_STALE_ACTIVITY |
+           IOCTL_RSC_REMEDIATION_FLAG_INCLUDE_DEPENDENCY_LOAD;
 }
 
 static ULONG rsc_sw_remediation_coverage_flags(_In_ ULONG flags)
 {
-    ULONG coverage_flags = QCPEP_RSCSW_COVERAGE_FLAG_REQUIRE_SUCCESS_THRESHOLD;
+    ULONG coverage_flags = IOCTL_RSC_COVERAGE_FLAG_REQUIRE_SUCCESS_THRESHOLD;
 
-    if ((flags & QCPEP_RSCSW_REMEDIATION_FLAG_TARGET_INACTIVE) != 0u)
-        coverage_flags |= QCPEP_RSCSW_COVERAGE_FLAG_REQUIRE_ACTIVE;
-    if ((flags & QCPEP_RSCSW_REMEDIATION_FLAG_TARGET_STALE_ACTIVITY) != 0u)
-        coverage_flags |= QCPEP_RSCSW_COVERAGE_FLAG_REQUIRE_RECENT_ACTIVITY;
-    if ((flags & QCPEP_RSCSW_REMEDIATION_FLAG_INCLUDE_DEPENDENCY_LOAD) != 0u)
-        coverage_flags |= QCPEP_RSCSW_COVERAGE_FLAG_INCLUDE_DEPENDENCY_LOAD;
-    if ((flags & QCPEP_RSCSW_REMEDIATION_FLAG_STRICT_THRESHOLD) != 0u)
-        coverage_flags |= QCPEP_RSCSW_COVERAGE_FLAG_STRICT_THRESHOLD;
+    if ((flags & IOCTL_RSC_REMEDIATION_FLAG_TARGET_INACTIVE) != 0u)
+        coverage_flags |= IOCTL_RSC_COVERAGE_FLAG_REQUIRE_ACTIVE;
+    if ((flags & IOCTL_RSC_REMEDIATION_FLAG_TARGET_STALE_ACTIVITY) != 0u)
+        coverage_flags |= IOCTL_RSC_COVERAGE_FLAG_REQUIRE_RECENT_ACTIVITY;
+    if ((flags & IOCTL_RSC_REMEDIATION_FLAG_INCLUDE_DEPENDENCY_LOAD) != 0u)
+        coverage_flags |= IOCTL_RSC_COVERAGE_FLAG_INCLUDE_DEPENDENCY_LOAD;
+    if ((flags & IOCTL_RSC_REMEDIATION_FLAG_STRICT_THRESHOLD) != 0u)
+        coverage_flags |= IOCTL_RSC_COVERAGE_FLAG_STRICT_THRESHOLD;
 
     return coverage_flags;
 }
@@ -7013,17 +7013,17 @@ static ULONG rsc_sw_remediation_priority(_In_ const rscsw_coverage_row_t* row,
     priority += (LONG)(row->dependency_out * 30u);
     priority += (LONG)(row->dependency_in * 12u);
 
-    if ((reason_flags & QCPEP_RSCSW_REMEDIATION_REASON_INACTIVE) != 0u)
+    if ((reason_flags & IOCTL_RSC_REMEDIATION_REASON_INACTIVE) != 0u)
         priority += 180;
-    if ((reason_flags & QCPEP_RSCSW_REMEDIATION_REASON_LOW_SUCCESS) != 0u)
+    if ((reason_flags & IOCTL_RSC_REMEDIATION_REASON_LOW_SUCCESS) != 0u)
         priority += 140;
-    if ((reason_flags & QCPEP_RSCSW_REMEDIATION_REASON_STALE_ACTIVITY) != 0u)
+    if ((reason_flags & IOCTL_RSC_REMEDIATION_REASON_STALE_ACTIVITY) != 0u)
         priority += 100;
-    if ((reason_flags & QCPEP_RSCSW_REMEDIATION_REASON_DEPENDENCY_PRESSURE) != 0u)
+    if ((reason_flags & IOCTL_RSC_REMEDIATION_REASON_DEPENDENCY_PRESSURE) != 0u)
         priority += 130;
-    if ((reason_flags & QCPEP_RSCSW_REMEDIATION_REASON_LAST_STATUS_FAIL) != 0u)
+    if ((reason_flags & IOCTL_RSC_REMEDIATION_REASON_LAST_STATUS_FAIL) != 0u)
         priority += 120;
-    if ((reason_flags & QCPEP_RSCSW_REMEDIATION_REASON_HIGH_FAILURE_RATE) != 0u)
+    if ((reason_flags & IOCTL_RSC_REMEDIATION_REASON_HIGH_FAILURE_RATE) != 0u)
         priority += 160;
 
     if (priority < 0)
@@ -7165,30 +7165,30 @@ NTSTATUS rsc_sw_run_remediation(_In_ ULONG flags, _Out_opt_ rscsw_remediation_re
         RtlZeroMemory(&row, sizeof(row));
         rsc_sw_build_coverage_row_locked(i, &nodes[i], local.tick100ns, &row);
 
-        if ((remediation_flags & QCPEP_RSCSW_REMEDIATION_FLAG_TARGET_INACTIVE) != 0u &&
+        if ((remediation_flags & IOCTL_RSC_REMEDIATION_FLAG_TARGET_INACTIVE) != 0u &&
             row.active == 0u) {
-            reason |= QCPEP_RSCSW_REMEDIATION_REASON_INACTIVE;
+            reason |= IOCTL_RSC_REMEDIATION_REASON_INACTIVE;
         }
 
-        if ((remediation_flags & QCPEP_RSCSW_REMEDIATION_FLAG_TARGET_LOW_SUCCESS) != 0u &&
+        if ((remediation_flags & IOCTL_RSC_REMEDIATION_FLAG_TARGET_LOW_SUCCESS) != 0u &&
             row.success_permille < coverage.threshold_permille) {
-            reason |= QCPEP_RSCSW_REMEDIATION_REASON_LOW_SUCCESS;
+            reason |= IOCTL_RSC_REMEDIATION_REASON_LOW_SUCCESS;
         }
 
-        if ((remediation_flags & QCPEP_RSCSW_REMEDIATION_FLAG_TARGET_STALE_ACTIVITY) != 0u &&
+        if ((remediation_flags & IOCTL_RSC_REMEDIATION_FLAG_TARGET_STALE_ACTIVITY) != 0u &&
             (row.flags & 0x2u) == 0u) {
-            reason |= QCPEP_RSCSW_REMEDIATION_REASON_STALE_ACTIVITY;
+            reason |= IOCTL_RSC_REMEDIATION_REASON_STALE_ACTIVITY;
         }
 
         if (!NT_SUCCESS((NTSTATUS)row.last_status))
-            reason |= QCPEP_RSCSW_REMEDIATION_REASON_LAST_STATUS_FAIL;
+            reason |= IOCTL_RSC_REMEDIATION_REASON_LAST_STATUS_FAIL;
 
         if (row.req_cnt != 0u && row.failure_cnt > row.success_cnt)
-            reason |= QCPEP_RSCSW_REMEDIATION_REASON_HIGH_FAILURE_RATE;
+            reason |= IOCTL_RSC_REMEDIATION_REASON_HIGH_FAILURE_RATE;
 
-        if ((remediation_flags & QCPEP_RSCSW_REMEDIATION_FLAG_INCLUDE_DEPENDENCY_LOAD) != 0u &&
+        if ((remediation_flags & IOCTL_RSC_REMEDIATION_FLAG_INCLUDE_DEPENDENCY_LOAD) != 0u &&
             row.active == 0u && row.dependency_out != 0u) {
-            reason |= QCPEP_RSCSW_REMEDIATION_REASON_DEPENDENCY_PRESSURE;
+            reason |= IOCTL_RSC_REMEDIATION_REASON_DEPENDENCY_PRESSURE;
         }
 
         if (reason == 0u)
@@ -7198,8 +7198,8 @@ NTSTATUS rsc_sw_run_remediation(_In_ ULONG flags, _Out_opt_ rscsw_remediation_re
             break;
 
         recommended_state = nodes[i].state;
-        if ((reason & (QCPEP_RSCSW_REMEDIATION_REASON_INACTIVE |
-                       QCPEP_RSCSW_REMEDIATION_REASON_STALE_ACTIVITY)) != 0u) {
+        if ((reason & (IOCTL_RSC_REMEDIATION_REASON_INACTIVE |
+                       IOCTL_RSC_REMEDIATION_REASON_STALE_ACTIVITY)) != 0u) {
             recommended_state = 1u;
         }
 
@@ -7209,16 +7209,16 @@ NTSTATUS rsc_sw_run_remediation(_In_ ULONG flags, _Out_opt_ rscsw_remediation_re
         if (recommended_clock == 0u)
             recommended_clock = 1200u + (i * 120u);
 
-        if ((reason & (QCPEP_RSCSW_REMEDIATION_REASON_LOW_SUCCESS |
-                       QCPEP_RSCSW_REMEDIATION_REASON_HIGH_FAILURE_RATE)) != 0u) {
+        if ((reason & (IOCTL_RSC_REMEDIATION_REASON_LOW_SUCCESS |
+                       IOCTL_RSC_REMEDIATION_REASON_HIGH_FAILURE_RATE)) != 0u) {
             clock_boost = 250u + (row.dependency_out * 40u);
             recommended_clock += clock_boost;
         }
 
         recommended_flags = nodes[i].flags;
-        if ((reason & QCPEP_RSCSW_REMEDIATION_REASON_DEPENDENCY_PRESSURE) != 0u)
+        if ((reason & IOCTL_RSC_REMEDIATION_REASON_DEPENDENCY_PRESSURE) != 0u)
             recommended_flags |= 0x20u;
-        if ((reason & QCPEP_RSCSW_REMEDIATION_REASON_LAST_STATUS_FAIL) != 0u)
+        if ((reason & IOCTL_RSC_REMEDIATION_REASON_LAST_STATUS_FAIL) != 0u)
             recommended_flags |= 0x01u;
 
         RtlZeroMemory(&action, sizeof(action));
@@ -7245,14 +7245,14 @@ NTSTATUS rsc_sw_run_remediation(_In_ ULONG flags, _Out_opt_ rscsw_remediation_re
     rsc_sw_sort_remediation_actions(actions, action_cnt);
     local.recommended_cnt = action_cnt;
 
-    if ((remediation_flags & QCPEP_RSCSW_REMEDIATION_FLAG_APPLY_RECOMMENDATIONS) != 0u) {
+    if ((remediation_flags & IOCTL_RSC_REMEDIATION_FLAG_APPLY_RECOMMENDATIONS) != 0u) {
         for (ULONG i = 0; i < action_cnt; i++) {
             NTSTATUS st =
                 rsc_sw_apply_node(actions[i].subsystem_id, actions[i].recommended_state,
                                   actions[i].recommended_clock_khz, actions[i].recommended_flags,
                                   0x524D4544u, actions[i].reason_flags,
                                   actions[i].recommended_state, actions[i].recommended_clock_khz,
-                                  actions[i].priority, IOCTL_QCPEP_RSCSW_REMEDIATION_RUN);
+                                  actions[i].priority, IOCTL_PEP_RSC_REMEDIATION_RUN);
 
             local.last_subsystem_id = actions[i].subsystem_id;
             local.last_tag = 0x524D4544u;
@@ -7288,7 +7288,7 @@ NTSTATUS rsc_sw_run_remediation(_In_ ULONG flags, _Out_opt_ rscsw_remediation_re
         }
     }
 
-    if ((remediation_flags & QCPEP_RSCSW_REMEDIATION_FLAG_APPLY_RECOMMENDATIONS) != 0u) {
+    if ((remediation_flags & IOCTL_RSC_REMEDIATION_FLAG_APPLY_RECOMMENDATIONS) != 0u) {
         if (first_failure != STATUS_SUCCESS)
             final_status = first_failure;
         else if (local.error_cnt != 0u)
@@ -7398,22 +7398,22 @@ NTSTATUS rsc_sw_get_remediation_history(_Out_writes_to_(capacity, *cnt)
 
 static ULONG rsc_sw_stabilization_default_flags(VOID)
 {
-    return QCPEP_RSCSW_STABILIZATION_FLAG_INCLUDE_CONTROL_LANE |
-           QCPEP_RSCSW_STABILIZATION_FLAG_INCLUDE_INTERCONNECT_LANE |
-           QCPEP_RSCSW_STABILIZATION_FLAG_INCLUDE_THERMAL_LANE |
-           QCPEP_RSCSW_STABILIZATION_FLAG_RUN_PROFILES |
-           QCPEP_RSCSW_STABILIZATION_FLAG_EXECUTE_REMEDIATION |
-           QCPEP_RSCSW_STABILIZATION_FLAG_VERIFY_POST;
+    return IOCTL_RSC_STABILIZATION_FLAG_INCLUDE_CONTROL_LANE |
+           IOCTL_RSC_STABILIZATION_FLAG_INCLUDE_INTERCONNECT_LANE |
+           IOCTL_RSC_STABILIZATION_FLAG_INCLUDE_THERMAL_LANE |
+           IOCTL_RSC_STABILIZATION_FLAG_RUN_PROFILES |
+           IOCTL_RSC_STABILIZATION_FLAG_EXECUTE_REMEDIATION |
+           IOCTL_RSC_STABILIZATION_FLAG_VERIFY_POST;
 }
 
 static ULONG rsc_sw_stabilization_coverage_flags(_In_ ULONG flags)
 {
-    ULONG coverage_flags = QCPEP_RSCSW_COVERAGE_FLAG_REQUIRE_SUCCESS_THRESHOLD |
-                           QCPEP_RSCSW_COVERAGE_FLAG_REQUIRE_RECENT_ACTIVITY |
-                           QCPEP_RSCSW_COVERAGE_FLAG_INCLUDE_DEPENDENCY_LOAD;
+    ULONG coverage_flags = IOCTL_RSC_COVERAGE_FLAG_REQUIRE_SUCCESS_THRESHOLD |
+                           IOCTL_RSC_COVERAGE_FLAG_REQUIRE_RECENT_ACTIVITY |
+                           IOCTL_RSC_COVERAGE_FLAG_INCLUDE_DEPENDENCY_LOAD;
 
-    if ((flags & QCPEP_RSCSW_STABILIZATION_FLAG_STRICT_COVERAGE) != 0u)
-        coverage_flags |= QCPEP_RSCSW_COVERAGE_FLAG_STRICT_THRESHOLD;
+    if ((flags & IOCTL_RSC_STABILIZATION_FLAG_STRICT_COVERAGE) != 0u)
+        coverage_flags |= IOCTL_RSC_COVERAGE_FLAG_STRICT_THRESHOLD;
 
     return coverage_flags;
 }
@@ -7607,7 +7607,7 @@ NTSTATUS rsc_sw_run_stabilization(_In_ ULONG flags, _Out_opt_ rscsw_stabilizatio
     if (lane_cnt == 0u)
         return STATUS_INVALID_PARAMETER;
 
-    if ((stabilization_flags & QCPEP_RSCSW_STABILIZATION_FLAG_RUN_PROFILES) != 0u) {
+    if ((stabilization_flags & IOCTL_RSC_STABILIZATION_FLAG_RUN_PROFILES) != 0u) {
         for (ULONG i = 0; i < lane_cnt; i++) {
             const rscsw_stabilization_lane_desc_t* desc;
             rscsw_profile_result_t profile_result;
@@ -7621,7 +7621,7 @@ NTSTATUS rsc_sw_run_stabilization(_In_ ULONG flags, _Out_opt_ rscsw_stabilizatio
             if (!desc || desc->profile_id == 0u)
                 continue;
 
-            if ((stabilization_flags & QCPEP_RSCSW_STABILIZATION_FLAG_STRICT_COVERAGE) != 0u)
+            if ((stabilization_flags & IOCTL_RSC_STABILIZATION_FLAG_STRICT_COVERAGE) != 0u)
                 profile_flags |= RSCSW_PROFILE_FLAG_FORCE_VERIFY;
 
             RtlZeroMemory(&profile_result, sizeof(profile_result));
@@ -7644,16 +7644,16 @@ NTSTATUS rsc_sw_run_stabilization(_In_ ULONG flags, _Out_opt_ rscsw_stabilizatio
 
     {
         rscsw_remediation_result_t remediation_result;
-        ULONG remediation_flags = QCPEP_RSCSW_REMEDIATION_FLAG_TARGET_INACTIVE |
-                                  QCPEP_RSCSW_REMEDIATION_FLAG_TARGET_LOW_SUCCESS |
-                                  QCPEP_RSCSW_REMEDIATION_FLAG_TARGET_STALE_ACTIVITY |
-                                  QCPEP_RSCSW_REMEDIATION_FLAG_INCLUDE_DEPENDENCY_LOAD;
+        ULONG remediation_flags = IOCTL_RSC_REMEDIATION_FLAG_TARGET_INACTIVE |
+                                  IOCTL_RSC_REMEDIATION_FLAG_TARGET_LOW_SUCCESS |
+                                  IOCTL_RSC_REMEDIATION_FLAG_TARGET_STALE_ACTIVITY |
+                                  IOCTL_RSC_REMEDIATION_FLAG_INCLUDE_DEPENDENCY_LOAD;
         NTSTATUS st;
 
-        if ((stabilization_flags & QCPEP_RSCSW_STABILIZATION_FLAG_STRICT_COVERAGE) != 0u)
-            remediation_flags |= QCPEP_RSCSW_REMEDIATION_FLAG_STRICT_THRESHOLD;
-        if ((stabilization_flags & QCPEP_RSCSW_STABILIZATION_FLAG_EXECUTE_REMEDIATION) != 0u)
-            remediation_flags |= QCPEP_RSCSW_REMEDIATION_FLAG_APPLY_RECOMMENDATIONS;
+        if ((stabilization_flags & IOCTL_RSC_STABILIZATION_FLAG_STRICT_COVERAGE) != 0u)
+            remediation_flags |= IOCTL_RSC_REMEDIATION_FLAG_STRICT_THRESHOLD;
+        if ((stabilization_flags & IOCTL_RSC_STABILIZATION_FLAG_EXECUTE_REMEDIATION) != 0u)
+            remediation_flags |= IOCTL_RSC_REMEDIATION_FLAG_APPLY_RECOMMENDATIONS;
 
         RtlZeroMemory(&remediation_result, sizeof(remediation_result));
         st = rsc_sw_run_remediation(remediation_flags, &remediation_result);
@@ -7666,13 +7666,13 @@ NTSTATUS rsc_sw_run_stabilization(_In_ ULONG flags, _Out_opt_ rscsw_stabilizatio
         local.last_value2 = remediation_result.last_value2;
         local.last_value3 = remediation_result.last_value3;
 
-        if ((stabilization_flags & QCPEP_RSCSW_STABILIZATION_FLAG_EXECUTE_REMEDIATION) != 0u &&
+        if ((stabilization_flags & IOCTL_RSC_STABILIZATION_FLAG_EXECUTE_REMEDIATION) != 0u &&
             !NT_SUCCESS(st) && first_failure == STATUS_SUCCESS) {
             first_failure = st;
         }
     }
 
-    if ((stabilization_flags & QCPEP_RSCSW_STABILIZATION_FLAG_VERIFY_POST) != 0u) {
+    if ((stabilization_flags & IOCTL_RSC_STABILIZATION_FLAG_VERIFY_POST) != 0u) {
         rscsw_coverage_result_t post_coverage;
         NTSTATUS post_status;
         RtlZeroMemory(&post_coverage, sizeof(post_coverage));
@@ -7695,13 +7695,13 @@ NTSTATUS rsc_sw_run_stabilization(_In_ ULONG flags, _Out_opt_ rscsw_stabilizatio
 
     if (local.profile_failures != 0u) {
         final_status = (first_failure != STATUS_SUCCESS) ? first_failure : STATUS_UNSUCCESSFUL;
-    } else if ((stabilization_flags & QCPEP_RSCSW_STABILIZATION_FLAG_EXECUTE_REMEDIATION) != 0u &&
+    } else if ((stabilization_flags & IOCTL_RSC_STABILIZATION_FLAG_EXECUTE_REMEDIATION) != 0u &&
                !NT_SUCCESS(local.remediation_status)) {
         final_status = local.remediation_status;
-    } else if ((stabilization_flags & QCPEP_RSCSW_STABILIZATION_FLAG_VERIFY_POST) != 0u &&
+    } else if ((stabilization_flags & IOCTL_RSC_STABILIZATION_FLAG_VERIFY_POST) != 0u &&
                local.coverage_error_cnt != 0u) {
         final_status = STATUS_UNSUCCESSFUL;
-    } else if ((stabilization_flags & QCPEP_RSCSW_STABILIZATION_FLAG_EXECUTE_REMEDIATION) == 0u &&
+    } else if ((stabilization_flags & IOCTL_RSC_STABILIZATION_FLAG_EXECUTE_REMEDIATION) == 0u &&
                local.degraded_lane_cnt != 0u) {
         final_status = STATUS_MORE_PROCESSING_REQUIRED;
     } else {
@@ -8279,11 +8279,10 @@ NTSTATUS rsc_sw_get_conformance_history(_Out_writes_to_(capacity, *cnt)
 
 static ULONG rsc_sw_orchestration_default_flags(VOID)
 {
-    return QCPEP_RSCSW_ORCHESTRATION_FLAG_RUN_COVERAGE |
-           QCPEP_RSCSW_ORCHESTRATION_FLAG_RUN_REMEDIATION |
-           QCPEP_RSCSW_ORCHESTRATION_FLAG_RUN_STABILIZATION |
-           QCPEP_RSCSW_ORCHESTRATION_FLAG_RUN_CONFORMANCE |
-           QCPEP_RSCSW_ORCHESTRATION_FLAG_RUN_PROFILES;
+    return IOCTL_RSC_ORCHESTRATION_FLAG_RUN_COVERAGE |
+           IOCTL_RSC_ORCHESTRATION_FLAG_RUN_REMEDIATION |
+           IOCTL_RSC_ORCHESTRATION_FLAG_RUN_STABILIZATION |
+           IOCTL_RSC_ORCHESTRATION_FLAG_RUN_CONFORMANCE | IOCTL_RSC_ORCHESTRATION_FLAG_RUN_PROFILES;
 }
 
 static VOID rsc_sw_orchestration_stage_name(_In_ ULONG stage_id, _Out_writes_(16) CHAR* name)
@@ -8294,19 +8293,19 @@ static VOID rsc_sw_orchestration_stage_name(_In_ ULONG stage_id, _Out_writes_(16
         return;
 
     switch (stage_id) {
-        case QCPEP_RSCSW_ORCHESTRATION_STAGE_COVERAGE:
+        case IOCTL_RSC_ORCHESTRATION_STAGE_COVERAGE:
             stage_name = "COVERAGE";
             break;
-        case QCPEP_RSCSW_ORCHESTRATION_STAGE_REMEDIATION:
+        case IOCTL_RSC_ORCHESTRATION_STAGE_REMEDIATION:
             stage_name = "REMEDIATION";
             break;
-        case QCPEP_RSCSW_ORCHESTRATION_STAGE_STABILIZATION:
+        case IOCTL_RSC_ORCHESTRATION_STAGE_STABILIZATION:
             stage_name = "STABILIZE";
             break;
-        case QCPEP_RSCSW_ORCHESTRATION_STAGE_CONFORMANCE:
+        case IOCTL_RSC_ORCHESTRATION_STAGE_CONFORMANCE:
             stage_name = "CONFORMANCE";
             break;
-        case QCPEP_RSCSW_ORCHESTRATION_STAGE_PROFILES:
+        case IOCTL_RSC_ORCHESTRATION_STAGE_PROFILES:
             stage_name = "PROFILES";
             break;
         default:
@@ -8379,30 +8378,30 @@ NTSTATUS rsc_sw_get_orchestration_snapshot(_Out_ rscsw_orchestration_snapshot_t*
 
         snapshot->last_flags = flags;
 
-        if ((flags & QCPEP_RSCSW_ORCHESTRATION_FLAG_RUN_COVERAGE) != 0u &&
+        if ((flags & IOCTL_RSC_ORCHESTRATION_FLAG_RUN_COVERAGE) != 0u &&
             stage_cnt < RSCSW_ORCHESTRATION_STAGE_CAPACITY) {
             rsc_sw_orchestration_init_stage(&snapshot->stages[stage_cnt++],
-                                            QCPEP_RSCSW_ORCHESTRATION_STAGE_COVERAGE, 1u, now);
+                                            IOCTL_RSC_ORCHESTRATION_STAGE_COVERAGE, 1u, now);
         }
-        if ((flags & QCPEP_RSCSW_ORCHESTRATION_FLAG_RUN_REMEDIATION) != 0u &&
+        if ((flags & IOCTL_RSC_ORCHESTRATION_FLAG_RUN_REMEDIATION) != 0u &&
             stage_cnt < RSCSW_ORCHESTRATION_STAGE_CAPACITY) {
             rsc_sw_orchestration_init_stage(&snapshot->stages[stage_cnt++],
-                                            QCPEP_RSCSW_ORCHESTRATION_STAGE_REMEDIATION, 1u, now);
+                                            IOCTL_RSC_ORCHESTRATION_STAGE_REMEDIATION, 1u, now);
         }
-        if ((flags & QCPEP_RSCSW_ORCHESTRATION_FLAG_RUN_STABILIZATION) != 0u &&
+        if ((flags & IOCTL_RSC_ORCHESTRATION_FLAG_RUN_STABILIZATION) != 0u &&
             stage_cnt < RSCSW_ORCHESTRATION_STAGE_CAPACITY) {
             rsc_sw_orchestration_init_stage(&snapshot->stages[stage_cnt++],
-                                            QCPEP_RSCSW_ORCHESTRATION_STAGE_STABILIZATION, 1u, now);
+                                            IOCTL_RSC_ORCHESTRATION_STAGE_STABILIZATION, 1u, now);
         }
-        if ((flags & QCPEP_RSCSW_ORCHESTRATION_FLAG_RUN_CONFORMANCE) != 0u &&
+        if ((flags & IOCTL_RSC_ORCHESTRATION_FLAG_RUN_CONFORMANCE) != 0u &&
             stage_cnt < RSCSW_ORCHESTRATION_STAGE_CAPACITY) {
             rsc_sw_orchestration_init_stage(&snapshot->stages[stage_cnt++],
-                                            QCPEP_RSCSW_ORCHESTRATION_STAGE_CONFORMANCE, 1u, now);
+                                            IOCTL_RSC_ORCHESTRATION_STAGE_CONFORMANCE, 1u, now);
         }
-        if ((flags & QCPEP_RSCSW_ORCHESTRATION_FLAG_RUN_PROFILES) != 0u &&
+        if ((flags & IOCTL_RSC_ORCHESTRATION_FLAG_RUN_PROFILES) != 0u &&
             stage_cnt < RSCSW_ORCHESTRATION_STAGE_CAPACITY) {
             rsc_sw_orchestration_init_stage(&snapshot->stages[stage_cnt++],
-                                            QCPEP_RSCSW_ORCHESTRATION_STAGE_PROFILES, 1u, now);
+                                            IOCTL_RSC_ORCHESTRATION_STAGE_PROFILES, 1u, now);
         }
 
         snapshot->stage_cnt = stage_cnt;
@@ -8432,19 +8431,19 @@ NTSTATUS rsc_sw_run_orchestration(_In_ ULONG flags, _Out_opt_ rscsw_orchestratio
     local.status = STATUS_SUCCESS;
     local.tick100ns = rsc_sw_now100ns();
 
-    if ((orchestration_flags & QCPEP_RSCSW_ORCHESTRATION_FLAG_RUN_COVERAGE) != 0u &&
+    if ((orchestration_flags & IOCTL_RSC_ORCHESTRATION_FLAG_RUN_COVERAGE) != 0u &&
         stage_cnt < RSCSW_ORCHESTRATION_STAGE_CAPACITY) {
         rscsw_coverage_result_t coverage;
-        ULONG coverage_flags = QCPEP_RSCSW_COVERAGE_FLAG_REQUIRE_ACTIVE |
-                               QCPEP_RSCSW_COVERAGE_FLAG_REQUIRE_SUCCESS_THRESHOLD |
-                               QCPEP_RSCSW_COVERAGE_FLAG_REQUIRE_RECENT_ACTIVITY |
-                               QCPEP_RSCSW_COVERAGE_FLAG_INCLUDE_DEPENDENCY_LOAD;
+        ULONG coverage_flags = IOCTL_RSC_COVERAGE_FLAG_REQUIRE_ACTIVE |
+                               IOCTL_RSC_COVERAGE_FLAG_REQUIRE_SUCCESS_THRESHOLD |
+                               IOCTL_RSC_COVERAGE_FLAG_REQUIRE_RECENT_ACTIVITY |
+                               IOCTL_RSC_COVERAGE_FLAG_INCLUDE_DEPENDENCY_LOAD;
 
-        if ((orchestration_flags & QCPEP_RSCSW_ORCHESTRATION_FLAG_STRICT) != 0u)
-            coverage_flags |= QCPEP_RSCSW_COVERAGE_FLAG_STRICT_THRESHOLD;
+        if ((orchestration_flags & IOCTL_RSC_ORCHESTRATION_FLAG_STRICT) != 0u)
+            coverage_flags |= IOCTL_RSC_COVERAGE_FLAG_STRICT_THRESHOLD;
 
-        rsc_sw_orchestration_init_stage(
-            &stages[stage_cnt], QCPEP_RSCSW_ORCHESTRATION_STAGE_COVERAGE, 1u, local.tick100ns);
+        rsc_sw_orchestration_init_stage(&stages[stage_cnt], IOCTL_RSC_ORCHESTRATION_STAGE_COVERAGE,
+                                        1u, local.tick100ns);
         RtlZeroMemory(&coverage, sizeof(coverage));
         stages[stage_cnt].status = rsc_sw_analyze_coverage(coverage_flags, &coverage);
         stages[stage_cnt].warning_cnt = coverage.warning_cnt;
@@ -8467,20 +8466,20 @@ NTSTATUS rsc_sw_run_orchestration(_In_ ULONG flags, _Out_opt_ rscsw_orchestratio
         stage_cnt++;
     }
 
-    if ((orchestration_flags & QCPEP_RSCSW_ORCHESTRATION_FLAG_RUN_REMEDIATION) != 0u &&
+    if ((orchestration_flags & IOCTL_RSC_ORCHESTRATION_FLAG_RUN_REMEDIATION) != 0u &&
         stage_cnt < RSCSW_ORCHESTRATION_STAGE_CAPACITY) {
         rscsw_remediation_result_t remediation;
-        ULONG remediation_flags = QCPEP_RSCSW_REMEDIATION_FLAG_APPLY_RECOMMENDATIONS |
-                                  QCPEP_RSCSW_REMEDIATION_FLAG_TARGET_INACTIVE |
-                                  QCPEP_RSCSW_REMEDIATION_FLAG_TARGET_LOW_SUCCESS |
-                                  QCPEP_RSCSW_REMEDIATION_FLAG_TARGET_STALE_ACTIVITY |
-                                  QCPEP_RSCSW_REMEDIATION_FLAG_INCLUDE_DEPENDENCY_LOAD;
+        ULONG remediation_flags = IOCTL_RSC_REMEDIATION_FLAG_APPLY_RECOMMENDATIONS |
+                                  IOCTL_RSC_REMEDIATION_FLAG_TARGET_INACTIVE |
+                                  IOCTL_RSC_REMEDIATION_FLAG_TARGET_LOW_SUCCESS |
+                                  IOCTL_RSC_REMEDIATION_FLAG_TARGET_STALE_ACTIVITY |
+                                  IOCTL_RSC_REMEDIATION_FLAG_INCLUDE_DEPENDENCY_LOAD;
 
-        if ((orchestration_flags & QCPEP_RSCSW_ORCHESTRATION_FLAG_STRICT) != 0u)
-            remediation_flags |= QCPEP_RSCSW_REMEDIATION_FLAG_STRICT_THRESHOLD;
+        if ((orchestration_flags & IOCTL_RSC_ORCHESTRATION_FLAG_STRICT) != 0u)
+            remediation_flags |= IOCTL_RSC_REMEDIATION_FLAG_STRICT_THRESHOLD;
 
         rsc_sw_orchestration_init_stage(
-            &stages[stage_cnt], QCPEP_RSCSW_ORCHESTRATION_STAGE_REMEDIATION, 1u, local.tick100ns);
+            &stages[stage_cnt], IOCTL_RSC_ORCHESTRATION_STAGE_REMEDIATION, 1u, local.tick100ns);
         RtlZeroMemory(&remediation, sizeof(remediation));
         stages[stage_cnt].status = rsc_sw_run_remediation(remediation_flags, &remediation);
         stages[stage_cnt].warning_cnt = remediation.warning_cnt;
@@ -8504,22 +8503,22 @@ NTSTATUS rsc_sw_run_orchestration(_In_ ULONG flags, _Out_opt_ rscsw_orchestratio
         stage_cnt++;
     }
 
-    if ((orchestration_flags & QCPEP_RSCSW_ORCHESTRATION_FLAG_RUN_STABILIZATION) != 0u &&
+    if ((orchestration_flags & IOCTL_RSC_ORCHESTRATION_FLAG_RUN_STABILIZATION) != 0u &&
         stage_cnt < RSCSW_ORCHESTRATION_STAGE_CAPACITY) {
         rscsw_stabilization_result_t stabilization;
-        ULONG stabilization_flags = QCPEP_RSCSW_STABILIZATION_FLAG_INCLUDE_CONTROL_LANE |
-                                    QCPEP_RSCSW_STABILIZATION_FLAG_INCLUDE_INTERCONNECT_LANE |
-                                    QCPEP_RSCSW_STABILIZATION_FLAG_INCLUDE_THERMAL_LANE |
-                                    QCPEP_RSCSW_STABILIZATION_FLAG_EXECUTE_REMEDIATION |
-                                    QCPEP_RSCSW_STABILIZATION_FLAG_VERIFY_POST;
+        ULONG stabilization_flags = IOCTL_RSC_STABILIZATION_FLAG_INCLUDE_CONTROL_LANE |
+                                    IOCTL_RSC_STABILIZATION_FLAG_INCLUDE_INTERCONNECT_LANE |
+                                    IOCTL_RSC_STABILIZATION_FLAG_INCLUDE_THERMAL_LANE |
+                                    IOCTL_RSC_STABILIZATION_FLAG_EXECUTE_REMEDIATION |
+                                    IOCTL_RSC_STABILIZATION_FLAG_VERIFY_POST;
 
-        if ((orchestration_flags & QCPEP_RSCSW_ORCHESTRATION_FLAG_RUN_PROFILES) != 0u)
-            stabilization_flags |= QCPEP_RSCSW_STABILIZATION_FLAG_RUN_PROFILES;
-        if ((orchestration_flags & QCPEP_RSCSW_ORCHESTRATION_FLAG_STRICT) != 0u)
-            stabilization_flags |= QCPEP_RSCSW_STABILIZATION_FLAG_STRICT_COVERAGE;
+        if ((orchestration_flags & IOCTL_RSC_ORCHESTRATION_FLAG_RUN_PROFILES) != 0u)
+            stabilization_flags |= IOCTL_RSC_STABILIZATION_FLAG_RUN_PROFILES;
+        if ((orchestration_flags & IOCTL_RSC_ORCHESTRATION_FLAG_STRICT) != 0u)
+            stabilization_flags |= IOCTL_RSC_STABILIZATION_FLAG_STRICT_COVERAGE;
 
         rsc_sw_orchestration_init_stage(
-            &stages[stage_cnt], QCPEP_RSCSW_ORCHESTRATION_STAGE_STABILIZATION, 1u, local.tick100ns);
+            &stages[stage_cnt], IOCTL_RSC_ORCHESTRATION_STAGE_STABILIZATION, 1u, local.tick100ns);
         RtlZeroMemory(&stabilization, sizeof(stabilization));
         stages[stage_cnt].status = rsc_sw_run_stabilization(stabilization_flags, &stabilization);
         stages[stage_cnt].warning_cnt = stabilization.coverage_warning_cnt;
@@ -8544,7 +8543,7 @@ NTSTATUS rsc_sw_run_orchestration(_In_ ULONG flags, _Out_opt_ rscsw_orchestratio
         stage_cnt++;
     }
 
-    if ((orchestration_flags & QCPEP_RSCSW_ORCHESTRATION_FLAG_RUN_CONFORMANCE) != 0u &&
+    if ((orchestration_flags & IOCTL_RSC_ORCHESTRATION_FLAG_RUN_CONFORMANCE) != 0u &&
         stage_cnt < RSCSW_ORCHESTRATION_STAGE_CAPACITY) {
         rscsw_conformance_result_t conformance;
         ULONG conformance_flags = RSCSW_CONFORMANCE_FLAG_REQUIRE_ACTIVE |
@@ -8553,13 +8552,13 @@ NTSTATUS rsc_sw_run_orchestration(_In_ ULONG flags, _Out_opt_ rscsw_orchestratio
                                   RSCSW_CONFORMANCE_FLAG_REQUIRE_DEPENDENCY_SHAPE |
                                   RSCSW_CONFORMANCE_FLAG_REQUIRE_CATALOG_MATCH;
 
-        if ((orchestration_flags & QCPEP_RSCSW_ORCHESTRATION_FLAG_STRICT) != 0u)
+        if ((orchestration_flags & IOCTL_RSC_ORCHESTRATION_FLAG_STRICT) != 0u)
             conformance_flags |= RSCSW_CONFORMANCE_FLAG_STRICT_THRESHOLD;
-        if ((orchestration_flags & QCPEP_RSCSW_ORCHESTRATION_FLAG_INCLUDE_ARCMGR) != 0u)
+        if ((orchestration_flags & IOCTL_RSC_ORCHESTRATION_FLAG_INCLUDE_ARCMGR) != 0u)
             conformance_flags |= RSCSW_CONFORMANCE_FLAG_INCLUDE_ARCMGR;
 
         rsc_sw_orchestration_init_stage(
-            &stages[stage_cnt], QCPEP_RSCSW_ORCHESTRATION_STAGE_CONFORMANCE, 1u, local.tick100ns);
+            &stages[stage_cnt], IOCTL_RSC_ORCHESTRATION_STAGE_CONFORMANCE, 1u, local.tick100ns);
         RtlZeroMemory(&conformance, sizeof(conformance));
         stages[stage_cnt].status = rsc_sw_run_conformance(conformance_flags, &conformance);
         stages[stage_cnt].warning_cnt = conformance.warning_cnt;
@@ -8582,7 +8581,7 @@ NTSTATUS rsc_sw_run_orchestration(_In_ ULONG flags, _Out_opt_ rscsw_orchestratio
         stage_cnt++;
     }
 
-    if ((orchestration_flags & QCPEP_RSCSW_ORCHESTRATION_FLAG_RUN_PROFILES) != 0u &&
+    if ((orchestration_flags & IOCTL_RSC_ORCHESTRATION_FLAG_RUN_PROFILES) != 0u &&
         stage_cnt < RSCSW_ORCHESTRATION_STAGE_CAPACITY) {
         static const ULONG profile_ids[] = {RSCSW_PROFILE_BRINGUP, RSCSW_PROFILE_PERF,
                                             RSCSW_PROFILE_INTERCONNECT, RSCSW_PROFILE_THERMAL,
@@ -8594,13 +8593,13 @@ NTSTATUS rsc_sw_run_orchestration(_In_ ULONG flags, _Out_opt_ rscsw_orchestratio
         ULONG profile_score_acc = 0u;
         ULONG profile_flags = RSCSW_PROFILE_FLAG_RUN_MATRIX;
 
-        if ((orchestration_flags & QCPEP_RSCSW_ORCHESTRATION_FLAG_STRICT) != 0u)
+        if ((orchestration_flags & IOCTL_RSC_ORCHESTRATION_FLAG_STRICT) != 0u)
             profile_flags |= RSCSW_PROFILE_FLAG_FORCE_VERIFY;
-        if ((orchestration_flags & QCPEP_RSCSW_ORCHESTRATION_FLAG_INCLUDE_ARCMGR) != 0u)
+        if ((orchestration_flags & IOCTL_RSC_ORCHESTRATION_FLAG_INCLUDE_ARCMGR) != 0u)
             profile_flags |= RSCSW_PROFILE_FLAG_INCLUDE_FULL_SWEEP;
 
-        rsc_sw_orchestration_init_stage(
-            &stages[stage_cnt], QCPEP_RSCSW_ORCHESTRATION_STAGE_PROFILES, 1u, local.tick100ns);
+        rsc_sw_orchestration_init_stage(&stages[stage_cnt], IOCTL_RSC_ORCHESTRATION_STAGE_PROFILES,
+                                        1u, local.tick100ns);
         RtlZeroMemory(&profile_result, sizeof(profile_result));
 
         for (ULONG i = 0; i < RTL_NUMBER_OF(profile_ids); i++) {
@@ -8665,7 +8664,7 @@ NTSTATUS rsc_sw_run_orchestration(_In_ ULONG flags, _Out_opt_ rscsw_orchestratio
     }
 
     local.overall_score_permille = (ULONG)(score_acc / stage_cnt);
-    if ((orchestration_flags & QCPEP_RSCSW_ORCHESTRATION_FLAG_STRICT) != 0u &&
+    if ((orchestration_flags & IOCTL_RSC_ORCHESTRATION_FLAG_STRICT) != 0u &&
         local.overall_score_permille < 850u && local.failed_stages == 0u) {
         local.failed_stages = 1u;
     }
@@ -9020,9 +9019,9 @@ NTSTATUS rsc_sw_apply_ppp_policy_vote(_In_ ULONG res_id, _In_ ULONG set_type,
     low_voter = (ULONG)(voter_id & 0xFFFFFFFFu);
     high_voter = (ULONG)(voter_id >> 32);
 
-    policy_flags = remove ? QCPEP_RSCSW_POLICY_FLAG_REMOVE : QCPEP_RSCSW_POLICY_FLAG_VOTE;
+    policy_flags = remove ? IOCTL_RSC_POLICY_FLAG_REMOVE : IOCTL_RSC_POLICY_FLAG_VOTE;
     if (parent_subsystem_id != subsystem_id)
-        policy_flags |= QCPEP_RSCSW_POLICY_FLAG_PROPAGATED | QCPEP_RSCSW_POLICY_FLAG_PARENT;
+        policy_flags |= IOCTL_RSC_POLICY_FLAG_PROPAGATED | IOCTL_RSC_POLICY_FLAG_PARENT;
 
     RtlZeroMemory(&evt, sizeof(evt));
 
@@ -9073,7 +9072,7 @@ NTSTATUS rsc_sw_apply_ppp_policy_vote(_In_ ULONG res_id, _In_ ULONG set_type,
         res->driver_map_id = driver_map_id;
         res->flags = policy_flags;
         if (res->active_vote_cnt != 0u)
-            res->flags |= QCPEP_RSCSW_POLICY_FLAG_ACTIVE;
+            res->flags |= IOCTL_RSC_POLICY_FLAG_ACTIVE;
         res->last_status = status;
         res->last_tag = (0x504F4C00u | (res_id & 0xFFu));
         res->last_value0 = set_type;
@@ -9133,7 +9132,7 @@ NTSTATUS rsc_sw_apply_ppp_policy_vote(_In_ ULONG res_id, _In_ ULONG set_type,
                               node_flags ^ 0x00010000u);
         rsc_sw_record_event(parent_subsystem_id, RSC_SW_EVENT_TRANSITION, status, ioctl_code,
                             parent_res_id, res_id, set_type, driver_map_id, 0u,
-                            policy_flags | QCPEP_RSCSW_POLICY_FLAG_PARENT);
+                            policy_flags | IOCTL_RSC_POLICY_FLAG_PARENT);
     }
 
     rsc_sw_set_node_state(RSC_SW_SUBSYSTEM_PPP, state, base_clock_khz / 4u, set_mask);
@@ -9227,10 +9226,9 @@ NTSTATUS rsc_sw_get_policy_history(_Out_writes_to_(capacity, *cnt) rscsw_policy_
 
 static ULONG rsc_sw_fabric_default_flags(VOID)
 {
-    return QCPEP_RSCSW_FABRIC_FLAG_REQUIRE_ACTIVE |
-           QCPEP_RSCSW_FABRIC_FLAG_REQUIRE_POLICY_ACTIVITY |
-           QCPEP_RSCSW_FABRIC_FLAG_REQUIRE_DEPENDENCY_HEALTH |
-           QCPEP_RSCSW_FABRIC_FLAG_INCLUDE_THERMAL_PRESSURE;
+    return IOCTL_RSC_FABRIC_FLAG_REQUIRE_ACTIVE | IOCTL_RSC_FABRIC_FLAG_REQUIRE_POLICY_ACTIVITY |
+           IOCTL_RSC_FABRIC_FLAG_REQUIRE_DEPENDENCY_HEALTH |
+           IOCTL_RSC_FABRIC_FLAG_INCLUDE_THERMAL_PRESSURE;
 }
 
 static VOID rsc_sw_build_fabric_lane(_In_ ULONG subsystem_id, _In_ const rscsw_node_state_t* node,
@@ -9520,24 +9518,24 @@ NTSTATUS rsc_sw_run_fabric(_In_ ULONG flags, _Out_opt_ rscsw_fabric_result_t* re
         if (lane->policy_active_vote_cnt != 0u)
             local.policy_active_lane_cnt++;
 
-        if (((run_flags & QCPEP_RSCSW_FABRIC_FLAG_REQUIRE_ACTIVE) != 0u ||
+        if (((run_flags & IOCTL_RSC_FABRIC_FLAG_REQUIRE_ACTIVE) != 0u ||
              (profile && profile->require_active != 0u)) &&
             lane->active == 0u) {
             lane_warn = TRUE;
         }
 
-        if (((run_flags & QCPEP_RSCSW_FABRIC_FLAG_REQUIRE_POLICY_ACTIVITY) != 0u ||
+        if (((run_flags & IOCTL_RSC_FABRIC_FLAG_REQUIRE_POLICY_ACTIVITY) != 0u ||
              (profile && profile->require_policy_activity != 0u)) &&
             lane->policy_res_cnt != 0u && lane->policy_active_vote_cnt == 0u) {
             lane_warn = TRUE;
         }
 
-        if ((run_flags & QCPEP_RSCSW_FABRIC_FLAG_REQUIRE_DEPENDENCY_HEALTH) != 0u &&
+        if ((run_flags & IOCTL_RSC_FABRIC_FLAG_REQUIRE_DEPENDENCY_HEALTH) != 0u &&
             dep_total != 0u && health_score < dependency_health_floor) {
             lane_warn = TRUE;
         }
 
-        if ((run_flags & QCPEP_RSCSW_FABRIC_FLAG_INCLUDE_THERMAL_PRESSURE) != 0u) {
+        if ((run_flags & IOCTL_RSC_FABRIC_FLAG_INCLUDE_THERMAL_PRESSURE) != 0u) {
             if (lane->thermal_deci_c >= thermal_error_deci_c)
                 lane_error = TRUE;
             else if (lane->thermal_deci_c >= thermal_warn_deci_c)
@@ -9549,11 +9547,11 @@ NTSTATUS rsc_sw_run_fabric(_In_ ULONG flags, _Out_opt_ rscsw_fabric_result_t* re
         if (health_score < low_health_floor)
             lane_warn = TRUE;
 
-        if ((run_flags & QCPEP_RSCSW_FABRIC_FLAG_STRICT) != 0u &&
+        if ((run_flags & IOCTL_RSC_FABRIC_FLAG_STRICT) != 0u &&
             health_score < strict_health_floor) {
             lane_error = TRUE;
         }
-        if ((run_flags & QCPEP_RSCSW_FABRIC_FLAG_STRICT) != 0u && lane_warn && profile &&
+        if ((run_flags & IOCTL_RSC_FABRIC_FLAG_STRICT) != 0u && lane_warn && profile &&
             profile->escalate_warn_in_strict != 0u) {
             lane_error = TRUE;
         }
@@ -9588,7 +9586,7 @@ NTSTATUS rsc_sw_run_fabric(_In_ ULONG flags, _Out_opt_ rscsw_fabric_result_t* re
         local.thermal_min_deci_c = 0;
     }
 
-    if ((run_flags & QCPEP_RSCSW_FABRIC_FLAG_STRICT) != 0u && local.warning_cnt != 0u &&
+    if ((run_flags & IOCTL_RSC_FABRIC_FLAG_STRICT) != 0u && local.warning_cnt != 0u &&
         local.error_cnt == 0u) {
         local.error_cnt = 1u;
     }
@@ -9688,10 +9686,9 @@ NTSTATUS rsc_sw_get_fabric_history(_Out_writes_to_(capacity, *cnt) rscsw_fabric_
 
 static ULONG rsc_sw_domain_default_flags(VOID)
 {
-    return QCPEP_RSCSW_DOMAIN_FLAG_REQUIRE_ACTIVE |
-           QCPEP_RSCSW_DOMAIN_FLAG_REQUIRE_POLICY_ACTIVITY |
-           QCPEP_RSCSW_DOMAIN_FLAG_REQUIRE_DEPENDENCY_HEALTH |
-           QCPEP_RSCSW_DOMAIN_FLAG_INCLUDE_THERMAL_PRESSURE;
+    return IOCTL_RSC_DOMAIN_FLAG_REQUIRE_ACTIVE | IOCTL_RSC_DOMAIN_FLAG_REQUIRE_POLICY_ACTIVITY |
+           IOCTL_RSC_DOMAIN_FLAG_REQUIRE_DEPENDENCY_HEALTH |
+           IOCTL_RSC_DOMAIN_FLAG_INCLUDE_THERMAL_PRESSURE;
 }
 
 static VOID rsc_sw_build_domain_entry(_In_ const rscsw_domain_desc_t* desc,
@@ -9767,24 +9764,24 @@ static VOID rsc_sw_build_domain_entry(_In_ const rscsw_domain_desc_t* desc,
         if (lane->policy_active_vote_cnt != 0u)
             domain->policy_active_lane_cnt++;
 
-        if (((flags & QCPEP_RSCSW_DOMAIN_FLAG_REQUIRE_ACTIVE) != 0u ||
+        if (((flags & IOCTL_RSC_DOMAIN_FLAG_REQUIRE_ACTIVE) != 0u ||
              (lane_profile && lane_profile->require_active != 0u)) &&
             lane->active == 0u) {
             lane_warn = TRUE;
         }
 
-        if (((flags & QCPEP_RSCSW_DOMAIN_FLAG_REQUIRE_POLICY_ACTIVITY) != 0u ||
+        if (((flags & IOCTL_RSC_DOMAIN_FLAG_REQUIRE_POLICY_ACTIVITY) != 0u ||
              (lane_profile && lane_profile->require_policy_vote != 0u)) &&
             lane->policy_res_cnt != 0u && lane->policy_active_vote_cnt == 0u) {
             lane_warn = TRUE;
         }
 
-        if ((flags & QCPEP_RSCSW_DOMAIN_FLAG_REQUIRE_DEPENDENCY_HEALTH) != 0u && dep_total != 0u &&
+        if ((flags & IOCTL_RSC_DOMAIN_FLAG_REQUIRE_DEPENDENCY_HEALTH) != 0u && dep_total != 0u &&
             lane_health < dependency_health_floor) {
             lane_warn = TRUE;
         }
 
-        if ((flags & QCPEP_RSCSW_DOMAIN_FLAG_INCLUDE_THERMAL_PRESSURE) != 0u) {
+        if ((flags & IOCTL_RSC_DOMAIN_FLAG_INCLUDE_THERMAL_PRESSURE) != 0u) {
             if (lane->thermal_deci_c >= thermal_error_deci_c)
                 lane_error = TRUE;
             else if (lane->thermal_deci_c >= thermal_warn_deci_c)
@@ -9794,10 +9791,10 @@ static VOID rsc_sw_build_domain_entry(_In_ const rscsw_domain_desc_t* desc,
         if (lane->last_status < 0)
             lane_error = TRUE;
 
-        if ((flags & QCPEP_RSCSW_DOMAIN_FLAG_STRICT) != 0u && lane_health < strict_health_floor) {
+        if ((flags & IOCTL_RSC_DOMAIN_FLAG_STRICT) != 0u && lane_health < strict_health_floor) {
             lane_error = TRUE;
         }
-        if ((flags & QCPEP_RSCSW_DOMAIN_FLAG_STRICT) != 0u && lane_warn && lane_profile &&
+        if ((flags & IOCTL_RSC_DOMAIN_FLAG_STRICT) != 0u && lane_warn && lane_profile &&
             lane_profile->escalate_warn_in_strict != 0u) {
             lane_error = TRUE;
         }
@@ -9948,7 +9945,7 @@ NTSTATUS rsc_sw_run_domain(_In_ ULONG flags, _Out_opt_ rscsw_domain_result_t* re
                 is_error = TRUE;
                 is_warning = FALSE;
             }
-            if (!is_error && (run_flags & QCPEP_RSCSW_DOMAIN_FLAG_STRICT) != 0u &&
+            if (!is_error && (run_flags & IOCTL_RSC_DOMAIN_FLAG_STRICT) != 0u &&
                 domains[i].avg_health_score < domain_profile->strict_health_floor) {
                 is_error = TRUE;
                 is_warning = FALSE;
@@ -9986,7 +9983,7 @@ NTSTATUS rsc_sw_run_domain(_In_ ULONG flags, _Out_opt_ rscsw_domain_result_t* re
         local.overall_activity_score = 0u;
     }
 
-    if ((run_flags & QCPEP_RSCSW_DOMAIN_FLAG_STRICT) != 0u && local.warning_cnt != 0u &&
+    if ((run_flags & IOCTL_RSC_DOMAIN_FLAG_STRICT) != 0u && local.warning_cnt != 0u &&
         local.error_cnt == 0u) {
         local.error_cnt = 1u;
     }
@@ -10082,10 +10079,10 @@ NTSTATUS rsc_sw_get_domain_history(_Out_writes_to_(capacity, *cnt) rscsw_domain_
 
 static ULONG rsc_sw_interconnect_default_flags(VOID)
 {
-    return QCPEP_RSCSW_INTERCONNECT_FLAG_REQUIRE_ACTIVE_ROUTES |
-           QCPEP_RSCSW_INTERCONNECT_FLAG_REQUIRE_BANDWIDTH_HEADROOM |
-           QCPEP_RSCSW_INTERCONNECT_FLAG_REQUIRE_POLICY_LINK |
-           QCPEP_RSCSW_INTERCONNECT_FLAG_INCLUDE_THERMAL_PRESSURE;
+    return IOCTL_RSC_INTERCONNECT_FLAG_REQUIRE_ACTIVE_ROUTES |
+           IOCTL_RSC_INTERCONNECT_FLAG_REQUIRE_BANDWIDTH_HEADROOM |
+           IOCTL_RSC_INTERCONNECT_FLAG_REQUIRE_POLICY_LINK |
+           IOCTL_RSC_INTERCONNECT_FLAG_INCLUDE_THERMAL_PRESSURE;
 }
 
 static const rscsw_interconnect_route_desc_t*
@@ -10279,30 +10276,30 @@ static VOID rsc_sw_build_interconnect_route(_In_ const rscsw_interconnect_route_
     route->utilization_permille = (ULONG)util;
 
     if (route->active != 0u)
-        route->flags |= QCPEP_RSCSW_INTERCONNECT_ROUTE_FLAG_ACTIVE;
+        route->flags |= IOCTL_RSC_INTERCONNECT_ROUTE_FLAG_ACTIVE;
     if (route->policy_linked != 0u)
-        route->flags |= QCPEP_RSCSW_INTERCONNECT_ROUTE_FLAG_POLICY_LINKED;
+        route->flags |= IOCTL_RSC_INTERCONNECT_ROUTE_FLAG_POLICY_LINKED;
     if (thermal_deci_c >= thermal_soft_deci_c)
-        route->flags |= QCPEP_RSCSW_INTERCONNECT_ROUTE_FLAG_THERMAL_HIGH;
+        route->flags |= IOCTL_RSC_INTERCONNECT_ROUTE_FLAG_THERMAL_HIGH;
     if (!NT_SUCCESS((NTSTATUS)node->last_status))
-        route->flags |= QCPEP_RSCSW_INTERCONNECT_ROUTE_FLAG_STATUS_FAIL;
+        route->flags |= IOCTL_RSC_INTERCONNECT_ROUTE_FLAG_STATUS_FAIL;
     if ((granted_mb + headroom_floor_mb) < required_mb)
-        route->flags |= QCPEP_RSCSW_INTERCONNECT_ROUTE_FLAG_UNDER_PROVISIONED;
+        route->flags |= IOCTL_RSC_INTERCONNECT_ROUTE_FLAG_UNDER_PROVISIONED;
     if (route->utilization_permille > util_warn_permille)
-        route->flags |= QCPEP_RSCSW_INTERCONNECT_ROUTE_FLAG_OVER_UTILIZED;
+        route->flags |= IOCTL_RSC_INTERCONNECT_ROUTE_FLAG_OVER_UTILIZED;
     if (route->utilization_permille > util_error_permille)
-        route->flags |= QCPEP_RSCSW_INTERCONNECT_ROUTE_FLAG_STATUS_FAIL;
+        route->flags |= IOCTL_RSC_INTERCONNECT_ROUTE_FLAG_STATUS_FAIL;
     if (profile && profile->require_policy_link != 0u && route->active != 0u &&
         route->policy_linked == 0u) {
-        route->flags |= QCPEP_RSCSW_INTERCONNECT_ROUTE_FLAG_UNDER_PROVISIONED;
+        route->flags |= IOCTL_RSC_INTERCONNECT_ROUTE_FLAG_UNDER_PROVISIONED;
     }
     if (profile && profile->require_active != 0u && route->policy_linked != 0u &&
         route->active == 0u) {
-        route->flags |= QCPEP_RSCSW_INTERCONNECT_ROUTE_FLAG_UNDER_PROVISIONED;
+        route->flags |= IOCTL_RSC_INTERCONNECT_ROUTE_FLAG_UNDER_PROVISIONED;
     }
 
-    if ((route->flags & (QCPEP_RSCSW_INTERCONNECT_ROUTE_FLAG_STATUS_FAIL |
-                         QCPEP_RSCSW_INTERCONNECT_ROUTE_FLAG_UNDER_PROVISIONED)) != 0u &&
+    if ((route->flags & (IOCTL_RSC_INTERCONNECT_ROUTE_FLAG_STATUS_FAIL |
+                         IOCTL_RSC_INTERCONNECT_ROUTE_FLAG_UNDER_PROVISIONED)) != 0u &&
         NT_SUCCESS((NTSTATUS)route->last_status)) {
         route->last_status = STATUS_MORE_PROCESSING_REQUIRED;
     }
@@ -10470,13 +10467,13 @@ NTSTATUS rsc_sw_run_interconnect(_In_ ULONG flags, _Out_opt_ rscsw_interconnect_
         if (route->utilization_permille > peak_util)
             peak_util = route->utilization_permille;
 
-        if (((run_flags & QCPEP_RSCSW_INTERCONNECT_FLAG_REQUIRE_ACTIVE_ROUTES) != 0u ||
+        if (((run_flags & IOCTL_RSC_INTERCONNECT_FLAG_REQUIRE_ACTIVE_ROUTES) != 0u ||
              (profile && profile->require_active != 0u)) &&
             route->policy_linked != 0u && route->active == 0u) {
             warn = TRUE;
         }
 
-        if (((run_flags & QCPEP_RSCSW_INTERCONNECT_FLAG_REQUIRE_POLICY_LINK) != 0u ||
+        if (((run_flags & IOCTL_RSC_INTERCONNECT_FLAG_REQUIRE_POLICY_LINK) != 0u ||
              (profile && profile->require_policy_link != 0u)) &&
             route->active != 0u && route->policy_linked == 0u) {
             warn = TRUE;
@@ -10484,12 +10481,12 @@ NTSTATUS rsc_sw_run_interconnect(_In_ ULONG flags, _Out_opt_ rscsw_interconnect_
 
         if (headroom < headroom_floor_mb)
             headroom = headroom_floor_mb;
-        if ((run_flags & QCPEP_RSCSW_INTERCONNECT_FLAG_REQUIRE_BANDWIDTH_HEADROOM) != 0u &&
+        if ((run_flags & IOCTL_RSC_INTERCONNECT_FLAG_REQUIRE_BANDWIDTH_HEADROOM) != 0u &&
             (route->granted_bandwidth_mb + headroom) < route->required_bandwidth_mb) {
             warn = TRUE;
         }
 
-        if ((run_flags & QCPEP_RSCSW_INTERCONNECT_FLAG_INCLUDE_THERMAL_PRESSURE) != 0u) {
+        if ((run_flags & IOCTL_RSC_INTERCONNECT_FLAG_INCLUDE_THERMAL_PRESSURE) != 0u) {
             if (route->thermal_deci_c >= thermal_hard_deci_c)
                 err = TRUE;
             else if (route->thermal_deci_c >= thermal_soft_deci_c)
@@ -10501,13 +10498,13 @@ NTSTATUS rsc_sw_run_interconnect(_In_ ULONG flags, _Out_opt_ rscsw_interconnect_
         else if (route->utilization_permille > util_warn_permille)
             warn = TRUE;
 
-        if ((route->flags & QCPEP_RSCSW_INTERCONNECT_ROUTE_FLAG_STATUS_FAIL) != 0u)
+        if ((route->flags & IOCTL_RSC_INTERCONNECT_ROUTE_FLAG_STATUS_FAIL) != 0u)
             err = TRUE;
-        if ((route->flags & (QCPEP_RSCSW_INTERCONNECT_ROUTE_FLAG_UNDER_PROVISIONED |
-                             QCPEP_RSCSW_INTERCONNECT_ROUTE_FLAG_OVER_UTILIZED)) != 0u)
+        if ((route->flags & (IOCTL_RSC_INTERCONNECT_ROUTE_FLAG_UNDER_PROVISIONED |
+                             IOCTL_RSC_INTERCONNECT_ROUTE_FLAG_OVER_UTILIZED)) != 0u)
             warn = TRUE;
 
-        if ((run_flags & QCPEP_RSCSW_INTERCONNECT_FLAG_STRICT) != 0u && warn)
+        if ((run_flags & IOCTL_RSC_INTERCONNECT_FLAG_STRICT) != 0u && warn)
             err = TRUE;
 
         if (err)
@@ -11292,18 +11289,18 @@ static ULONG rsc_sw_reason_flags_detailed(
 
 static ULONG rsc_sw_sync_interconnect_flags(_In_ ULONG profile_id, _In_ ULONG sync_flags)
 {
-    ULONG interconnect_flags = QCPEP_RSCSW_INTERCONNECT_FLAG_REQUIRE_ACTIVE_ROUTES |
-                               QCPEP_RSCSW_INTERCONNECT_FLAG_REQUIRE_POLICY_LINK |
-                               QCPEP_RSCSW_INTERCONNECT_FLAG_REQUIRE_BANDWIDTH_HEADROOM;
+    ULONG interconnect_flags = IOCTL_RSC_INTERCONNECT_FLAG_REQUIRE_ACTIVE_ROUTES |
+                               IOCTL_RSC_INTERCONNECT_FLAG_REQUIRE_POLICY_LINK |
+                               IOCTL_RSC_INTERCONNECT_FLAG_REQUIRE_BANDWIDTH_HEADROOM;
 
     if (profile_id == RSCSW_SYNC_PROFILE_THERMAL || profile_id == RSCSW_SYNC_PROFILE_INTERCONNECT ||
         (sync_flags & RSCSW_SYNC_FLAG_THERMAL_GUARD) != 0u) {
-        interconnect_flags |= QCPEP_RSCSW_INTERCONNECT_FLAG_INCLUDE_THERMAL_PRESSURE;
+        interconnect_flags |= IOCTL_RSC_INTERCONNECT_FLAG_INCLUDE_THERMAL_PRESSURE;
     }
 
     if (profile_id == RSCSW_SYNC_PROFILE_PERFORMANCE ||
         profile_id == RSCSW_SYNC_PROFILE_INTERCONNECT) {
-        interconnect_flags |= QCPEP_RSCSW_INTERCONNECT_FLAG_STRICT;
+        interconnect_flags |= IOCTL_RSC_INTERCONNECT_FLAG_STRICT;
     }
 
     return interconnect_flags;
@@ -11311,18 +11308,18 @@ static ULONG rsc_sw_sync_interconnect_flags(_In_ ULONG profile_id, _In_ ULONG sy
 
 static ULONG rsc_sw_sync_domain_flags(_In_ ULONG profile_id, _In_ ULONG sync_flags)
 {
-    ULONG domain_flags = QCPEP_RSCSW_DOMAIN_FLAG_REQUIRE_ACTIVE |
-                         QCPEP_RSCSW_DOMAIN_FLAG_REQUIRE_POLICY_ACTIVITY |
-                         QCPEP_RSCSW_DOMAIN_FLAG_REQUIRE_DEPENDENCY_HEALTH;
+    ULONG domain_flags = IOCTL_RSC_DOMAIN_FLAG_REQUIRE_ACTIVE |
+                         IOCTL_RSC_DOMAIN_FLAG_REQUIRE_POLICY_ACTIVITY |
+                         IOCTL_RSC_DOMAIN_FLAG_REQUIRE_DEPENDENCY_HEALTH;
 
     if (profile_id == RSCSW_SYNC_PROFILE_THERMAL ||
         (sync_flags & RSCSW_SYNC_FLAG_THERMAL_GUARD) != 0u) {
-        domain_flags |= QCPEP_RSCSW_DOMAIN_FLAG_INCLUDE_THERMAL_PRESSURE;
+        domain_flags |= IOCTL_RSC_DOMAIN_FLAG_INCLUDE_THERMAL_PRESSURE;
     }
 
     if (profile_id == RSCSW_SYNC_PROFILE_PERFORMANCE ||
         profile_id == RSCSW_SYNC_PROFILE_INTERCONNECT) {
-        domain_flags |= QCPEP_RSCSW_DOMAIN_FLAG_STRICT;
+        domain_flags |= IOCTL_RSC_DOMAIN_FLAG_STRICT;
     }
 
     return domain_flags;
@@ -12773,32 +12770,32 @@ static ULONG rsc_sw_sequence_flags_for_phase(
 
 static ULONG rsc_sw_sequence_interconnect_flags(_In_ ULONG mode_id, _In_ ULONG sequence_flags)
 {
-    ULONG interconnect_flags = QCPEP_RSCSW_INTERCONNECT_FLAG_REQUIRE_ACTIVE_ROUTES |
-                               QCPEP_RSCSW_INTERCONNECT_FLAG_REQUIRE_POLICY_LINK |
-                               QCPEP_RSCSW_INTERCONNECT_FLAG_REQUIRE_BANDWIDTH_HEADROOM;
+    ULONG interconnect_flags = IOCTL_RSC_INTERCONNECT_FLAG_REQUIRE_ACTIVE_ROUTES |
+                               IOCTL_RSC_INTERCONNECT_FLAG_REQUIRE_POLICY_LINK |
+                               IOCTL_RSC_INTERCONNECT_FLAG_REQUIRE_BANDWIDTH_HEADROOM;
 
     if (mode_id == RSCSW_SEQUENCE_MODE_THERMAL)
-        interconnect_flags |= QCPEP_RSCSW_INTERCONNECT_FLAG_INCLUDE_THERMAL_PRESSURE;
+        interconnect_flags |= IOCTL_RSC_INTERCONNECT_FLAG_INCLUDE_THERMAL_PRESSURE;
     if (mode_id == RSCSW_SEQUENCE_MODE_PERFORMANCE)
-        interconnect_flags |= QCPEP_RSCSW_INTERCONNECT_FLAG_STRICT;
+        interconnect_flags |= IOCTL_RSC_INTERCONNECT_FLAG_STRICT;
     if ((sequence_flags & RSCSW_SEQUENCE_FLAG_VERIFY_QUERY) != 0u)
-        interconnect_flags |= QCPEP_RSCSW_INTERCONNECT_FLAG_REQUIRE_POLICY_LINK;
+        interconnect_flags |= IOCTL_RSC_INTERCONNECT_FLAG_REQUIRE_POLICY_LINK;
 
     return interconnect_flags;
 }
 
 static ULONG rsc_sw_sequence_domain_flags(_In_ ULONG mode_id, _In_ ULONG sequence_flags)
 {
-    ULONG domain_flags = QCPEP_RSCSW_DOMAIN_FLAG_REQUIRE_ACTIVE |
-                         QCPEP_RSCSW_DOMAIN_FLAG_REQUIRE_POLICY_ACTIVITY |
-                         QCPEP_RSCSW_DOMAIN_FLAG_REQUIRE_DEPENDENCY_HEALTH;
+    ULONG domain_flags = IOCTL_RSC_DOMAIN_FLAG_REQUIRE_ACTIVE |
+                         IOCTL_RSC_DOMAIN_FLAG_REQUIRE_POLICY_ACTIVITY |
+                         IOCTL_RSC_DOMAIN_FLAG_REQUIRE_DEPENDENCY_HEALTH;
 
     if (mode_id == RSCSW_SEQUENCE_MODE_THERMAL)
-        domain_flags |= QCPEP_RSCSW_DOMAIN_FLAG_INCLUDE_THERMAL_PRESSURE;
+        domain_flags |= IOCTL_RSC_DOMAIN_FLAG_INCLUDE_THERMAL_PRESSURE;
     if (mode_id == RSCSW_SEQUENCE_MODE_PERFORMANCE)
-        domain_flags |= QCPEP_RSCSW_DOMAIN_FLAG_STRICT;
+        domain_flags |= IOCTL_RSC_DOMAIN_FLAG_STRICT;
     if ((sequence_flags & RSCSW_SEQUENCE_FLAG_VERIFY_QUERY) != 0u)
-        domain_flags |= QCPEP_RSCSW_DOMAIN_FLAG_REQUIRE_POLICY_ACTIVITY;
+        domain_flags |= IOCTL_RSC_DOMAIN_FLAG_REQUIRE_POLICY_ACTIVITY;
 
     return domain_flags;
 }
@@ -22219,17 +22216,17 @@ NTSTATUS rsc_sw_run_coord(_In_ ULONG mode_id_arg, _In_ ULONG flags,
 
     if ((flags & RSCSW_COORD_FLAG_RUN_FABRIC) != 0u) {
         rscsw_fabric_result_t fabric_result;
-        ULONG fabric_flags = QCPEP_RSCSW_FABRIC_FLAG_REQUIRE_ACTIVE |
-                             QCPEP_RSCSW_FABRIC_FLAG_REQUIRE_POLICY_ACTIVITY |
-                             QCPEP_RSCSW_FABRIC_FLAG_REQUIRE_DEPENDENCY_HEALTH;
+        ULONG fabric_flags = IOCTL_RSC_FABRIC_FLAG_REQUIRE_ACTIVE |
+                             IOCTL_RSC_FABRIC_FLAG_REQUIRE_POLICY_ACTIVITY |
+                             IOCTL_RSC_FABRIC_FLAG_REQUIRE_DEPENDENCY_HEALTH;
         NTSTATUS phase_status;
 
         if (mode_id_arg == RSCSW_COORD_MODE_THERMAL ||
             (flags & RSCSW_COORD_FLAG_RUN_THERMAL) != 0u) {
-            fabric_flags |= QCPEP_RSCSW_FABRIC_FLAG_INCLUDE_THERMAL_PRESSURE;
+            fabric_flags |= IOCTL_RSC_FABRIC_FLAG_INCLUDE_THERMAL_PRESSURE;
         }
         if ((flags & RSCSW_COORD_FLAG_STRICT_VERIFY) != 0u)
-            fabric_flags |= QCPEP_RSCSW_FABRIC_FLAG_STRICT;
+            fabric_flags |= IOCTL_RSC_FABRIC_FLAG_STRICT;
 
         RtlZeroMemory(&fabric_result, sizeof(fabric_result));
         local.executed_phase_mask |= RSCSW_COORD_FLAG_RUN_FABRIC;
@@ -22253,17 +22250,17 @@ NTSTATUS rsc_sw_run_coord(_In_ ULONG mode_id_arg, _In_ ULONG flags,
 
     if ((flags & RSCSW_COORD_FLAG_RUN_INTERCONNECT) != 0u) {
         rscsw_interconnect_result_t interconnect_result;
-        ULONG interconnect_flags = QCPEP_RSCSW_INTERCONNECT_FLAG_REQUIRE_ACTIVE_ROUTES |
-                                   QCPEP_RSCSW_INTERCONNECT_FLAG_REQUIRE_BANDWIDTH_HEADROOM |
-                                   QCPEP_RSCSW_INTERCONNECT_FLAG_REQUIRE_POLICY_LINK;
+        ULONG interconnect_flags = IOCTL_RSC_INTERCONNECT_FLAG_REQUIRE_ACTIVE_ROUTES |
+                                   IOCTL_RSC_INTERCONNECT_FLAG_REQUIRE_BANDWIDTH_HEADROOM |
+                                   IOCTL_RSC_INTERCONNECT_FLAG_REQUIRE_POLICY_LINK;
         NTSTATUS phase_status;
 
         if (mode_id_arg == RSCSW_COORD_MODE_THERMAL ||
             (flags & RSCSW_COORD_FLAG_RUN_THERMAL) != 0u) {
-            interconnect_flags |= QCPEP_RSCSW_INTERCONNECT_FLAG_INCLUDE_THERMAL_PRESSURE;
+            interconnect_flags |= IOCTL_RSC_INTERCONNECT_FLAG_INCLUDE_THERMAL_PRESSURE;
         }
         if ((flags & RSCSW_COORD_FLAG_STRICT_VERIFY) != 0u)
-            interconnect_flags |= QCPEP_RSCSW_INTERCONNECT_FLAG_STRICT;
+            interconnect_flags |= IOCTL_RSC_INTERCONNECT_FLAG_STRICT;
 
         RtlZeroMemory(&interconnect_result, sizeof(interconnect_result));
         local.executed_phase_mask |= RSCSW_COORD_FLAG_RUN_INTERCONNECT;
@@ -22289,17 +22286,17 @@ NTSTATUS rsc_sw_run_coord(_In_ ULONG mode_id_arg, _In_ ULONG flags,
 
     if ((flags & RSCSW_COORD_FLAG_RUN_DOMAIN) != 0u) {
         rscsw_domain_result_t domain_result;
-        ULONG domain_flags = QCPEP_RSCSW_DOMAIN_FLAG_REQUIRE_ACTIVE |
-                             QCPEP_RSCSW_DOMAIN_FLAG_REQUIRE_POLICY_ACTIVITY |
-                             QCPEP_RSCSW_DOMAIN_FLAG_REQUIRE_DEPENDENCY_HEALTH;
+        ULONG domain_flags = IOCTL_RSC_DOMAIN_FLAG_REQUIRE_ACTIVE |
+                             IOCTL_RSC_DOMAIN_FLAG_REQUIRE_POLICY_ACTIVITY |
+                             IOCTL_RSC_DOMAIN_FLAG_REQUIRE_DEPENDENCY_HEALTH;
         NTSTATUS phase_status;
 
         if (mode_id_arg == RSCSW_COORD_MODE_THERMAL ||
             (flags & RSCSW_COORD_FLAG_RUN_THERMAL) != 0u) {
-            domain_flags |= QCPEP_RSCSW_DOMAIN_FLAG_INCLUDE_THERMAL_PRESSURE;
+            domain_flags |= IOCTL_RSC_DOMAIN_FLAG_INCLUDE_THERMAL_PRESSURE;
         }
         if ((flags & RSCSW_COORD_FLAG_STRICT_VERIFY) != 0u)
-            domain_flags |= QCPEP_RSCSW_DOMAIN_FLAG_STRICT;
+            domain_flags |= IOCTL_RSC_DOMAIN_FLAG_STRICT;
 
         RtlZeroMemory(&domain_result, sizeof(domain_result));
         local.executed_phase_mask |= RSCSW_COORD_FLAG_RUN_DOMAIN;
@@ -24481,15 +24478,15 @@ NTSTATUS rsc_sw_run_audit(_In_ ULONG mode_id, _In_ ULONG flags,
 
     if ((flags & RSCSW_AUDIT_FLAG_RUN_INTERCONNECT) != 0u) {
         rscsw_interconnect_result_t interconnect_result;
-        ULONG interconnect_flags = QCPEP_RSCSW_INTERCONNECT_FLAG_REQUIRE_ACTIVE_ROUTES |
-                                   QCPEP_RSCSW_INTERCONNECT_FLAG_REQUIRE_BANDWIDTH_HEADROOM |
-                                   QCPEP_RSCSW_INTERCONNECT_FLAG_REQUIRE_POLICY_LINK;
+        ULONG interconnect_flags = IOCTL_RSC_INTERCONNECT_FLAG_REQUIRE_ACTIVE_ROUTES |
+                                   IOCTL_RSC_INTERCONNECT_FLAG_REQUIRE_BANDWIDTH_HEADROOM |
+                                   IOCTL_RSC_INTERCONNECT_FLAG_REQUIRE_POLICY_LINK;
         NTSTATUS phase_status;
 
         if (mode_id == RSCSW_AUDIT_MODE_THERMAL)
-            interconnect_flags |= QCPEP_RSCSW_INTERCONNECT_FLAG_INCLUDE_THERMAL_PRESSURE;
+            interconnect_flags |= IOCTL_RSC_INTERCONNECT_FLAG_INCLUDE_THERMAL_PRESSURE;
         if ((flags & RSCSW_AUDIT_FLAG_STRICT) != 0u)
-            interconnect_flags |= QCPEP_RSCSW_INTERCONNECT_FLAG_STRICT;
+            interconnect_flags |= IOCTL_RSC_INTERCONNECT_FLAG_STRICT;
 
         RtlZeroMemory(&interconnect_result, sizeof(interconnect_result));
         phase_status = rsc_sw_run_interconnect(interconnect_flags, &interconnect_result);
@@ -24506,15 +24503,15 @@ NTSTATUS rsc_sw_run_audit(_In_ ULONG mode_id, _In_ ULONG flags,
 
     if ((flags & RSCSW_AUDIT_FLAG_RUN_DOMAIN) != 0u) {
         rscsw_domain_result_t domain_result;
-        ULONG domain_flags = QCPEP_RSCSW_DOMAIN_FLAG_REQUIRE_ACTIVE |
-                             QCPEP_RSCSW_DOMAIN_FLAG_REQUIRE_POLICY_ACTIVITY |
-                             QCPEP_RSCSW_DOMAIN_FLAG_REQUIRE_DEPENDENCY_HEALTH;
+        ULONG domain_flags = IOCTL_RSC_DOMAIN_FLAG_REQUIRE_ACTIVE |
+                             IOCTL_RSC_DOMAIN_FLAG_REQUIRE_POLICY_ACTIVITY |
+                             IOCTL_RSC_DOMAIN_FLAG_REQUIRE_DEPENDENCY_HEALTH;
         NTSTATUS phase_status;
 
         if (mode_id == RSCSW_AUDIT_MODE_THERMAL)
-            domain_flags |= QCPEP_RSCSW_DOMAIN_FLAG_INCLUDE_THERMAL_PRESSURE;
+            domain_flags |= IOCTL_RSC_DOMAIN_FLAG_INCLUDE_THERMAL_PRESSURE;
         if ((flags & RSCSW_AUDIT_FLAG_STRICT) != 0u)
-            domain_flags |= QCPEP_RSCSW_DOMAIN_FLAG_STRICT;
+            domain_flags |= IOCTL_RSC_DOMAIN_FLAG_STRICT;
 
         RtlZeroMemory(&domain_result, sizeof(domain_result));
         phase_status = rsc_sw_run_domain(domain_flags, &domain_result);

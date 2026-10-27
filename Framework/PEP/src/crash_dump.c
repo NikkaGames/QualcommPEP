@@ -389,13 +389,13 @@ VOID crash_dump_on_file_close(_In_opt_ PVOID file_object)
 }
 
 enum {
-    IOCTL_QCPEP_CRASH_CREATE = 0x22A000,
-    IOCTL_QCPEP_CRASH_DESTROY = 0x22A004,
-    IOCTL_QCPEP_CRASH_WRITE = 0x22A008,
-    IOCTL_QCPEP_CRASH_READ = 0x226010,
-    IOCTL_QCPEP_CRASH_OPEN = 0x226014,
-    IOCTL_QCPEP_CRASH_CAPTURE = 0x226018,
-    IOCTL_QCPEP_LKD_CREATE = 0x22CB00
+    IOCTL_PEP_CRASH_CREATE = 0x22A000,
+    IOCTL_PEP_CRASH_DESTROY = 0x22A004,
+    IOCTL_PEP_CRASH_WRITE = 0x22A008,
+    IOCTL_PEP_CRASH_READ = 0x226010,
+    IOCTL_PEP_CRASH_OPEN = 0x226014,
+    IOCTL_PEP_CRASH_CAPTURE = 0x226018,
+    IOCTL_PEP_LKD_CREATE = 0x22CB00
 };
 
 static NTSTATUS write_blob(_Inout_ crash_src_t* s, _In_ const VOID* in, _In_ size_t in_bytes)
@@ -590,7 +590,7 @@ NTSTATUS crash_dump_handle_ioctl(_In_ ULONG ioctl_code, _In_opt_ PVOID file_obje
     ULONG src_idx = 0;
 
     switch (ioctl_code) {
-        case IOCTL_QCPEP_CRASH_CREATE: {
+        case IOCTL_PEP_CRASH_CREATE: {
             if (!file_object) {
                 status = STATUS_INVALID_ADDRESS;
                 break;
@@ -678,7 +678,7 @@ NTSTATUS crash_dump_handle_ioctl(_In_ ULONG ioctl_code, _In_opt_ PVOID file_obje
             break;
         }
 
-        case IOCTL_QCPEP_CRASH_OPEN:
+        case IOCTL_PEP_CRASH_OPEN:
             if (!file_object) {
                 status = STATUS_INVALID_ADDRESS;
                 break;
@@ -723,7 +723,7 @@ NTSTATUS crash_dump_handle_ioctl(_In_ ULONG ioctl_code, _In_opt_ PVOID file_obje
             }
             break;
 
-        case IOCTL_QCPEP_CRASH_DESTROY:
+        case IOCTL_PEP_CRASH_DESTROY:
             s = NULL;
             if (!file_object && (!in || in_bytes < sizeof(ULONG))) {
                 status = STATUS_INVALID_ADDRESS;
@@ -770,7 +770,7 @@ NTSTATUS crash_dump_handle_ioctl(_In_ ULONG ioctl_code, _In_opt_ PVOID file_obje
                 status = STATUS_SUCCESS;
             break;
 
-        case IOCTL_QCPEP_CRASH_CAPTURE:
+        case IOCTL_PEP_CRASH_CAPTURE:
             s = crash_find_src_by_open_file(file_object);
             if (!s && !file_object)
                 s = crash_get_active(FALSE);
@@ -842,7 +842,7 @@ NTSTATUS crash_dump_handle_ioctl(_In_ ULONG ioctl_code, _In_opt_ PVOID file_obje
             crash_publish_state(6u, s ? s->idx : g_active_src, status, s ? s->blob_len : 0);
             break;
 
-        case IOCTL_QCPEP_CRASH_WRITE:
+        case IOCTL_PEP_CRASH_WRITE:
             if (!file_object) {
                 status = STATUS_INVALID_PARAMETER;
                 *written = 0;
@@ -873,7 +873,7 @@ NTSTATUS crash_dump_handle_ioctl(_In_ ULONG ioctl_code, _In_opt_ PVOID file_obje
             crash_publish_state(4u, s ? s->idx : g_active_src, status, s ? s->blob_len : 0);
             break;
 
-        case IOCTL_QCPEP_CRASH_READ:
+        case IOCTL_PEP_CRASH_READ:
             s = crash_find_src_by_open_file(file_object);
             if (!s && !file_object)
                 s = crash_get_active(FALSE);
@@ -909,7 +909,7 @@ NTSTATUS crash_dump_handle_ioctl(_In_ ULONG ioctl_code, _In_opt_ PVOID file_obje
             crash_publish_state(5u, s ? s->idx : g_active_src, status, s ? s->blob_len : 0);
             break;
 
-        case IOCTL_QCPEP_LKD_CREATE:
+        case IOCTL_PEP_LKD_CREATE:
 
             if (!in || in_bytes < sizeof(lkd_create_in_t)) {
                 *written = 0;

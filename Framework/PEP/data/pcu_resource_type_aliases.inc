@@ -1,4 +1,4 @@
-/* Auto-generated from driverA/qcpep8280.sys.h */
+/* pcu resource type catalog aliases. */
     { 0x0u, "CPU0Frequency" },
     { 0x1u, "CPU1Frequency" },
     { 0x2u, "CPU2Frequency" },

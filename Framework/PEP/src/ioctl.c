@@ -41,7 +41,7 @@ static BOOLEAN is_compat_pmic_passthrough_family(_In_ ULONG code)
 
 static BOOLEAN is_unsupported_parity_ioctl(_In_ ULONG code)
 {
-    return (code >= IOCTL_QCPEP_PING && code <= IOCTL_QCPEP_RSCSW_DRIVERA_HARDEN_HISTORY);
+    return (code >= IOCTL_PEP_PING && code <= IOCTL_PEP_RSC_HARDEN_HISTORY);
 }
 
 static ULONG rsc_sw_subsystem_for_ioctl(_In_ ULONG ioctl_code)
@@ -50,157 +50,157 @@ static ULONG rsc_sw_subsystem_for_ioctl(_In_ ULONG ioctl_code)
         return RSC_SW_SUBSYSTEM_MAX;
 
     switch (ioctl_code) {
-        case IOCTL_QCPEP_SUBSYS_ADSP_STATE:
+        case IOCTL_PEP_SUBSYS_ADSP_STATE:
             return RSC_SW_SUBSYSTEM_AOP;
-        case IOCTL_QCPEP_SUBSYS_ADSP_CTRL:
+        case IOCTL_PEP_SUBSYS_ADSP_CTRL:
             return RSC_SW_SUBSYSTEM_GLINK;
-        case IOCTL_QCPEP_SUBSYS_CDSP_STATE:
+        case IOCTL_PEP_SUBSYS_CDSP_STATE:
             return RSC_SW_SUBSYSTEM_CMD_DB;
-        case IOCTL_QCPEP_RSCSW_SNAPSHOT:
-        case IOCTL_QCPEP_RSCSW_HISTORY:
-        case IOCTL_QCPEP_RSCSW_SET_NODE:
-        case IOCTL_QCPEP_RSCSW_QUERY_NODE:
-        case IOCTL_QCPEP_RSCSW_APPLY_BATCH:
-        case IOCTL_QCPEP_RSCSW_GET_CATALOG:
-        case IOCTL_QCPEP_RSCSW_RUN_SCENARIO:
-        case IOCTL_QCPEP_RSCSW_SCENARIO_HISTORY:
-        case IOCTL_QCPEP_RSCSW_DIAG_SNAPSHOT:
-        case IOCTL_QCPEP_RSCSW_DIAG_RUN_MATRIX:
-        case IOCTL_QCPEP_RSCSW_DIAG_HISTORY:
-        case IOCTL_QCPEP_RSCSW_PROFILE_CATALOG:
-        case IOCTL_QCPEP_RSCSW_PROFILE_RUN:
-        case IOCTL_QCPEP_RSCSW_PROFILE_HISTORY:
-        case IOCTL_QCPEP_RSCSW_GRAPH_SNAPSHOT:
-        case IOCTL_QCPEP_RSCSW_PLAN_EXECUTE:
-        case IOCTL_QCPEP_RSCSW_PLAN_HISTORY:
-        case IOCTL_QCPEP_RSCSW_CHECKPOINT_SNAPSHOT:
-        case IOCTL_QCPEP_RSCSW_CHECKPOINT_CAPTURE:
-        case IOCTL_QCPEP_RSCSW_CHECKPOINT_APPLY:
-        case IOCTL_QCPEP_RSCSW_CHECKPOINT_HISTORY:
-        case IOCTL_QCPEP_RSCSW_PLAN_PREVIEW_SNAPSHOT:
-        case IOCTL_QCPEP_RSCSW_PLAN_PREVIEW_EXECUTE:
-        case IOCTL_QCPEP_RSCSW_PLAN_PREVIEW_HISTORY:
-        case IOCTL_QCPEP_RSCSW_COVERAGE_SNAPSHOT:
-        case IOCTL_QCPEP_RSCSW_COVERAGE_ANALYZE:
-        case IOCTL_QCPEP_RSCSW_COVERAGE_HISTORY:
-        case IOCTL_QCPEP_RSCSW_REMEDIATION_SNAPSHOT:
-        case IOCTL_QCPEP_RSCSW_REMEDIATION_RUN:
-        case IOCTL_QCPEP_RSCSW_REMEDIATION_HISTORY:
-        case IOCTL_QCPEP_RSCSW_STABILIZATION_SNAPSHOT:
-        case IOCTL_QCPEP_RSCSW_STABILIZATION_RUN:
-        case IOCTL_QCPEP_RSCSW_STABILIZATION_HISTORY:
-        case IOCTL_QCPEP_RSCSW_CONFORMANCE_SNAPSHOT:
-        case IOCTL_QCPEP_RSCSW_CONFORMANCE_RUN:
-        case IOCTL_QCPEP_RSCSW_CONFORMANCE_HISTORY:
-        case IOCTL_QCPEP_RSCSW_ORCHESTRATION_SNAPSHOT:
-        case IOCTL_QCPEP_RSCSW_ORCHESTRATION_RUN:
-        case IOCTL_QCPEP_RSCSW_ORCHESTRATION_HISTORY:
-        case IOCTL_QCPEP_RSCSW_POLICY_SNAPSHOT:
-        case IOCTL_QCPEP_RSCSW_POLICY_HISTORY:
-        case IOCTL_QCPEP_RSCSW_FABRIC_SNAPSHOT:
-        case IOCTL_QCPEP_RSCSW_FABRIC_RUN:
-        case IOCTL_QCPEP_RSCSW_FABRIC_HISTORY:
-        case IOCTL_QCPEP_RSCSW_DOMAIN_SNAPSHOT:
-        case IOCTL_QCPEP_RSCSW_DOMAIN_RUN:
-        case IOCTL_QCPEP_RSCSW_DOMAIN_HISTORY:
-        case IOCTL_QCPEP_RSCSW_INTERCONNECT_SNAPSHOT:
-        case IOCTL_QCPEP_RSCSW_INTERCONNECT_RUN:
-        case IOCTL_QCPEP_RSCSW_INTERCONNECT_HISTORY:
-        case IOCTL_QCPEP_RSCSW_TOPOLOGY_SNAPSHOT:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_CATALOG:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_SYNC_SNAPSHOT:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_SYNC_RUN:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_SYNC_HISTORY:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_VALIDATE_SNAPSHOT:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_VALIDATE_RUN:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_VALIDATE_HISTORY:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_SEQUENCE_SNAPSHOT:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_SEQUENCE_RUN:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_SEQUENCE_HISTORY:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_LOOKUP_SNAPSHOT:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_LOOKUP_RUN:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_LOOKUP_HISTORY:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_PROVISION_SNAPSHOT:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_PROVISION_RUN:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_PROVISION_HISTORY:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_RAIL_SNAPSHOT:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_RAIL_RUN:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_RAIL_HISTORY:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_TCS_SNAPSHOT:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_TCS_RUN:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_TCS_HISTORY:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_THERMAL_SNAPSHOT:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_THERMAL_RUN:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_THERMAL_HISTORY:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_COORD_SNAPSHOT:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_COORD_RUN:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_COORD_HISTORY:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_AUDIT_SNAPSHOT:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_AUDIT_RUN:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_AUDIT_HISTORY:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_SUPERVISOR_SNAPSHOT:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_SUPERVISOR_RUN:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_SUPERVISOR_HISTORY:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_AUTOTUNE_SNAPSHOT:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_AUTOTUNE_RUN:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_AUTOTUNE_HISTORY:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_HARDEN_SNAPSHOT:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_HARDEN_RUN:
-        case IOCTL_QCPEP_RSCSW_DRIVERA_HARDEN_HISTORY:
+        case IOCTL_PEP_RSC_SNAPSHOT:
+        case IOCTL_PEP_RSC_HISTORY:
+        case IOCTL_PEP_RSC_SET_NODE:
+        case IOCTL_PEP_RSC_QUERY_NODE:
+        case IOCTL_PEP_RSC_APPLY_BATCH:
+        case IOCTL_PEP_RSC_GET_CATALOG:
+        case IOCTL_PEP_RSC_RUN_SCENARIO:
+        case IOCTL_PEP_RSC_SCENARIO_HISTORY:
+        case IOCTL_PEP_RSC_DIAG_SNAPSHOT:
+        case IOCTL_PEP_RSC_DIAG_RUN_MATRIX:
+        case IOCTL_PEP_RSC_DIAG_HISTORY:
+        case IOCTL_PEP_RSC_PROFILE_CATALOG:
+        case IOCTL_PEP_RSC_PROFILE_RUN:
+        case IOCTL_PEP_RSC_PROFILE_HISTORY:
+        case IOCTL_PEP_RSC_GRAPH_SNAPSHOT:
+        case IOCTL_PEP_RSC_ACTION_SEQUENCE_EXECUTE:
+        case IOCTL_PEP_RSC_ACTION_SEQUENCE_HISTORY:
+        case IOCTL_PEP_RSC_CHECKPOINT_SNAPSHOT:
+        case IOCTL_PEP_RSC_CHECKPOINT_CAPTURE:
+        case IOCTL_PEP_RSC_CHECKPOINT_APPLY:
+        case IOCTL_PEP_RSC_CHECKPOINT_HISTORY:
+        case IOCTL_PEP_RSC_ACTION_SEQUENCE_PREVIEW_SNAPSHOT:
+        case IOCTL_PEP_RSC_ACTION_SEQUENCE_PREVIEW_EXECUTE:
+        case IOCTL_PEP_RSC_ACTION_SEQUENCE_PREVIEW_HISTORY:
+        case IOCTL_PEP_RSC_COVERAGE_SNAPSHOT:
+        case IOCTL_PEP_RSC_COVERAGE_ANALYZE:
+        case IOCTL_PEP_RSC_COVERAGE_HISTORY:
+        case IOCTL_PEP_RSC_REMEDIATION_SNAPSHOT:
+        case IOCTL_PEP_RSC_REMEDIATION_RUN:
+        case IOCTL_PEP_RSC_REMEDIATION_HISTORY:
+        case IOCTL_PEP_RSC_STABILIZATION_SNAPSHOT:
+        case IOCTL_PEP_RSC_STABILIZATION_RUN:
+        case IOCTL_PEP_RSC_STABILIZATION_HISTORY:
+        case IOCTL_PEP_RSC_CONFORMANCE_SNAPSHOT:
+        case IOCTL_PEP_RSC_CONFORMANCE_RUN:
+        case IOCTL_PEP_RSC_CONFORMANCE_HISTORY:
+        case IOCTL_PEP_RSC_ORCHESTRATION_SNAPSHOT:
+        case IOCTL_PEP_RSC_ORCHESTRATION_RUN:
+        case IOCTL_PEP_RSC_ORCHESTRATION_HISTORY:
+        case IOCTL_PEP_RSC_POLICY_SNAPSHOT:
+        case IOCTL_PEP_RSC_POLICY_HISTORY:
+        case IOCTL_PEP_RSC_FABRIC_SNAPSHOT:
+        case IOCTL_PEP_RSC_FABRIC_RUN:
+        case IOCTL_PEP_RSC_FABRIC_HISTORY:
+        case IOCTL_PEP_RSC_DOMAIN_SNAPSHOT:
+        case IOCTL_PEP_RSC_DOMAIN_RUN:
+        case IOCTL_PEP_RSC_DOMAIN_HISTORY:
+        case IOCTL_PEP_RSC_INTERCONNECT_SNAPSHOT:
+        case IOCTL_PEP_RSC_INTERCONNECT_RUN:
+        case IOCTL_PEP_RSC_INTERCONNECT_HISTORY:
+        case IOCTL_PEP_RSC_TOPOLOGY_SNAPSHOT:
+        case IOCTL_PEP_RSC_CATALOG:
+        case IOCTL_PEP_RSC_SYNC_SNAPSHOT:
+        case IOCTL_PEP_RSC_SYNC_RUN:
+        case IOCTL_PEP_RSC_SYNC_HISTORY:
+        case IOCTL_PEP_RSC_VALIDATE_SNAPSHOT:
+        case IOCTL_PEP_RSC_VALIDATE_RUN:
+        case IOCTL_PEP_RSC_VALIDATE_HISTORY:
+        case IOCTL_PEP_RSC_SEQUENCE_SNAPSHOT:
+        case IOCTL_PEP_RSC_SEQUENCE_RUN:
+        case IOCTL_PEP_RSC_SEQUENCE_HISTORY:
+        case IOCTL_PEP_RSC_LOOKUP_SNAPSHOT:
+        case IOCTL_PEP_RSC_LOOKUP_RUN:
+        case IOCTL_PEP_RSC_LOOKUP_HISTORY:
+        case IOCTL_PEP_RSC_PROVISION_SNAPSHOT:
+        case IOCTL_PEP_RSC_PROVISION_RUN:
+        case IOCTL_PEP_RSC_PROVISION_HISTORY:
+        case IOCTL_PEP_RSC_RAIL_SNAPSHOT:
+        case IOCTL_PEP_RSC_RAIL_RUN:
+        case IOCTL_PEP_RSC_RAIL_HISTORY:
+        case IOCTL_PEP_RSC_TCS_SNAPSHOT:
+        case IOCTL_PEP_RSC_TCS_RUN:
+        case IOCTL_PEP_RSC_TCS_HISTORY:
+        case IOCTL_PEP_RSC_THERMAL_SNAPSHOT:
+        case IOCTL_PEP_RSC_THERMAL_RUN:
+        case IOCTL_PEP_RSC_THERMAL_HISTORY:
+        case IOCTL_PEP_RSC_COORD_SNAPSHOT:
+        case IOCTL_PEP_RSC_COORD_RUN:
+        case IOCTL_PEP_RSC_COORD_HISTORY:
+        case IOCTL_PEP_RSC_AUDIT_SNAPSHOT:
+        case IOCTL_PEP_RSC_AUDIT_RUN:
+        case IOCTL_PEP_RSC_AUDIT_HISTORY:
+        case IOCTL_PEP_RSC_SUPERVISOR_SNAPSHOT:
+        case IOCTL_PEP_RSC_SUPERVISOR_RUN:
+        case IOCTL_PEP_RSC_SUPERVISOR_HISTORY:
+        case IOCTL_PEP_RSC_AUTOTUNE_SNAPSHOT:
+        case IOCTL_PEP_RSC_AUTOTUNE_RUN:
+        case IOCTL_PEP_RSC_AUTOTUNE_HISTORY:
+        case IOCTL_PEP_RSC_HARDEN_SNAPSHOT:
+        case IOCTL_PEP_RSC_HARDEN_RUN:
+        case IOCTL_PEP_RSC_HARDEN_HISTORY:
             return RSC_SW_SUBSYSTEM_RSC;
 
-        case IOCTL_QCPEP_PPP_GET_RPMH_COMMAND_SET:
+        case IOCTL_PEP_PPP_GET_RPMH_COMMAND_SET:
             return RSC_SW_SUBSYSTEM_RPMH;
-        case IOCTL_QCPEP_PPP_RESOURCE_VOTE:
-        case IOCTL_QCPEP_PPP_GET_RESOURCE_SETTINGS:
-        case IOCTL_QCPEP_PPP_RESOURCE_ACTION:
+        case IOCTL_PEP_PPP_RESOURCE_VOTE:
+        case IOCTL_PEP_PPP_GET_RESOURCE_SETTINGS:
+        case IOCTL_PEP_PPP_RESOURCE_ACTION:
             return RSC_SW_SUBSYSTEM_PPP;
 
-        case IOCTL_QCPEP_TSENS_SNAPSHOT:
-        case IOCTL_QCPEP_TSENS_HISTORY:
-        case IOCTL_QCPEP_TSENS_SENSOR_RANGE:
-        case IOCTL_QCPEP_TSENS_SET_THRESHOLD:
-        case IOCTL_QCPEP_TSENS_GET_TEMPS:
-        case IOCTL_QCPEP_TSENS_GET_TEMP_FOR_IDX:
-        case IOCTL_QCPEP_TSENS_STABLE_REQ:
+        case IOCTL_PEP_TSENS_SNAPSHOT:
+        case IOCTL_PEP_TSENS_HISTORY:
+        case IOCTL_PEP_TSENS_SENSOR_RANGE:
+        case IOCTL_PEP_TSENS_SET_THRESHOLD:
+        case IOCTL_PEP_TSENS_GET_TEMPS:
+        case IOCTL_PEP_TSENS_GET_TEMP_FOR_IDX:
+        case IOCTL_PEP_TSENS_STABLE_REQ:
             return RSC_SW_SUBSYSTEM_TSENS;
 
-        case IOCTL_QCPEP_SOC_SUBSYS_COUNT:
-        case IOCTL_QCPEP_SOC_SUBSYS_QUERY:
-        case IOCTL_QCPEP_SOC_SUBSYS_RESET:
-        case IOCTL_QCPEP_SOC_SUBSYS_BLOCKTIME:
-        case IOCTL_QCPEP_SOC_SUBSYS_METADATA:
+        case IOCTL_PEP_SOC_SUBSYS_COUNT:
+        case IOCTL_PEP_SOC_SUBSYS_QUERY:
+        case IOCTL_PEP_SOC_SUBSYS_RESET:
+        case IOCTL_PEP_SOC_SUBSYS_BLOCKTIME:
+        case IOCTL_PEP_SOC_SUBSYS_METADATA:
             return RSC_SW_SUBSYSTEM_RSC;
 
-        case IOCTL_QCPEP_INTERRUPT_SNAPSHOT:
-        case IOCTL_QCPEP_INTERRUPT_HISTORY:
-        case IOCTL_QCPEP_INTERRUPT_WAKECOUNTERS:
-        case IOCTL_QCPEP_INTERRUPT_LOOKUP:
+        case IOCTL_PEP_INTERRUPT_SNAPSHOT:
+        case IOCTL_PEP_INTERRUPT_HISTORY:
+        case IOCTL_PEP_INTERRUPT_WAKECOUNTERS:
+        case IOCTL_PEP_INTERRUPT_LOOKUP:
             return RSC_SW_SUBSYSTEM_ICB;
 
-        case IOCTL_QCPEP_MMRM_SNAPSHOT:
-        case IOCTL_QCPEP_MMRM_HISTORY:
-        case IOCTL_QCPEP_MMRM_DOMAIN_QUERY:
+        case IOCTL_PEP_MMRM_SNAPSHOT:
+        case IOCTL_PEP_MMRM_HISTORY:
+        case IOCTL_PEP_MMRM_DOMAIN_QUERY:
             return RSC_SW_SUBSYSTEM_ARC;
 
-        case IOCTL_QCPEP_VENDOR_88882058:
-        case IOCTL_QCPEP_VENDOR_88882088:
+        case IOCTL_PEP_VENDOR_88882058:
+        case IOCTL_PEP_VENDOR_88882088:
             return RSC_SW_SUBSYSTEM_CLOCK;
 
-        case IOCTL_QCPEP_DEEPSTANDBY_SNAPSHOT:
-        case IOCTL_QCPEP_DEEPSTANDBY_HISTORY:
-        case IOCTL_QCPEP_DEEPSTANDBY_MODEM_GET:
-        case IOCTL_QCPEP_DEEPSTANDBY_MODEM_SET:
-        case IOCTL_QCPEP_VENDOR_88884084:
+        case IOCTL_PEP_DEEPSTANDBY_SNAPSHOT:
+        case IOCTL_PEP_DEEPSTANDBY_HISTORY:
+        case IOCTL_PEP_DEEPSTANDBY_MODEM_GET:
+        case IOCTL_PEP_DEEPSTANDBY_MODEM_SET:
+        case IOCTL_PEP_VENDOR_88884084:
             return RSC_SW_SUBSYSTEM_PDC;
 
-        case IOCTL_QCPEP_GPIO_CONFIG:
-        case IOCTL_QCPEP_GPIO_REQUEST:
+        case IOCTL_PEP_GPIO_CONFIG:
+        case IOCTL_PEP_GPIO_REQUEST:
         case IOCTL_PM_GPIO_CONFIG_BIAS_VOLTAGE:
         case IOCTL_PM_GPIO_CONFIG_DIGITAL_INPUT:
-        case IOCTL_QCPEP_GPIO_PMIC_SET_STATE:
-        case IOCTL_QCPEP_GPIO_PMIC_SET_PULL:
-        case IOCTL_QCPEP_GPIO_PMIC_SET_DRIVE:
+        case IOCTL_PEP_GPIO_PMIC_SET_STATE:
+        case IOCTL_PEP_GPIO_PMIC_SET_PULL:
+        case IOCTL_PEP_GPIO_PMIC_SET_DRIVE:
         case IOCTL_PM_GPIO_GET_GPIO_STATE:
         case IOCTL_PM_GPIO_SET_GPIO_OUTPUT:
         case IOCTL_PMIC_PUBLIC_USB_OTG_CONTROL:
@@ -231,8 +231,8 @@ static ULONG rsc_sw_subsystem_for_ioctl(_In_ ULONG ioctl_code)
         case IOCTL_PM_LPG_ATEST:
             return RSC_SW_SUBSYSTEM_TLMM;
 
-        case IOCTL_QCPEP_BMS_SET_THRESHOLDS:
-        case IOCTL_QCPEP_BMS_QUERY:
+        case IOCTL_PEP_BMS_SET_THRESHOLDS:
+        case IOCTL_PEP_BMS_QUERY:
             return RSC_SW_SUBSYSTEM_NPA;
 
         default:
@@ -917,8 +917,8 @@ static NTSTATUS build_ppp_res_settings_for_test(_In_opt_ WDFDEVICE dev, _In_ ULO
         return STATUS_UNSUCCESSFUL;
 
     ULONG pm_bytes = 0;
-    NTSTATUS pm_st = forward_send(dev, IOCTL_QCPEP_PPP_GET_RESOURCE_SETTINGS, &res_id,
-                                  sizeof(res_id), out, 0x60, &pm_bytes);
+    NTSTATUS pm_st = forward_send(dev, IOCTL_PEP_PPP_GET_RESOURCE_SETTINGS, &res_id, sizeof(res_id),
+                                  out, 0x60, &pm_bytes);
     if (!NT_SUCCESS(pm_st))
         return pm_st;
 
@@ -2209,8 +2209,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
         io_control_code != IOCTL_PM_GPIO_CONFIG_DIGITAL_OUTPUT &&
         io_control_code != IOCTL_PM_GPIO_CONFIG_BIAS_VOLTAGE &&
         io_control_code != IOCTL_PM_GPIO_CONFIG_DIGITAL_INPUT &&
-        io_control_code != IOCTL_QCPEP_GPIO_PMIC_SET_PULL &&
-        io_control_code != IOCTL_QCPEP_GPIO_PMIC_SET_DRIVE &&
+        io_control_code != IOCTL_PEP_GPIO_PMIC_SET_PULL &&
+        io_control_code != IOCTL_PEP_GPIO_PMIC_SET_DRIVE &&
         io_control_code != IOCTL_PM_GPIO_GET_GPIO_STATE &&
         io_control_code != IOCTL_PM_GPIO_SET_GPIO_OUTPUT) {
         PVOID inb2 = NULL;
@@ -2238,9 +2238,9 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
     if (is_compat_pmic_passthrough_family(io_control_code) &&
         io_control_code != IOCTL_PM_GPIO_CONFIG_BIAS_VOLTAGE &&
         io_control_code != IOCTL_PM_GPIO_CONFIG_DIGITAL_INPUT &&
-        io_control_code != IOCTL_QCPEP_GPIO_PMIC_SET_STATE &&
-        io_control_code != IOCTL_QCPEP_GPIO_PMIC_SET_PULL &&
-        io_control_code != IOCTL_QCPEP_GPIO_PMIC_SET_DRIVE &&
+        io_control_code != IOCTL_PEP_GPIO_PMIC_SET_STATE &&
+        io_control_code != IOCTL_PEP_GPIO_PMIC_SET_PULL &&
+        io_control_code != IOCTL_PEP_GPIO_PMIC_SET_DRIVE &&
         io_control_code != IOCTL_PM_GPIO_GET_GPIO_STATE &&
         io_control_code != IOCTL_PM_GPIO_SET_GPIO_OUTPUT &&
         io_control_code != IOCTL_PMIC_PUBLIC_USB_OTG_CONTROL &&
@@ -2297,15 +2297,15 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 handle_core_bsp_compat_ioctl(req_arg, input_buf_length, output_buf_length, &info);
             break;
 
-        case IOCTL_QCPEP_PING:
+        case IOCTL_PEP_PING:
             status = STATUS_SUCCESS;
             info = 0;
             break;
 
-        case IOCTL_QCPEP_GET_PORTID: {
-            QCPEP_PORTID_REPLY* out = NULL;
+        case IOCTL_PEP_GET_PORTID: {
+            ioctl_portid_response_t* out = NULL;
             size_t out_sz = 0;
-            status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(QCPEP_PORTID_REPLY),
+            status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(ioctl_portid_response_t),
                                                     (PVOID*)&out, &out_sz);
             if (NT_SUCCESS(status)) {
                 out->PortId = ctx ? ctx->port_id : 0;
@@ -2315,7 +2315,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_GET_HID: {
+        case IOCTL_PEP_GET_HID: {
             PWCHAR out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, 1, (PVOID*)&out, &out_sz);
@@ -2333,10 +2333,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_GET_CONFIG: {
-            QCPEP_CONFIG_REPLY* out = NULL;
+        case IOCTL_PEP_GET_CONFIG: {
+            ioctl_config_response_t* out = NULL;
             size_t out_sz = 0;
-            status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(QCPEP_CONFIG_REPLY),
+            status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(ioctl_config_response_t),
                                                     (PVOID*)&out, &out_sz);
             if (NT_SUCCESS(status)) {
                 out->Config = g.config;
@@ -2346,10 +2346,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_GET_STATS: {
-            QCPEP_STATS_REPLY* out = NULL;
+        case IOCTL_PEP_GET_STATS: {
+            ioctl_stats_response_t* out = NULL;
             size_t out_sz = 0;
-            status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(QCPEP_STATS_REPLY),
+            status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(ioctl_stats_response_t),
                                                     (PVOID*)&out, &out_sz);
             if (NT_SUCCESS(status)) {
                 out->IoctlCount = (ULONG)g_stats.ioctl_cnt;
@@ -2366,7 +2366,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_GET_DIAG: {
+        case IOCTL_PEP_GET_DIAG: {
             PVOID out = NULL;
             size_t out_sz = 0;
             status =
@@ -2379,7 +2379,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_GET_PEPLOG: {
+        case IOCTL_PEP_GET_PEPLOG: {
             PVOID out = NULL;
             size_t out_sz = 0;
             status =
@@ -2392,13 +2392,13 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_CLEAR_PEPLOG:
+        case IOCTL_PEP_CLEAR_PEPLOG:
             pep_log_clear();
             status = STATUS_SUCCESS;
             info = 0;
             break;
 
-        case IOCTL_QCPEP_SOC_SUBSYS_COUNT: {
+        case IOCTL_PEP_SOC_SUBSYS_COUNT: {
             ULONG* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(ULONG), (PVOID*)&out, &out_sz);
@@ -2410,19 +2410,19 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_SOC_SUBSYS_QUERY: {
-            QCPEP_SOC_SUBSYS_QUERY_IN* in = NULL;
+        case IOCTL_PEP_SOC_SUBSYS_QUERY: {
+            ioctl_soc_subsys_query_request_t* in = NULL;
             size_t in_sz = 0;
-            QCPEP_SOC_SUBSYS_QUERY_OUT* out = NULL;
+            ioctl_soc_subsys_query_response_t* out = NULL;
             size_t out_sz = 0;
 
-            status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(QCPEP_SOC_SUBSYS_QUERY_IN),
-                                                   (PVOID*)&in, &in_sz);
+            status = WdfRequestRetrieveInputBuffer(
+                req_arg, sizeof(ioctl_soc_subsys_query_request_t), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
                 break;
 
-            status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(QCPEP_SOC_SUBSYS_QUERY_OUT),
-                                                    (PVOID*)&out, &out_sz);
+            status = WdfRequestRetrieveOutputBuffer(
+                req_arg, sizeof(ioctl_soc_subsys_query_response_t), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
                 break;
 
@@ -2455,7 +2455,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_SOC_SUBSYS_RESET: {
+        case IOCTL_PEP_SOC_SUBSYS_RESET: {
             PEP_RESET_SOC_SUBSYSTEM_ACCOUNTING reset;
             reset.PlatformIdleStateIndex = 0;
             reset.Flags = 0;
@@ -2467,19 +2467,19 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_SOC_SUBSYS_BLOCKTIME: {
-            QCPEP_SOC_SUBSYS_BLOCK_IN* in = NULL;
+        case IOCTL_PEP_SOC_SUBSYS_BLOCKTIME: {
+            ioctl_soc_subsys_block_request_t* in = NULL;
             size_t in_sz = 0;
-            QCPEP_SOC_SUBSYS_BLOCK_OUT* out = NULL;
+            ioctl_soc_subsys_block_response_t* out = NULL;
             size_t out_sz = 0;
 
-            status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(QCPEP_SOC_SUBSYS_BLOCK_IN),
-                                                   (PVOID*)&in, &in_sz);
+            status = WdfRequestRetrieveInputBuffer(
+                req_arg, sizeof(ioctl_soc_subsys_block_request_t), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
                 break;
 
-            status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(QCPEP_SOC_SUBSYS_BLOCK_OUT),
-                                                    (PVOID*)&out, &out_sz);
+            status = WdfRequestRetrieveOutputBuffer(
+                req_arg, sizeof(ioctl_soc_subsys_block_response_t), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
                 break;
 
@@ -2500,19 +2500,19 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_SOC_SUBSYS_METADATA: {
-            QCPEP_SOC_SUBSYS_META_IN* in = NULL;
+        case IOCTL_PEP_SOC_SUBSYS_METADATA: {
+            ioctl_soc_subsys_meta_request_t* in = NULL;
             size_t in_sz = 0;
-            QCPEP_SOC_SUBSYS_META_OUT* out = NULL;
+            ioctl_soc_subsys_meta_response_t* out = NULL;
             size_t out_sz = 0;
 
-            status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(QCPEP_SOC_SUBSYS_META_IN),
+            status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(ioctl_soc_subsys_meta_request_t),
                                                    (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
                 break;
 
-            status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(QCPEP_SOC_SUBSYS_META_OUT),
-                                                    (PVOID*)&out, &out_sz);
+            status = WdfRequestRetrieveOutputBuffer(
+                req_arg, sizeof(ioctl_soc_subsys_meta_response_t), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
                 break;
 
@@ -2555,7 +2555,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_REGISTER_VETO_REASON: {
+        case IOCTL_PEP_REGISTER_VETO_REASON: {
             PVOID in = NULL;
             size_t in_sz = 0;
             PVOID out = NULL;
@@ -2590,10 +2590,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_APPLY_VETO: {
-            QCPEP_VETO_OPERATION* op = NULL;
+        case IOCTL_PEP_APPLY_VETO: {
+            ioctl_veto_operation_t* op = NULL;
             size_t in_sz = 0;
-            status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(QCPEP_VETO_OPERATION),
+            status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(ioctl_veto_operation_t),
                                                    (PVOID*)&op, &in_sz);
             if (!NT_SUCCESS(status))
                 break;
@@ -2602,10 +2602,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_REMOVE_VETO: {
-            QCPEP_VETO_OPERATION* op = NULL;
+        case IOCTL_PEP_REMOVE_VETO: {
+            ioctl_veto_operation_t* op = NULL;
             size_t in_sz = 0;
-            status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(QCPEP_VETO_OPERATION),
+            status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(ioctl_veto_operation_t),
                                                    (PVOID*)&op, &in_sz);
             if (!NT_SUCCESS(status))
                 break;
@@ -2614,7 +2614,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_QUERY_VETO_REFCOUNT: {
+        case IOCTL_PEP_QUERY_VETO_REFCOUNT: {
             ULONG* in = NULL;
             size_t in_sz = 0;
             LONGLONG* out = NULL;
@@ -2635,11 +2635,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_INTERRUPT_SNAPSHOT: {
-            QCPEP_INTERRUPT_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_INTERRUPT_SNAPSHOT: {
+            ioctl_interrupt_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
-            status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(QCPEP_INTERRUPT_SNAPSHOT_OUT),
-                                                    (PVOID*)&out, &out_sz);
+            status = WdfRequestRetrieveOutputBuffer(
+                req_arg, sizeof(ioctl_interrupt_snapshot_response_t), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
                 break;
 
@@ -2711,16 +2711,16 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_INTERRUPT_HISTORY: {
-            QCPEP_INTERRUPT_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_INTERRUPT_HISTORY: {
+            ioctl_interrupt_history_response_t* out = NULL;
             size_t out_sz = 0;
-            status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(QCPEP_INTERRUPT_HISTORY_OUT),
-                                                    (PVOID*)&out, &out_sz);
+            status = WdfRequestRetrieveOutputBuffer(
+                req_arg, sizeof(ioctl_interrupt_history_response_t), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
                 break;
 
-            const ULONG base = FIELD_OFFSET(QCPEP_INTERRUPT_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_INTERRUPT_EVENT_INFO);
+            const ULONG base = FIELD_OFFSET(ioctl_interrupt_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_interrupt_event_info_t);
             if (out_sz < base + entry_size) {
                 info = base + entry_size;
                 status = STATUS_BUFFER_TOO_SMALL;
@@ -2748,16 +2748,16 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_INTERRUPT_WAKECOUNTERS: {
-            QCPEP_INTERRUPT_WAKECOUNTERS_OUT* out = NULL;
+        case IOCTL_PEP_INTERRUPT_WAKECOUNTERS: {
+            ioctl_interrupt_wakecounters_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(
-                req_arg, sizeof(QCPEP_INTERRUPT_WAKECOUNTERS_OUT), (PVOID*)&out, &out_sz);
+                req_arg, sizeof(ioctl_interrupt_wakecounters_response_t), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
                 break;
 
-            const ULONG base = FIELD_OFFSET(QCPEP_INTERRUPT_WAKECOUNTERS_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_INTERRUPT_WAKE_COUNTER_INFO);
+            const ULONG base = FIELD_OFFSET(ioctl_interrupt_wakecounters_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_interrupt_wake_counter_info_t);
             if (out_sz < base + entry_size) {
                 info = base + entry_size;
                 status = STATUS_BUFFER_TOO_SMALL;
@@ -2783,18 +2783,18 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_INTERRUPT_LOOKUP: {
-            QCPEP_INTERRUPT_LOOKUP_IN* in = NULL;
+        case IOCTL_PEP_INTERRUPT_LOOKUP: {
+            ioctl_interrupt_lookup_request_t* in = NULL;
             size_t in_sz = 0;
-            QCPEP_INTERRUPT_LOOKUP_OUT* out = NULL;
+            ioctl_interrupt_lookup_response_t* out = NULL;
             size_t out_sz = 0;
 
-            status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(QCPEP_INTERRUPT_LOOKUP_IN),
-                                                   (PVOID*)&in, &in_sz);
+            status = WdfRequestRetrieveInputBuffer(
+                req_arg, sizeof(ioctl_interrupt_lookup_request_t), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
                 break;
-            status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(QCPEP_INTERRUPT_LOOKUP_OUT),
-                                                    (PVOID*)&out, &out_sz);
+            status = WdfRequestRetrieveOutputBuffer(
+                req_arg, sizeof(ioctl_interrupt_lookup_response_t), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
                 break;
 
@@ -2817,8 +2817,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_MMRM_SNAPSHOT: {
-            QCPEP_MMRM_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_MMRM_SNAPSHOT: {
+            ioctl_mmrm_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -2899,21 +2899,21 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_MMRM_HISTORY: {
-            QCPEP_MMRM_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_MMRM_HISTORY: {
+            ioctl_mmrm_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_MMRM_HISTORY_OUT, Entries);
-            status = WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + sizeof(QCPEP_MMRM_EVENT_INFO),
-                                                    (PVOID*)&out, &out_sz);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_mmrm_history_response_t, Entries);
+            status = WdfRequestRetrieveOutputBuffer(
+                req_arg, hdr_sz + sizeof(ioctl_mmrm_event_info_t), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
                 break;
 
             ULONG cap = 0;
             if (out_sz > hdr_sz)
-                cap = (ULONG)((out_sz - hdr_sz) / sizeof(QCPEP_MMRM_EVENT_INFO));
+                cap = (ULONG)((out_sz - hdr_sz) / sizeof(ioctl_mmrm_event_info_t));
             if (cap == 0) {
                 status = STATUS_BUFFER_TOO_SMALL;
-                info = hdr_sz + sizeof(QCPEP_MMRM_EVENT_INFO);
+                info = hdr_sz + sizeof(ioctl_mmrm_event_info_t);
                 break;
             }
 
@@ -2932,7 +2932,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 out->Capacity = cap;
                 out->Count = count;
                 out->Dropped = dropped;
-                out->EntrySize = sizeof(QCPEP_MMRM_EVENT_INFO);
+                out->EntrySize = sizeof(ioctl_mmrm_event_info_t);
                 for (ULONG i = 0; i < count; i++) {
                     out->Entries[i].Tick100ns = hist[i].tick100ns;
                     out->Entries[i].Sequence = hist[i].sequence;
@@ -2950,21 +2950,21 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                     out->Entries[i].FeatureEnabled = hist[i].feature_enabled;
                     out->Entries[i].DsmFlags = hist[i].dsm_flags;
                 }
-                info = hdr_sz + ((size_t)count * sizeof(QCPEP_MMRM_EVENT_INFO));
+                info = hdr_sz + ((size_t)count * sizeof(ioctl_mmrm_event_info_t));
             }
 
             ExFreePool(hist);
             break;
         }
 
-        case IOCTL_QCPEP_MMRM_DOMAIN_QUERY: {
-            QCPEP_MMRM_DOMAIN_QUERY_IN* in = NULL;
+        case IOCTL_PEP_MMRM_DOMAIN_QUERY: {
+            ioctl_mmrm_domain_query_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
                 break;
 
-            QCPEP_MMRM_DOMAIN_QUERY_OUT* out = NULL;
+            ioctl_mmrm_domain_query_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -2996,8 +2996,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_TSENS_SNAPSHOT: {
-            QCPEP_TSENS_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_TSENS_SNAPSHOT: {
+            ioctl_tsens_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -3045,21 +3045,21 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_TSENS_HISTORY: {
-            QCPEP_TSENS_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_TSENS_HISTORY: {
+            ioctl_tsens_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_TSENS_HISTORY_OUT, Entries);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_tsens_history_response_t, Entries);
             status = WdfRequestRetrieveOutputBuffer(
-                req_arg, hdr_sz + sizeof(QCPEP_TSENS_EVENT_INFO), (PVOID*)&out, &out_sz);
+                req_arg, hdr_sz + sizeof(ioctl_tsens_event_info_t), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
                 break;
 
             ULONG cap = 0;
             if (out_sz > hdr_sz)
-                cap = (ULONG)((out_sz - hdr_sz) / sizeof(QCPEP_TSENS_EVENT_INFO));
+                cap = (ULONG)((out_sz - hdr_sz) / sizeof(ioctl_tsens_event_info_t));
             if (cap == 0) {
                 status = STATUS_BUFFER_TOO_SMALL;
-                info = hdr_sz + sizeof(QCPEP_TSENS_EVENT_INFO);
+                info = hdr_sz + sizeof(ioctl_tsens_event_info_t);
                 break;
             }
 
@@ -3078,7 +3078,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 out->Capacity = cap;
                 out->Count = count;
                 out->Dropped = dropped;
-                out->EntrySize = sizeof(QCPEP_TSENS_EVENT_INFO);
+                out->EntrySize = sizeof(ioctl_tsens_event_info_t);
                 for (ULONG i = 0; i < count; i++) {
                     out->Entries[i].Tick100ns = hist[i].tick100ns;
                     out->Entries[i].Sequence = hist[i].sequence;
@@ -3091,21 +3091,21 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                     out->Entries[i].Aux0 = hist[i].aux0;
                     out->Entries[i].Aux1 = hist[i].aux1;
                 }
-                info = hdr_sz + ((size_t)count * sizeof(QCPEP_TSENS_EVENT_INFO));
+                info = hdr_sz + ((size_t)count * sizeof(ioctl_tsens_event_info_t));
             }
 
             ExFreePool(hist);
             break;
         }
 
-        case IOCTL_QCPEP_TSENS_SENSOR_RANGE: {
-            QCPEP_TSENS_SENSOR_RANGE_IN* in = NULL;
+        case IOCTL_PEP_TSENS_SENSOR_RANGE: {
+            ioctl_tsens_sensor_range_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
                 break;
 
-            QCPEP_TSENS_SENSOR_RANGE_OUT* out = NULL;
+            ioctl_tsens_sensor_range_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -3120,14 +3120,14 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_TSENS_SET_THRESHOLD: {
-            QCPEP_TSENS_SET_THRESHOLD_IN* in = NULL;
+        case IOCTL_PEP_TSENS_SET_THRESHOLD: {
+            ioctl_tsens_set_threshold_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
                 break;
 
-            QCPEP_TSENS_SET_THRESHOLD_OUT* out = NULL;
+            ioctl_tsens_set_threshold_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -3148,8 +3148,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_THERMALREQ_SNAPSHOT: {
-            QCPEP_THERMALREQ_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_THERMALREQ_SNAPSHOT: {
+            ioctl_thermalreq_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -3190,21 +3190,21 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_THERMALREQ_HISTORY: {
-            QCPEP_THERMALREQ_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_THERMALREQ_HISTORY: {
+            ioctl_thermalreq_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_THERMALREQ_HISTORY_OUT, Entries);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_thermalreq_history_response_t, Entries);
             status = WdfRequestRetrieveOutputBuffer(
-                req_arg, hdr_sz + sizeof(QCPEP_THERMALREQ_EVENT_INFO), (PVOID*)&out, &out_sz);
+                req_arg, hdr_sz + sizeof(ioctl_thermalreq_event_info_t), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
                 break;
 
             ULONG cap = 0;
             if (out_sz > hdr_sz)
-                cap = (ULONG)((out_sz - hdr_sz) / sizeof(QCPEP_THERMALREQ_EVENT_INFO));
+                cap = (ULONG)((out_sz - hdr_sz) / sizeof(ioctl_thermalreq_event_info_t));
             if (cap == 0) {
                 status = STATUS_BUFFER_TOO_SMALL;
-                info = hdr_sz + sizeof(QCPEP_THERMALREQ_EVENT_INFO);
+                info = hdr_sz + sizeof(ioctl_thermalreq_event_info_t);
                 break;
             }
 
@@ -3223,7 +3223,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 out->Capacity = cap;
                 out->Count = count;
                 out->Dropped = dropped;
-                out->EntrySize = sizeof(QCPEP_THERMALREQ_EVENT_INFO);
+                out->EntrySize = sizeof(ioctl_thermalreq_event_info_t);
                 for (ULONG i = 0; i < count; i++) {
                     out->Entries[i].Sequence = hist[i].sequence;
                     out->Entries[i].Tick100ns = hist[i].tick100ns;
@@ -3237,15 +3237,15 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                     out->Entries[i].ActiveCount = hist[i].active_cnt;
                     out->Entries[i].PortId = hist[i].port_id;
                 }
-                info = hdr_sz + ((size_t)count * sizeof(QCPEP_THERMALREQ_EVENT_INFO));
+                info = hdr_sz + ((size_t)count * sizeof(ioctl_thermalreq_event_info_t));
             }
 
             ExFreePool(hist);
             break;
         }
 
-        case IOCTL_QCPEP_DEEPSTANDBY_SNAPSHOT: {
-            QCPEP_DEEPSTANDBY_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_DEEPSTANDBY_SNAPSHOT: {
+            ioctl_deepstandby_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -3299,21 +3299,21 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_DEEPSTANDBY_HISTORY: {
-            QCPEP_DEEPSTANDBY_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_DEEPSTANDBY_HISTORY: {
+            ioctl_deepstandby_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_DEEPSTANDBY_HISTORY_OUT, Entries);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_deepstandby_history_response_t, Entries);
             status = WdfRequestRetrieveOutputBuffer(
-                req_arg, hdr_sz + sizeof(QCPEP_DEEPSTANDBY_EVENT_INFO), (PVOID*)&out, &out_sz);
+                req_arg, hdr_sz + sizeof(ioctl_deepstandby_event_info_t), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
                 break;
 
             ULONG cap = 0;
             if (out_sz > hdr_sz)
-                cap = (ULONG)((out_sz - hdr_sz) / sizeof(QCPEP_DEEPSTANDBY_EVENT_INFO));
+                cap = (ULONG)((out_sz - hdr_sz) / sizeof(ioctl_deepstandby_event_info_t));
             if (cap == 0) {
                 status = STATUS_BUFFER_TOO_SMALL;
-                info = hdr_sz + sizeof(QCPEP_DEEPSTANDBY_EVENT_INFO);
+                info = hdr_sz + sizeof(ioctl_deepstandby_event_info_t);
                 break;
             }
 
@@ -3332,7 +3332,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 out->Capacity = cap;
                 out->Count = count;
                 out->Dropped = dropped;
-                out->EntrySize = sizeof(QCPEP_DEEPSTANDBY_EVENT_INFO);
+                out->EntrySize = sizeof(ioctl_deepstandby_event_info_t);
                 for (ULONG i = 0; i < count; i++) {
                     out->Entries[i].Tick100ns = hist[i].tick100ns;
                     out->Entries[i].EventCode = hist[i].event_code;
@@ -3344,15 +3344,15 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                     out->Entries[i].Aux0 = hist[i].aux0;
                     out->Entries[i].Aux1 = hist[i].aux1;
                 }
-                info = hdr_sz + ((size_t)count * sizeof(QCPEP_DEEPSTANDBY_EVENT_INFO));
+                info = hdr_sz + ((size_t)count * sizeof(ioctl_deepstandby_event_info_t));
             }
 
             ExFreePool(hist);
             break;
         }
 
-        case IOCTL_QCPEP_DEEPSTANDBY_MODEM_GET: {
-            QCPEP_DEEPSTANDBY_MODEM_GET_OUT* out = NULL;
+        case IOCTL_PEP_DEEPSTANDBY_MODEM_GET: {
+            ioctl_deepstandby_modem_get_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -3365,8 +3365,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_CRASHDUMP_SNAPSHOT: {
-            QCPEP_CRASHDUMP_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_CRASHDUMP_SNAPSHOT: {
+            ioctl_crashdump_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -3424,21 +3424,21 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_CRASHDUMP_HISTORY: {
-            QCPEP_CRASHDUMP_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_CRASHDUMP_HISTORY: {
+            ioctl_crashdump_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_CRASHDUMP_HISTORY_OUT, Entries);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_crashdump_history_response_t, Entries);
             status = WdfRequestRetrieveOutputBuffer(
-                req_arg, hdr_sz + sizeof(QCPEP_CRASHDUMP_EVENT_INFO), (PVOID*)&out, &out_sz);
+                req_arg, hdr_sz + sizeof(ioctl_crashdump_event_info_t), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
                 break;
 
             ULONG cap = 0;
             if (out_sz > hdr_sz)
-                cap = (ULONG)((out_sz - hdr_sz) / sizeof(QCPEP_CRASHDUMP_EVENT_INFO));
+                cap = (ULONG)((out_sz - hdr_sz) / sizeof(ioctl_crashdump_event_info_t));
             if (cap == 0) {
                 status = STATUS_BUFFER_TOO_SMALL;
-                info = hdr_sz + sizeof(QCPEP_CRASHDUMP_EVENT_INFO);
+                info = hdr_sz + sizeof(ioctl_crashdump_event_info_t);
                 break;
             }
 
@@ -3457,7 +3457,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 out->Capacity = cap;
                 out->Count = count;
                 out->Dropped = dropped;
-                out->EntrySize = sizeof(QCPEP_CRASHDUMP_EVENT_INFO);
+                out->EntrySize = sizeof(ioctl_crashdump_event_info_t);
                 for (ULONG i = 0; i < count; i++) {
                     out->Entries[i].Sequence = hist[i].sequence;
                     out->Entries[i].Tick100ns = hist[i].tick100ns;
@@ -3474,21 +3474,21 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                     out->Entries[i].CaptureCount = hist[i].capture_cnt;
                     out->Entries[i].LiveKernelCreateCount = hist[i].live_kernel_create_cnt;
                 }
-                info = hdr_sz + ((size_t)count * sizeof(QCPEP_CRASHDUMP_EVENT_INFO));
+                info = hdr_sz + ((size_t)count * sizeof(ioctl_crashdump_event_info_t));
             }
 
             ExFreePool(hist);
             break;
         }
 
-        case IOCTL_QCPEP_CRASHDUMP_SOURCE_QUERY: {
-            QCPEP_CRASHDUMP_SOURCE_QUERY_IN* in = NULL;
+        case IOCTL_PEP_CRASHDUMP_SOURCE_QUERY: {
+            ioctl_crashdump_source_query_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
                 break;
 
-            QCPEP_CRASHDUMP_SOURCE_QUERY_OUT* out = NULL;
+            ioctl_crashdump_source_query_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -3527,14 +3527,14 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_CRASHDUMP_SET_ACTIVE: {
-            QCPEP_CRASHDUMP_SET_ACTIVE_IN* in = NULL;
+        case IOCTL_PEP_CRASHDUMP_SET_ACTIVE: {
+            ioctl_crashdump_set_active_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
                 break;
 
-            QCPEP_CRASHDUMP_SET_ACTIVE_OUT* out = NULL;
+            ioctl_crashdump_set_active_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -3554,8 +3554,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_BCL_SNAPSHOT: {
-            QCPEP_BCL_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_BCL_SNAPSHOT: {
+            ioctl_bcl_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -3622,21 +3622,21 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_BCL_HISTORY: {
-            QCPEP_BCL_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_BCL_HISTORY: {
+            ioctl_bcl_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_BCL_HISTORY_OUT, Entries);
-            status = WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + sizeof(QCPEP_BCL_EVENT_INFO),
-                                                    (PVOID*)&out, &out_sz);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_bcl_history_response_t, Entries);
+            status = WdfRequestRetrieveOutputBuffer(
+                req_arg, hdr_sz + sizeof(ioctl_bcl_event_info_t), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
                 break;
 
             ULONG cap = 0;
             if (out_sz > hdr_sz)
-                cap = (ULONG)((out_sz - hdr_sz) / sizeof(QCPEP_BCL_EVENT_INFO));
+                cap = (ULONG)((out_sz - hdr_sz) / sizeof(ioctl_bcl_event_info_t));
             if (cap == 0) {
                 status = STATUS_BUFFER_TOO_SMALL;
-                info = hdr_sz + sizeof(QCPEP_BCL_EVENT_INFO);
+                info = hdr_sz + sizeof(ioctl_bcl_event_info_t);
                 break;
             }
 
@@ -3655,7 +3655,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 out->Capacity = cap;
                 out->Count = count;
                 out->Dropped = dropped;
-                out->EntrySize = sizeof(QCPEP_BCL_EVENT_INFO);
+                out->EntrySize = sizeof(ioctl_bcl_event_info_t);
                 for (ULONG i = 0; i < count; i++) {
                     out->Entries[i].Tick100ns = hist[i].tick100ns;
                     out->Entries[i].Sequence = hist[i].sequence;
@@ -3672,28 +3672,28 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                     out->Entries[i].Flag = hist[i].flag;
                     out->Entries[i].Aux0 = hist[i].aux0;
                 }
-                info = hdr_sz + ((size_t)count * sizeof(QCPEP_BCL_EVENT_INFO));
+                info = hdr_sz + ((size_t)count * sizeof(ioctl_bcl_event_info_t));
             }
 
             ExFreePool(hist);
             break;
         }
 
-        case IOCTL_QCPEP_BCL_THRESHOLDS: {
-            QCPEP_BCL_THRESHOLDS_OUT* out = NULL;
+        case IOCTL_PEP_BCL_THRESHOLDS: {
+            ioctl_bcl_thresholds_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_BCL_THRESHOLDS_OUT, Entries);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_bcl_thresholds_response_t, Entries);
             status = WdfRequestRetrieveOutputBuffer(
-                req_arg, hdr_sz + sizeof(QCPEP_BCL_THRESHOLD_INFO), (PVOID*)&out, &out_sz);
+                req_arg, hdr_sz + sizeof(ioctl_bcl_threshold_info_t), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
                 break;
 
             ULONG cap = 0;
             if (out_sz > hdr_sz)
-                cap = (ULONG)((out_sz - hdr_sz) / sizeof(QCPEP_BCL_THRESHOLD_INFO));
+                cap = (ULONG)((out_sz - hdr_sz) / sizeof(ioctl_bcl_threshold_info_t));
             if (cap == 0) {
                 status = STATUS_BUFFER_TOO_SMALL;
-                info = hdr_sz + sizeof(QCPEP_BCL_THRESHOLD_INFO);
+                info = hdr_sz + sizeof(ioctl_bcl_threshold_info_t);
                 break;
             }
 
@@ -3707,7 +3707,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
 
             out->Capacity = cap;
             out->Count = count;
-            out->EntrySize = sizeof(QCPEP_BCL_THRESHOLD_INFO);
+            out->EntrySize = sizeof(ioctl_bcl_threshold_info_t);
             for (ULONG i = 0; i < count; i++) {
                 out->Entries[i].ResourceId = bcl.thresholds[i].res_id;
                 out->Entries[i].Field = bcl.thresholds[i].field;
@@ -3723,18 +3723,18 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             }
 
             status = STATUS_SUCCESS;
-            info = hdr_sz + ((size_t)count * sizeof(QCPEP_BCL_THRESHOLD_INFO));
+            info = hdr_sz + ((size_t)count * sizeof(ioctl_bcl_threshold_info_t));
             break;
         }
 
-        case IOCTL_QCPEP_BCL_SUBMIT_TEST: {
-            QCPEP_BCL_SUBMIT_TEST_IN* in = NULL;
+        case IOCTL_PEP_BCL_SUBMIT_TEST: {
+            ioctl_bcl_submit_test_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
                 break;
 
-            QCPEP_BCL_SUBMIT_TEST_OUT* out = NULL;
+            ioctl_bcl_submit_test_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -3759,14 +3759,14 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_BCL_READSET_THRESHOLD: {
-            QCPEP_BCL_READSET_THRESHOLD_IN* in = NULL;
+        case IOCTL_PEP_BCL_READSET_THRESHOLD: {
+            ioctl_bcl_readset_threshold_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
                 break;
 
-            QCPEP_BCL_READSET_THRESHOLD_OUT* out = NULL;
+            ioctl_bcl_readset_threshold_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -3807,8 +3807,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_DCVS_SNAPSHOT: {
-            QCPEP_DCVS_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_DCVS_SNAPSHOT: {
+            ioctl_dcvs_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -3892,21 +3892,21 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_DCVS_HISTORY: {
-            QCPEP_DCVS_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_DCVS_HISTORY: {
+            ioctl_dcvs_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_DCVS_HISTORY_OUT, Entries);
-            status = WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + sizeof(QCPEP_DCVS_EVENT_INFO),
-                                                    (PVOID*)&out, &out_sz);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_dcvs_history_response_t, Entries);
+            status = WdfRequestRetrieveOutputBuffer(
+                req_arg, hdr_sz + sizeof(ioctl_dcvs_event_info_t), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
                 break;
 
             ULONG cap = 0;
             if (out_sz > hdr_sz)
-                cap = (ULONG)((out_sz - hdr_sz) / sizeof(QCPEP_DCVS_EVENT_INFO));
+                cap = (ULONG)((out_sz - hdr_sz) / sizeof(ioctl_dcvs_event_info_t));
             if (cap == 0) {
                 status = STATUS_BUFFER_TOO_SMALL;
-                info = hdr_sz + sizeof(QCPEP_DCVS_EVENT_INFO);
+                info = hdr_sz + sizeof(ioctl_dcvs_event_info_t);
                 break;
             }
 
@@ -3925,7 +3925,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 out->Capacity = cap;
                 out->Count = count;
                 out->Dropped = dropped;
-                out->EntrySize = sizeof(QCPEP_DCVS_EVENT_INFO);
+                out->EntrySize = sizeof(ioctl_dcvs_event_info_t);
                 for (ULONG i = 0; i < count; i++) {
                     out->Entries[i].Tick100ns = hist[i].tick100ns;
                     out->Entries[i].Sequence = hist[i].sequence;
@@ -3942,17 +3942,17 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                     out->Entries[i].Aux0 = hist[i].aux0;
                     out->Entries[i].Aux1 = hist[i].aux1;
                 }
-                info = hdr_sz + ((size_t)count * sizeof(QCPEP_DCVS_EVENT_INFO));
+                info = hdr_sz + ((size_t)count * sizeof(ioctl_dcvs_event_info_t));
             }
 
             ExFreePool(hist);
             break;
         }
 
-        case IOCTL_QCPEP_DCVS_PERF_TABLE: {
-            QCPEP_DCVS_PERF_TABLE_OUT* out = NULL;
+        case IOCTL_PEP_DCVS_PERF_TABLE: {
+            ioctl_dcvs_perf_table_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_DCVS_PERF_TABLE_OUT, Entries);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_dcvs_perf_table_response_t, Entries);
             status = WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + sizeof(ULONG), (PVOID*)&out,
                                                     &out_sz);
             if (!NT_SUCCESS(status))
@@ -3990,14 +3990,14 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_DCVS_SET_POLICY: {
-            QCPEP_DCVS_SET_POLICY_IN* in = NULL;
+        case IOCTL_PEP_DCVS_SET_POLICY: {
+            ioctl_dcvs_set_policy_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
                 break;
 
-            QCPEP_DCVS_SET_POLICY_OUT* out = NULL;
+            ioctl_dcvs_set_policy_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -4030,8 +4030,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_PARKSEL_SNAPSHOT: {
-            QCPEP_PARKSEL_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_PARKSEL_SNAPSHOT: {
+            ioctl_parksel_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -4115,21 +4115,21 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_PARKSEL_HISTORY: {
-            QCPEP_PARKSEL_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_PARKSEL_HISTORY: {
+            ioctl_parksel_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_PARKSEL_HISTORY_OUT, Entries);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_parksel_history_response_t, Entries);
             status = WdfRequestRetrieveOutputBuffer(
-                req_arg, hdr_sz + sizeof(QCPEP_PARKSEL_EVENT_INFO), (PVOID*)&out, &out_sz);
+                req_arg, hdr_sz + sizeof(ioctl_parksel_event_info_t), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
                 break;
 
             ULONG cap = 0;
             if (out_sz > hdr_sz)
-                cap = (ULONG)((out_sz - hdr_sz) / sizeof(QCPEP_PARKSEL_EVENT_INFO));
+                cap = (ULONG)((out_sz - hdr_sz) / sizeof(ioctl_parksel_event_info_t));
             if (cap == 0) {
                 status = STATUS_BUFFER_TOO_SMALL;
-                info = hdr_sz + sizeof(QCPEP_PARKSEL_EVENT_INFO);
+                info = hdr_sz + sizeof(ioctl_parksel_event_info_t);
                 break;
             }
 
@@ -4148,7 +4148,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 out->Capacity = cap;
                 out->Count = count;
                 out->Dropped = dropped;
-                out->EntrySize = sizeof(QCPEP_PARKSEL_EVENT_INFO);
+                out->EntrySize = sizeof(ioctl_parksel_event_info_t);
                 for (ULONG i = 0; i < count; i++) {
                     out->Entries[i].Tick100ns = hist[i].tick100ns;
                     out->Entries[i].Sequence = hist[i].sequence;
@@ -4165,15 +4165,15 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                     out->Entries[i].Aux0 = hist[i].aux0;
                     out->Entries[i].Aux1 = hist[i].aux1;
                 }
-                info = hdr_sz + ((size_t)count * sizeof(QCPEP_PARKSEL_EVENT_INFO));
+                info = hdr_sz + ((size_t)count * sizeof(ioctl_parksel_event_info_t));
             }
 
             ExFreePool(hist);
             break;
         }
 
-        case IOCTL_QCPEP_PARKSEL_GET_POLICY: {
-            QCPEP_PARKSEL_POLICY_OUT* out = NULL;
+        case IOCTL_PEP_PARKSEL_GET_POLICY: {
+            ioctl_parksel_policy_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -4202,14 +4202,14 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_PARKSEL_SET_POLICY: {
-            QCPEP_PARKSEL_POLICY_IN* in = NULL;
+        case IOCTL_PEP_PARKSEL_SET_POLICY: {
+            ioctl_parksel_policy_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
                 break;
 
-            QCPEP_PARKSEL_POLICY_OUT* out = NULL;
+            ioctl_parksel_policy_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -4251,7 +4251,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RES_SNAPSHOT: {
+        case IOCTL_PEP_RES_SNAPSHOT: {
             PVOID out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, 64, &out, &out_sz);
@@ -4263,18 +4263,18 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_ARM_WAKE:
+        case IOCTL_PEP_ARM_WAKE:
             status = WdfDeviceStopIdle(device, TRUE);
             info = 0;
             break;
 
-        case IOCTL_QCPEP_DISARM_WAKE:
+        case IOCTL_PEP_DISARM_WAKE:
             WdfDeviceResumeIdle(device);
             status = STATUS_SUCCESS;
             info = 0;
             break;
 
-        case IOCTL_QCPEP_TSENS_GET_TEMPS: {
+        case IOCTL_PEP_TSENS_GET_TEMPS: {
             PVOID out = NULL;
             size_t out_sz = 0;
             size_t min_out = sizeof(USHORT) * ((size_t)tsens_get_cnt() + 1);
@@ -4287,7 +4287,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_TSENS_GET_TEMP_FOR_IDX: {
+        case IOCTL_PEP_TSENS_GET_TEMP_FOR_IDX: {
             PVOID out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, 2, &out, &out_sz);
@@ -4304,12 +4304,12 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_TSENS_STABLE_REQ: {
+        case IOCTL_PEP_TSENS_STABLE_REQ: {
             status = tsens_process_stable_req(req_arg, device, &info);
             break;
         }
 
-        case IOCTL_QCPEP_MMRM_POLICY_NOTSUP: {
+        case IOCTL_PEP_MMRM_POLICY_NOTSUP: {
 
             if (output_buf_length != 0 && input_buf_length < (sizeof(ULONG) * 3)) {
                 status = STATUS_INVALID_PARAMETER;
@@ -4435,7 +4435,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_MMRM_POLICY_READ: {
+        case IOCTL_PEP_MMRM_POLICY_READ: {
 
             if (input_buf_length == 0) {
                 status = STATUS_INVALID_PARAMETER;
@@ -4569,7 +4569,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_BRANCHTRACK_QUERY: {
+        case IOCTL_PEP_BRANCHTRACK_QUERY: {
 
             ULONG* in = NULL;
             size_t in_sz = 0;
@@ -4606,8 +4606,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_EXSOC_SNAPSHOT: {
-            QCPEP_EXSOC_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_EXSOC_SNAPSHOT: {
+            ioctl_exsoc_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -4658,11 +4658,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_EXSOC_HISTORY: {
-            QCPEP_EXSOC_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_EXSOC_HISTORY: {
+            ioctl_exsoc_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_EXSOC_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_EXSOC_EVENT_INFO);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_exsoc_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_exsoc_event_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -4676,10 +4676,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_EXSOC_HISTORY_INFO_CAPACITY)
-                cap = QCPEP_EXSOC_HISTORY_INFO_CAPACITY;
+            if (cap > IOCTL_EXSOC_HISTORY_INFO_CAPACITY)
+                cap = IOCTL_EXSOC_HISTORY_INFO_CAPACITY;
 
-            exsoc_event_t hist[QCPEP_EXSOC_HISTORY_INFO_CAPACITY];
+            exsoc_event_t hist[IOCTL_EXSOC_HISTORY_INFO_CAPACITY];
             RtlZeroMemory(hist, sizeof(hist));
 
             ULONG count = 0;
@@ -4708,8 +4708,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_SNAPSHOT: {
-            QCPEP_RSCSW_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_RSC_SNAPSHOT: {
+            ioctl_rsc_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -4754,8 +4754,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastScenarioTick100ns = snap.last_scenario_tick100ns;
 
             ULONG node_cnt = snap.node_cnt;
-            if (node_cnt > QCPEP_RSCSW_NODE_INFO_CAPACITY)
-                node_cnt = QCPEP_RSCSW_NODE_INFO_CAPACITY;
+            if (node_cnt > IOCTL_RSC_NODE_INFO_CAPACITY)
+                node_cnt = IOCTL_RSC_NODE_INFO_CAPACITY;
             out->NodeEntryCount = node_cnt;
             for (ULONG i = 0; i < node_cnt; i++) {
                 out->Nodes[i].SubsystemId = snap.nodes[i].subsystem_id;
@@ -4786,11 +4786,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_HISTORY: {
-            QCPEP_RSCSW_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_RSC_HISTORY: {
+            ioctl_rsc_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_RSCSW_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_RSCSW_EVENT_INFO);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_rsc_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_rsc_event_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -4804,10 +4804,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_RSCSW_HISTORY_INFO_CAPACITY)
-                cap = QCPEP_RSCSW_HISTORY_INFO_CAPACITY;
+            if (cap > IOCTL_RSC_HISTORY_INFO_CAPACITY)
+                cap = IOCTL_RSC_HISTORY_INFO_CAPACITY;
 
-            rscsw_event_t hist[QCPEP_RSCSW_HISTORY_INFO_CAPACITY];
+            rscsw_event_t hist[IOCTL_RSC_HISTORY_INFO_CAPACITY];
             RtlZeroMemory(hist, sizeof(hist));
 
             ULONG count = 0;
@@ -4840,8 +4840,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_SET_NODE: {
-            QCPEP_RSCSW_SET_NODE_IN* in = NULL;
+        case IOCTL_PEP_RSC_SET_NODE: {
+            ioctl_rsc_set_node_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
@@ -4853,7 +4853,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             if (!NT_SUCCESS(status))
                 break;
 
-            QCPEP_RSCSW_SET_NODE_OUT* out = NULL;
+            ioctl_rsc_set_node_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (NT_SUCCESS(status)) {
@@ -4895,14 +4895,14 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_QUERY_NODE: {
-            QCPEP_RSCSW_QUERY_NODE_IN* in = NULL;
+        case IOCTL_PEP_RSC_QUERY_NODE: {
+            ioctl_rsc_query_node_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
                 break;
 
-            QCPEP_RSCSW_QUERY_NODE_OUT* out = NULL;
+            ioctl_rsc_query_node_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -4943,8 +4943,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_APPLY_BATCH: {
-            QCPEP_RSCSW_APPLY_BATCH_IN* in = NULL;
+        case IOCTL_PEP_RSC_APPLY_BATCH: {
+            ioctl_rsc_apply_batch_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
@@ -4956,8 +4956,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 break;
             }
 
-            size_t req_bytes = FIELD_OFFSET(QCPEP_RSCSW_APPLY_BATCH_IN, Entries) +
-                               ((size_t)in->Count * sizeof(QCPEP_RSCSW_BATCH_ENTRY_IN));
+            size_t req_bytes = FIELD_OFFSET(ioctl_rsc_apply_batch_request_t, Entries) +
+                               ((size_t)in->Count * sizeof(ioctl_rsc_batch_entry_request_t));
             if (in_sz < req_bytes) {
                 status = STATUS_INVALID_PARAMETER;
                 info = 0;
@@ -4971,7 +4971,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                                         in->IoctlCode ? in->IoctlCode : io_control_code, &applied,
                                         &failed, &first_failure);
 
-            QCPEP_RSCSW_APPLY_BATCH_OUT* out = NULL;
+            ioctl_rsc_apply_batch_response_t* out = NULL;
             size_t out_sz = 0;
             NTSTATUS out_status =
                 WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
@@ -4989,11 +4989,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_GET_CATALOG: {
-            QCPEP_RSCSW_CATALOG_OUT* out = NULL;
+        case IOCTL_PEP_RSC_GET_CATALOG: {
+            ioctl_rsc_catalog_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_RSCSW_CATALOG_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_RSCSW_CATALOG_ENTRY_INFO);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_rsc_catalog_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_rsc_catalog_entry_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -5007,10 +5007,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_RSCSW_CATALOG_INFO_CAPACITY)
-                cap = QCPEP_RSCSW_CATALOG_INFO_CAPACITY;
+            if (cap > IOCTL_RSC_CATALOG_INFO_CAPACITY)
+                cap = IOCTL_RSC_CATALOG_INFO_CAPACITY;
 
-            rscsw_catalog_entry_t cat[QCPEP_RSCSW_CATALOG_INFO_CAPACITY];
+            rscsw_catalog_entry_t cat[IOCTL_RSC_CATALOG_INFO_CAPACITY];
             RtlZeroMemory(cat, sizeof(cat));
             ULONG count = 0;
             status = rsc_sw_get_catalog(cat, cap, &count);
@@ -5040,8 +5040,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_RUN_SCENARIO: {
-            QCPEP_RSCSW_RUN_SCENARIO_IN* in = NULL;
+        case IOCTL_PEP_RSC_RUN_SCENARIO: {
+            ioctl_rsc_run_scenario_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
@@ -5051,7 +5051,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             RtlZeroMemory(&result, sizeof(result));
             status = rsc_sw_run_scenario(in->ScenarioId, in->Iterations, in->Flags, &result);
 
-            QCPEP_RSCSW_RUN_SCENARIO_OUT* out = NULL;
+            ioctl_rsc_run_scenario_response_t* out = NULL;
             size_t out_sz = 0;
             NTSTATUS out_status =
                 WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
@@ -5078,11 +5078,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_SCENARIO_HISTORY: {
-            QCPEP_RSCSW_SCENARIO_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_RSC_SCENARIO_HISTORY: {
+            ioctl_rsc_scenario_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_RSCSW_SCENARIO_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_RSCSW_SCENARIO_RESULT_INFO);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_rsc_scenario_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_rsc_scenario_result_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -5096,10 +5096,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_RSCSW_SCENARIO_HISTORY_INFO_CAPACITY)
-                cap = QCPEP_RSCSW_SCENARIO_HISTORY_INFO_CAPACITY;
+            if (cap > IOCTL_RSC_SCENARIO_HISTORY_INFO_CAPACITY)
+                cap = IOCTL_RSC_SCENARIO_HISTORY_INFO_CAPACITY;
 
-            rscsw_scenario_result_t hist[QCPEP_RSCSW_SCENARIO_HISTORY_INFO_CAPACITY];
+            rscsw_scenario_result_t hist[IOCTL_RSC_SCENARIO_HISTORY_INFO_CAPACITY];
             ULONG count = 0;
             ULONG dropped = 0;
             RtlZeroMemory(hist, sizeof(hist));
@@ -5135,8 +5135,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DIAG_SNAPSHOT: {
-            QCPEP_RSCSW_DIAG_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_RSC_DIAG_SNAPSHOT: {
+            ioctl_rsc_diag_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -5161,8 +5161,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->Reserved = snap.reserved;
 
             ULONG take = snap.entry_cnt;
-            if (take > QCPEP_RSCSW_DIAG_INFO_CAPACITY)
-                take = QCPEP_RSCSW_DIAG_INFO_CAPACITY;
+            if (take > IOCTL_RSC_DIAG_INFO_CAPACITY)
+                take = IOCTL_RSC_DIAG_INFO_CAPACITY;
             for (ULONG i = 0; i < take; i++) {
                 out->Entries[i].SubsystemId = snap.entries[i].subsystem_id;
                 RtlCopyMemory(out->Entries[i].Name, snap.entries[i].name,
@@ -5186,8 +5186,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DIAG_RUN_MATRIX: {
-            QCPEP_RSCSW_DIAG_RUN_MATRIX_IN* in = NULL;
+        case IOCTL_PEP_RSC_DIAG_RUN_MATRIX: {
+            ioctl_rsc_diag_run_matrix_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
@@ -5197,7 +5197,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             RtlZeroMemory(&result, sizeof(result));
             status = rsc_sw_run_diagnostic_matrix(in->Iterations, in->Flags, &result);
 
-            QCPEP_RSCSW_DIAG_RUN_MATRIX_OUT* out = NULL;
+            ioctl_rsc_diag_run_matrix_response_t* out = NULL;
             size_t out_sz = 0;
             NTSTATUS out_status =
                 WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
@@ -5220,11 +5220,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DIAG_HISTORY: {
-            QCPEP_RSCSW_DIAG_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_RSC_DIAG_HISTORY: {
+            ioctl_rsc_diag_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_RSCSW_DIAG_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_RSCSW_DIAG_RESULT_INFO);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_rsc_diag_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_rsc_diag_result_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -5238,10 +5238,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_RSCSW_DIAG_HISTORY_INFO_CAPACITY)
-                cap = QCPEP_RSCSW_DIAG_HISTORY_INFO_CAPACITY;
+            if (cap > IOCTL_RSC_DIAG_HISTORY_INFO_CAPACITY)
+                cap = IOCTL_RSC_DIAG_HISTORY_INFO_CAPACITY;
 
-            rscsw_diag_result_t hist[QCPEP_RSCSW_DIAG_HISTORY_INFO_CAPACITY];
+            rscsw_diag_result_t hist[IOCTL_RSC_DIAG_HISTORY_INFO_CAPACITY];
             ULONG count = 0;
             ULONG dropped = 0;
             RtlZeroMemory(hist, sizeof(hist));
@@ -5272,8 +5272,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_PROFILE_CATALOG: {
-            QCPEP_RSCSW_PROFILE_CATALOG_OUT* out = NULL;
+        case IOCTL_PEP_RSC_PROFILE_CATALOG: {
+            ioctl_rsc_profile_catalog_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -5297,8 +5297,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastProfileTick100ns = snap.last_profile_tick100ns;
 
             ULONG take = snap.profile_cnt;
-            if (take > QCPEP_RSCSW_PROFILE_INFO_CAPACITY)
-                take = QCPEP_RSCSW_PROFILE_INFO_CAPACITY;
+            if (take > IOCTL_RSC_PROFILE_INFO_CAPACITY)
+                take = IOCTL_RSC_PROFILE_INFO_CAPACITY;
             for (ULONG i = 0; i < take; i++) {
                 out->Profiles[i].ProfileId = snap.profiles[i].profile_id;
                 RtlCopyMemory(out->Profiles[i].Name, snap.profiles[i].name,
@@ -5316,8 +5316,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_PROFILE_RUN: {
-            QCPEP_RSCSW_PROFILE_RUN_IN* in = NULL;
+        case IOCTL_PEP_RSC_PROFILE_RUN: {
+            ioctl_rsc_profile_run_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
@@ -5327,7 +5327,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             RtlZeroMemory(&result, sizeof(result));
             status = rsc_sw_run_profile(in->ProfileId, in->Iterations, in->Flags, &result);
 
-            QCPEP_RSCSW_PROFILE_RUN_OUT* out = NULL;
+            ioctl_rsc_profile_run_response_t* out = NULL;
             size_t out_sz = 0;
             NTSTATUS out_status =
                 WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
@@ -5353,11 +5353,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_PROFILE_HISTORY: {
-            QCPEP_RSCSW_PROFILE_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_RSC_PROFILE_HISTORY: {
+            ioctl_rsc_profile_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_RSCSW_PROFILE_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_RSCSW_PROFILE_RESULT_INFO);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_rsc_profile_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_rsc_profile_result_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -5371,10 +5371,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_RSCSW_PROFILE_HISTORY_INFO_CAPACITY)
-                cap = QCPEP_RSCSW_PROFILE_HISTORY_INFO_CAPACITY;
+            if (cap > IOCTL_RSC_PROFILE_HISTORY_INFO_CAPACITY)
+                cap = IOCTL_RSC_PROFILE_HISTORY_INFO_CAPACITY;
 
-            rscsw_profile_result_t hist[QCPEP_RSCSW_PROFILE_HISTORY_INFO_CAPACITY];
+            rscsw_profile_result_t hist[IOCTL_RSC_PROFILE_HISTORY_INFO_CAPACITY];
             ULONG count = 0;
             ULONG dropped = 0;
             RtlZeroMemory(hist, sizeof(hist));
@@ -5408,8 +5408,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_GRAPH_SNAPSHOT: {
-            QCPEP_RSCSW_GRAPH_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_RSC_GRAPH_SNAPSHOT: {
+            ioctl_rsc_graph_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -5426,14 +5426,14 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->NodeCount = snap.node_cnt;
             out->LinkCount = snap.link_cnt;
             out->ActiveMask = snap.active_mask;
-            out->LastPlanStatus = snap.last_action_sequence_status;
-            out->LastPlanStepCount = snap.last_action_sequence_step_cnt;
-            out->LastPlanFailureCount = snap.last_action_sequence_failure_cnt;
-            out->LastPlanTick100ns = snap.last_action_sequence_tick100ns;
+            out->LastSequenceStatus = snap.last_action_sequence_status;
+            out->LastSequenceStepCount = snap.last_action_sequence_step_cnt;
+            out->LastSequenceFailureCount = snap.last_action_sequence_failure_cnt;
+            out->LastSequenceTick100ns = snap.last_action_sequence_tick100ns;
 
             ULONG take = snap.link_cnt;
-            if (take > QCPEP_RSCSW_GRAPH_LINK_INFO_CAPACITY)
-                take = QCPEP_RSCSW_GRAPH_LINK_INFO_CAPACITY;
+            if (take > IOCTL_RSC_GRAPH_LINK_INFO_CAPACITY)
+                take = IOCTL_RSC_GRAPH_LINK_INFO_CAPACITY;
             for (ULONG i = 0; i < take; i++) {
                 out->Links[i].FromSubsystemId = snap.links[i].from_subsystem_id;
                 out->Links[i].ToSubsystemId = snap.links[i].to_subsystem_id;
@@ -5450,20 +5450,22 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_PLAN_EXECUTE: {
-            QCPEP_RSCSW_PLAN_EXECUTE_IN* in = NULL;
+        case IOCTL_PEP_RSC_ACTION_SEQUENCE_EXECUTE: {
+            ioctl_rsc_action_sequence_execute_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
                 break;
 
-            if (in->StepCount == 0u || in->StepCount > QCPEP_RSCSW_PLAN_STEP_INFO_CAPACITY) {
+            if (in->StepCount == 0u ||
+                in->StepCount > IOCTL_RSC_ACTION_SEQUENCE_STEP_INFO_CAPACITY) {
                 status = STATUS_INVALID_PARAMETER;
                 break;
             }
 
-            size_t req_bytes = FIELD_OFFSET(QCPEP_RSCSW_PLAN_EXECUTE_IN, Steps) +
-                               ((size_t)in->StepCount * sizeof(QCPEP_RSCSW_PLAN_STEP_IN));
+            size_t req_bytes =
+                FIELD_OFFSET(ioctl_rsc_action_sequence_execute_request_t, Steps) +
+                ((size_t)in->StepCount * sizeof(ioctl_rsc_action_sequence_step_request_t));
             if (in_sz < req_bytes) {
                 status = STATUS_INVALID_PARAMETER;
                 break;
@@ -5474,7 +5476,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             status = rsc_sw_execute_action_sequence((const rscsw_action_sequence_step_t*)in->Steps,
                                                     in->StepCount, in->Flags, &result);
 
-            QCPEP_RSCSW_PLAN_EXECUTE_OUT* out = NULL;
+            ioctl_rsc_action_sequence_execute_response_t* out = NULL;
             size_t out_sz = 0;
             NTSTATUS out_status =
                 WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
@@ -5499,11 +5501,12 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_PLAN_HISTORY: {
-            QCPEP_RSCSW_PLAN_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_RSC_ACTION_SEQUENCE_HISTORY: {
+            ioctl_rsc_action_sequence_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_RSCSW_PLAN_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_RSCSW_PLAN_RESULT_INFO);
+            const size_t hdr_sz =
+                FIELD_OFFSET(ioctl_rsc_action_sequence_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_rsc_action_sequence_result_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -5517,10 +5520,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_RSCSW_PLAN_HISTORY_INFO_CAPACITY)
-                cap = QCPEP_RSCSW_PLAN_HISTORY_INFO_CAPACITY;
+            if (cap > IOCTL_RSC_ACTION_SEQUENCE_HISTORY_INFO_CAPACITY)
+                cap = IOCTL_RSC_ACTION_SEQUENCE_HISTORY_INFO_CAPACITY;
 
-            rscsw_action_sequence_result_t hist[QCPEP_RSCSW_PLAN_HISTORY_INFO_CAPACITY];
+            rscsw_action_sequence_result_t hist[IOCTL_RSC_ACTION_SEQUENCE_HISTORY_INFO_CAPACITY];
             ULONG count = 0;
             ULONG dropped = 0;
             RtlZeroMemory(hist, sizeof(hist));
@@ -5553,8 +5556,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_PLAN_PREVIEW_SNAPSHOT: {
-            QCPEP_RSCSW_PLAN_PREVIEW_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_RSC_ACTION_SEQUENCE_PREVIEW_SNAPSHOT: {
+            ioctl_rsc_action_sequence_preview_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -5586,20 +5589,22 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_PLAN_PREVIEW_EXECUTE: {
-            QCPEP_RSCSW_PLAN_PREVIEW_IN* in = NULL;
+        case IOCTL_PEP_RSC_ACTION_SEQUENCE_PREVIEW_EXECUTE: {
+            ioctl_rsc_action_sequence_preview_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
                 break;
 
-            if (in->StepCount == 0u || in->StepCount > QCPEP_RSCSW_PLAN_STEP_INFO_CAPACITY) {
+            if (in->StepCount == 0u ||
+                in->StepCount > IOCTL_RSC_ACTION_SEQUENCE_STEP_INFO_CAPACITY) {
                 status = STATUS_INVALID_PARAMETER;
                 break;
             }
 
-            size_t req_bytes = FIELD_OFFSET(QCPEP_RSCSW_PLAN_PREVIEW_IN, Steps) +
-                               ((size_t)in->StepCount * sizeof(QCPEP_RSCSW_PLAN_STEP_IN));
+            size_t req_bytes =
+                FIELD_OFFSET(ioctl_rsc_action_sequence_preview_request_t, Steps) +
+                ((size_t)in->StepCount * sizeof(ioctl_rsc_action_sequence_step_request_t));
             if (in_sz < req_bytes) {
                 status = STATUS_INVALID_PARAMETER;
                 break;
@@ -5610,7 +5615,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             status = rsc_sw_preview_action_sequence((const rscsw_action_sequence_step_t*)in->Steps,
                                                     in->StepCount, in->Flags, &result);
 
-            QCPEP_RSCSW_PLAN_PREVIEW_OUT* out = NULL;
+            ioctl_rsc_action_sequence_preview_response_t* out = NULL;
             size_t out_sz = 0;
             NTSTATUS out_status =
                 WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
@@ -5641,11 +5646,12 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_PLAN_PREVIEW_HISTORY: {
-            QCPEP_RSCSW_PLAN_PREVIEW_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_RSC_ACTION_SEQUENCE_PREVIEW_HISTORY: {
+            ioctl_rsc_action_sequence_preview_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_RSCSW_PLAN_PREVIEW_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_RSCSW_PLAN_PREVIEW_RESULT_INFO);
+            const size_t hdr_sz =
+                FIELD_OFFSET(ioctl_rsc_action_sequence_preview_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_rsc_action_sequence_preview_result_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -5659,11 +5665,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_RSCSW_PLAN_PREVIEW_HISTORY_INFO_CAPACITY)
-                cap = QCPEP_RSCSW_PLAN_PREVIEW_HISTORY_INFO_CAPACITY;
+            if (cap > IOCTL_RSC_ACTION_SEQUENCE_PREVIEW_HISTORY_INFO_CAPACITY)
+                cap = IOCTL_RSC_ACTION_SEQUENCE_PREVIEW_HISTORY_INFO_CAPACITY;
 
             rscsw_action_sequence_preview_result_t
-                hist[QCPEP_RSCSW_PLAN_PREVIEW_HISTORY_INFO_CAPACITY];
+                hist[IOCTL_RSC_ACTION_SEQUENCE_PREVIEW_HISTORY_INFO_CAPACITY];
             ULONG count = 0;
             ULONG dropped = 0;
             RtlZeroMemory(hist, sizeof(hist));
@@ -5703,8 +5709,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_CHECKPOINT_SNAPSHOT: {
-            QCPEP_RSCSW_CHECKPOINT_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_RSC_CHECKPOINT_SNAPSHOT: {
+            ioctl_rsc_checkpoint_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -5727,8 +5733,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastOperationTick100ns = snap.last_operation_tick100ns;
 
             ULONG take = snap.slot_cnt;
-            if (take > QCPEP_RSCSW_CHECKPOINT_INFO_CAPACITY)
-                take = QCPEP_RSCSW_CHECKPOINT_INFO_CAPACITY;
+            if (take > IOCTL_RSC_CHECKPOINT_INFO_CAPACITY)
+                take = IOCTL_RSC_CHECKPOINT_INFO_CAPACITY;
             for (ULONG i = 0; i < take; i++) {
                 out->Slots[i].SlotId = snap.slots[i].slot_id;
                 out->Slots[i].Valid = snap.slots[i].valid;
@@ -5746,8 +5752,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_CHECKPOINT_CAPTURE: {
-            QCPEP_RSCSW_CHECKPOINT_CAPTURE_IN* in = NULL;
+        case IOCTL_PEP_RSC_CHECKPOINT_CAPTURE: {
+            ioctl_rsc_checkpoint_capture_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
@@ -5759,7 +5765,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
 
             rscsw_checkpoint_result_t result;
             RtlZeroMemory(&result, sizeof(result));
-            result.operation = QCPEP_RSCSW_CHECKPOINT_OP_CAPTURE;
+            result.operation = IOCTL_RSC_CHECKPOINT_OP_CAPTURE;
             result.slot_id = in->SlotId;
             result.flags = in->Flags;
             result.status = STATUS_UNSUCCESSFUL;
@@ -5770,7 +5776,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             if (!NT_SUCCESS(status))
                 result.status = status;
 
-            QCPEP_RSCSW_CHECKPOINT_CAPTURE_OUT* out = NULL;
+            ioctl_rsc_checkpoint_capture_response_t* out = NULL;
             size_t out_sz = 0;
             NTSTATUS out_status =
                 WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
@@ -5798,8 +5804,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_CHECKPOINT_APPLY: {
-            QCPEP_RSCSW_CHECKPOINT_APPLY_IN* in = NULL;
+        case IOCTL_PEP_RSC_CHECKPOINT_APPLY: {
+            ioctl_rsc_checkpoint_apply_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
@@ -5807,7 +5813,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
 
             rscsw_checkpoint_result_t result;
             RtlZeroMemory(&result, sizeof(result));
-            result.operation = QCPEP_RSCSW_CHECKPOINT_OP_APPLY;
+            result.operation = IOCTL_RSC_CHECKPOINT_OP_APPLY;
             result.slot_id = in->SlotId;
             result.flags = in->Flags;
             result.status = STATUS_UNSUCCESSFUL;
@@ -5816,7 +5822,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             if (!NT_SUCCESS(status))
                 result.status = status;
 
-            QCPEP_RSCSW_CHECKPOINT_APPLY_OUT* out = NULL;
+            ioctl_rsc_checkpoint_apply_response_t* out = NULL;
             size_t out_sz = 0;
             NTSTATUS out_status =
                 WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
@@ -5844,11 +5850,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_CHECKPOINT_HISTORY: {
-            QCPEP_RSCSW_CHECKPOINT_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_RSC_CHECKPOINT_HISTORY: {
+            ioctl_rsc_checkpoint_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_RSCSW_CHECKPOINT_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_RSCSW_CHECKPOINT_RESULT_INFO);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_rsc_checkpoint_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_rsc_checkpoint_result_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -5862,10 +5868,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_RSCSW_CHECKPOINT_HISTORY_INFO_CAPACITY)
-                cap = QCPEP_RSCSW_CHECKPOINT_HISTORY_INFO_CAPACITY;
+            if (cap > IOCTL_RSC_CHECKPOINT_HISTORY_INFO_CAPACITY)
+                cap = IOCTL_RSC_CHECKPOINT_HISTORY_INFO_CAPACITY;
 
-            rscsw_checkpoint_result_t hist[QCPEP_RSCSW_CHECKPOINT_HISTORY_INFO_CAPACITY];
+            rscsw_checkpoint_result_t hist[IOCTL_RSC_CHECKPOINT_HISTORY_INFO_CAPACITY];
             ULONG count = 0;
             ULONG dropped = 0;
             RtlZeroMemory(hist, sizeof(hist));
@@ -5902,8 +5908,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_COVERAGE_SNAPSHOT: {
-            QCPEP_RSCSW_COVERAGE_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_RSC_COVERAGE_SNAPSHOT: {
+            ioctl_rsc_coverage_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -5931,8 +5937,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastTick100ns = snap.last_tick100ns;
 
             ULONG row_cnt = snap.node_cnt;
-            if (row_cnt > QCPEP_RSCSW_COVERAGE_INFO_CAPACITY)
-                row_cnt = QCPEP_RSCSW_COVERAGE_INFO_CAPACITY;
+            if (row_cnt > IOCTL_RSC_COVERAGE_INFO_CAPACITY)
+                row_cnt = IOCTL_RSC_COVERAGE_INFO_CAPACITY;
             out->RowCount = row_cnt;
             for (ULONG i = 0; i < row_cnt; i++) {
                 out->Rows[i].SubsystemId = snap.rows[i].subsystem_id;
@@ -5957,8 +5963,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_COVERAGE_ANALYZE: {
-            QCPEP_RSCSW_COVERAGE_RUN_IN* in = NULL;
+        case IOCTL_PEP_RSC_COVERAGE_ANALYZE: {
+            ioctl_rsc_coverage_run_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
@@ -5968,7 +5974,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             RtlZeroMemory(&result, sizeof(result));
             status = rsc_sw_analyze_coverage(in->Flags, &result);
 
-            QCPEP_RSCSW_COVERAGE_RUN_OUT* out = NULL;
+            ioctl_rsc_coverage_run_response_t* out = NULL;
             size_t out_sz = 0;
             NTSTATUS out_status =
                 WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
@@ -6000,11 +6006,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_COVERAGE_HISTORY: {
-            QCPEP_RSCSW_COVERAGE_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_RSC_COVERAGE_HISTORY: {
+            ioctl_rsc_coverage_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_RSCSW_COVERAGE_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_RSCSW_COVERAGE_RESULT_INFO);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_rsc_coverage_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_rsc_coverage_result_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -6018,10 +6024,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_RSCSW_COVERAGE_HISTORY_INFO_CAPACITY)
-                cap = QCPEP_RSCSW_COVERAGE_HISTORY_INFO_CAPACITY;
+            if (cap > IOCTL_RSC_COVERAGE_HISTORY_INFO_CAPACITY)
+                cap = IOCTL_RSC_COVERAGE_HISTORY_INFO_CAPACITY;
 
-            rscsw_coverage_result_t hist[QCPEP_RSCSW_COVERAGE_HISTORY_INFO_CAPACITY];
+            rscsw_coverage_result_t hist[IOCTL_RSC_COVERAGE_HISTORY_INFO_CAPACITY];
             ULONG count = 0;
             ULONG dropped = 0;
             RtlZeroMemory(hist, sizeof(hist));
@@ -6062,8 +6068,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_REMEDIATION_SNAPSHOT: {
-            QCPEP_RSCSW_REMEDIATION_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_RSC_REMEDIATION_SNAPSHOT: {
+            ioctl_rsc_remediation_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -6093,8 +6099,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastTick100ns = snap.last_tick100ns;
 
             ULONG action_cnt = snap.action_cnt;
-            if (action_cnt > QCPEP_RSCSW_REMEDIATION_INFO_CAPACITY)
-                action_cnt = QCPEP_RSCSW_REMEDIATION_INFO_CAPACITY;
+            if (action_cnt > IOCTL_RSC_REMEDIATION_INFO_CAPACITY)
+                action_cnt = IOCTL_RSC_REMEDIATION_INFO_CAPACITY;
             out->ActionCount = action_cnt;
             for (ULONG i = 0; i < action_cnt; i++) {
                 out->Actions[i].SubsystemId = snap.actions[i].subsystem_id;
@@ -6121,8 +6127,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_REMEDIATION_RUN: {
-            QCPEP_RSCSW_REMEDIATION_RUN_IN* in = NULL;
+        case IOCTL_PEP_RSC_REMEDIATION_RUN: {
+            ioctl_rsc_remediation_run_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
@@ -6132,7 +6138,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             RtlZeroMemory(&result, sizeof(result));
             status = rsc_sw_run_remediation(in->Flags, &result);
 
-            QCPEP_RSCSW_REMEDIATION_RUN_OUT* out = NULL;
+            ioctl_rsc_remediation_run_response_t* out = NULL;
             size_t out_sz = 0;
             NTSTATUS out_status =
                 WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
@@ -6164,11 +6170,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_REMEDIATION_HISTORY: {
-            QCPEP_RSCSW_REMEDIATION_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_RSC_REMEDIATION_HISTORY: {
+            ioctl_rsc_remediation_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_RSCSW_REMEDIATION_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_RSCSW_REMEDIATION_RESULT_INFO);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_rsc_remediation_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_rsc_remediation_result_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -6182,10 +6188,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_RSCSW_REMEDIATION_HISTORY_INFO_CAPACITY)
-                cap = QCPEP_RSCSW_REMEDIATION_HISTORY_INFO_CAPACITY;
+            if (cap > IOCTL_RSC_REMEDIATION_HISTORY_INFO_CAPACITY)
+                cap = IOCTL_RSC_REMEDIATION_HISTORY_INFO_CAPACITY;
 
-            rscsw_remediation_result_t hist[QCPEP_RSCSW_REMEDIATION_HISTORY_INFO_CAPACITY];
+            rscsw_remediation_result_t hist[IOCTL_RSC_REMEDIATION_HISTORY_INFO_CAPACITY];
             ULONG count = 0;
             ULONG dropped = 0;
             RtlZeroMemory(hist, sizeof(hist));
@@ -6226,8 +6232,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_STABILIZATION_SNAPSHOT: {
-            QCPEP_RSCSW_STABILIZATION_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_RSC_STABILIZATION_SNAPSHOT: {
+            ioctl_rsc_stabilization_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -6257,8 +6263,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastTick100ns = snap.last_tick100ns;
 
             ULONG lane_cnt = snap.lane_cnt;
-            if (lane_cnt > QCPEP_RSCSW_STABILIZATION_LANE_INFO_CAPACITY)
-                lane_cnt = QCPEP_RSCSW_STABILIZATION_LANE_INFO_CAPACITY;
+            if (lane_cnt > IOCTL_RSC_STABILIZATION_LANE_INFO_CAPACITY)
+                lane_cnt = IOCTL_RSC_STABILIZATION_LANE_INFO_CAPACITY;
             out->LaneCount = lane_cnt;
             for (ULONG i = 0; i < lane_cnt; i++) {
                 out->Lanes[i].LaneId = snap.lanes[i].lane_id;
@@ -6279,8 +6285,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_STABILIZATION_RUN: {
-            QCPEP_RSCSW_STABILIZATION_RUN_IN* in = NULL;
+        case IOCTL_PEP_RSC_STABILIZATION_RUN: {
+            ioctl_rsc_stabilization_run_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
@@ -6290,7 +6296,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             RtlZeroMemory(&result, sizeof(result));
             status = rsc_sw_run_stabilization(in->Flags, &result);
 
-            QCPEP_RSCSW_STABILIZATION_RUN_OUT* out = NULL;
+            ioctl_rsc_stabilization_run_response_t* out = NULL;
             size_t out_sz = 0;
             NTSTATUS out_status =
                 WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
@@ -6323,11 +6329,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_STABILIZATION_HISTORY: {
-            QCPEP_RSCSW_STABILIZATION_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_RSC_STABILIZATION_HISTORY: {
+            ioctl_rsc_stabilization_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_RSCSW_STABILIZATION_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_RSCSW_STABILIZATION_RESULT_INFO);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_rsc_stabilization_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_rsc_stabilization_result_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -6341,10 +6347,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_RSCSW_STABILIZATION_HISTORY_INFO_CAPACITY)
-                cap = QCPEP_RSCSW_STABILIZATION_HISTORY_INFO_CAPACITY;
+            if (cap > IOCTL_RSC_STABILIZATION_HISTORY_INFO_CAPACITY)
+                cap = IOCTL_RSC_STABILIZATION_HISTORY_INFO_CAPACITY;
 
-            rscsw_stabilization_result_t hist[QCPEP_RSCSW_STABILIZATION_HISTORY_INFO_CAPACITY];
+            rscsw_stabilization_result_t hist[IOCTL_RSC_STABILIZATION_HISTORY_INFO_CAPACITY];
             ULONG count = 0;
             ULONG dropped = 0;
             RtlZeroMemory(hist, sizeof(hist));
@@ -6386,8 +6392,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_CONFORMANCE_SNAPSHOT: {
-            QCPEP_RSCSW_CONFORMANCE_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_RSC_CONFORMANCE_SNAPSHOT: {
+            ioctl_rsc_conformance_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -6414,8 +6420,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastTick100ns = snap.last_tick100ns;
 
             ULONG row_cnt = snap.row_cnt;
-            if (row_cnt > QCPEP_RSCSW_CONFORMANCE_INFO_CAPACITY)
-                row_cnt = QCPEP_RSCSW_CONFORMANCE_INFO_CAPACITY;
+            if (row_cnt > IOCTL_RSC_CONFORMANCE_INFO_CAPACITY)
+                row_cnt = IOCTL_RSC_CONFORMANCE_INFO_CAPACITY;
             out->RowCount = row_cnt;
             for (ULONG i = 0; i < row_cnt; i++) {
                 out->Rows[i].SubsystemId = snap.rows[i].subsystem_id;
@@ -6442,8 +6448,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_CONFORMANCE_RUN: {
-            QCPEP_RSCSW_CONFORMANCE_RUN_IN* in = NULL;
+        case IOCTL_PEP_RSC_CONFORMANCE_RUN: {
+            ioctl_rsc_conformance_run_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
@@ -6453,7 +6459,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             RtlZeroMemory(&result, sizeof(result));
             status = rsc_sw_run_conformance(in->Flags, &result);
 
-            QCPEP_RSCSW_CONFORMANCE_RUN_OUT* out = NULL;
+            ioctl_rsc_conformance_run_response_t* out = NULL;
             size_t out_sz = 0;
             NTSTATUS out_status =
                 WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
@@ -6483,11 +6489,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_CONFORMANCE_HISTORY: {
-            QCPEP_RSCSW_CONFORMANCE_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_RSC_CONFORMANCE_HISTORY: {
+            ioctl_rsc_conformance_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_RSCSW_CONFORMANCE_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_RSCSW_CONFORMANCE_RESULT_INFO);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_rsc_conformance_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_rsc_conformance_result_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -6501,10 +6507,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_RSCSW_CONFORMANCE_HISTORY_INFO_CAPACITY)
-                cap = QCPEP_RSCSW_CONFORMANCE_HISTORY_INFO_CAPACITY;
+            if (cap > IOCTL_RSC_CONFORMANCE_HISTORY_INFO_CAPACITY)
+                cap = IOCTL_RSC_CONFORMANCE_HISTORY_INFO_CAPACITY;
 
-            rscsw_conformance_result_t hist[QCPEP_RSCSW_CONFORMANCE_HISTORY_INFO_CAPACITY];
+            rscsw_conformance_result_t hist[IOCTL_RSC_CONFORMANCE_HISTORY_INFO_CAPACITY];
             ULONG count = 0;
             ULONG dropped = 0;
             RtlZeroMemory(hist, sizeof(hist));
@@ -6543,8 +6549,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_ORCHESTRATION_SNAPSHOT: {
-            QCPEP_RSCSW_ORCHESTRATION_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_RSC_ORCHESTRATION_SNAPSHOT: {
+            ioctl_rsc_orchestration_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -6571,8 +6577,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastTick100ns = snap.last_tick100ns;
 
             ULONG stage_cnt = snap.stage_cnt;
-            if (stage_cnt > QCPEP_RSCSW_ORCHESTRATION_STAGE_INFO_CAPACITY)
-                stage_cnt = QCPEP_RSCSW_ORCHESTRATION_STAGE_INFO_CAPACITY;
+            if (stage_cnt > IOCTL_RSC_ORCHESTRATION_STAGE_INFO_CAPACITY)
+                stage_cnt = IOCTL_RSC_ORCHESTRATION_STAGE_INFO_CAPACITY;
             out->StageCount = stage_cnt;
             for (ULONG i = 0; i < stage_cnt; i++) {
                 out->Stages[i].StageId = snap.stages[i].stage_id;
@@ -6595,8 +6601,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_ORCHESTRATION_RUN: {
-            QCPEP_RSCSW_ORCHESTRATION_RUN_IN* in = NULL;
+        case IOCTL_PEP_RSC_ORCHESTRATION_RUN: {
+            ioctl_rsc_orchestration_run_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
@@ -6606,7 +6612,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             RtlZeroMemory(&result, sizeof(result));
             status = rsc_sw_run_orchestration(in->Flags, &result);
 
-            QCPEP_RSCSW_ORCHESTRATION_RUN_OUT* out = NULL;
+            ioctl_rsc_orchestration_run_response_t* out = NULL;
             size_t out_sz = 0;
             NTSTATUS out_status =
                 WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
@@ -6635,11 +6641,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_ORCHESTRATION_HISTORY: {
-            QCPEP_RSCSW_ORCHESTRATION_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_RSC_ORCHESTRATION_HISTORY: {
+            ioctl_rsc_orchestration_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_RSCSW_ORCHESTRATION_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_RSCSW_ORCHESTRATION_RESULT_INFO);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_rsc_orchestration_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_rsc_orchestration_result_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -6653,10 +6659,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_RSCSW_ORCHESTRATION_HISTORY_INFO_CAPACITY)
-                cap = QCPEP_RSCSW_ORCHESTRATION_HISTORY_INFO_CAPACITY;
+            if (cap > IOCTL_RSC_ORCHESTRATION_HISTORY_INFO_CAPACITY)
+                cap = IOCTL_RSC_ORCHESTRATION_HISTORY_INFO_CAPACITY;
 
-            rscsw_orchestration_result_t hist[QCPEP_RSCSW_ORCHESTRATION_HISTORY_INFO_CAPACITY];
+            rscsw_orchestration_result_t hist[IOCTL_RSC_ORCHESTRATION_HISTORY_INFO_CAPACITY];
             ULONG count = 0;
             ULONG dropped = 0;
             RtlZeroMemory(hist, sizeof(hist));
@@ -6694,8 +6700,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_POLICY_SNAPSHOT: {
-            QCPEP_RSCSW_POLICY_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_RSC_POLICY_SNAPSHOT: {
+            ioctl_rsc_policy_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -6724,8 +6730,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastTick100ns = snap.last_tick100ns;
 
             ULONG res_cnt = snap.res_entry_cnt;
-            if (res_cnt > QCPEP_RSCSW_POLICY_RESOURCE_INFO_CAPACITY)
-                res_cnt = QCPEP_RSCSW_POLICY_RESOURCE_INFO_CAPACITY;
+            if (res_cnt > IOCTL_RSC_POLICY_RESOURCE_INFO_CAPACITY)
+                res_cnt = IOCTL_RSC_POLICY_RESOURCE_INFO_CAPACITY;
             out->ResourceEntryCount = res_cnt;
             for (ULONG i = 0; i < res_cnt; i++) {
                 out->Resources[i].ResourceId = snap.resources[i].res_id;
@@ -6751,11 +6757,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_POLICY_HISTORY: {
-            QCPEP_RSCSW_POLICY_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_RSC_POLICY_HISTORY: {
+            ioctl_rsc_policy_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_RSCSW_POLICY_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_RSCSW_POLICY_EVENT_INFO);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_rsc_policy_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_rsc_policy_event_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -6769,10 +6775,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_RSCSW_POLICY_HISTORY_INFO_CAPACITY)
-                cap = QCPEP_RSCSW_POLICY_HISTORY_INFO_CAPACITY;
+            if (cap > IOCTL_RSC_POLICY_HISTORY_INFO_CAPACITY)
+                cap = IOCTL_RSC_POLICY_HISTORY_INFO_CAPACITY;
 
-            rscsw_policy_event_t hist[QCPEP_RSCSW_POLICY_HISTORY_INFO_CAPACITY];
+            rscsw_policy_event_t hist[IOCTL_RSC_POLICY_HISTORY_INFO_CAPACITY];
             ULONG count = 0;
             ULONG dropped = 0;
             RtlZeroMemory(hist, sizeof(hist));
@@ -6813,8 +6819,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_FABRIC_SNAPSHOT: {
-            QCPEP_RSCSW_FABRIC_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_RSC_FABRIC_SNAPSHOT: {
+            ioctl_rsc_fabric_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -6844,8 +6850,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastTick100ns = snap.last_tick100ns;
 
             ULONG lane_cnt = snap.lane_cnt;
-            if (lane_cnt > QCPEP_RSCSW_FABRIC_LANE_INFO_CAPACITY)
-                lane_cnt = QCPEP_RSCSW_FABRIC_LANE_INFO_CAPACITY;
+            if (lane_cnt > IOCTL_RSC_FABRIC_LANE_INFO_CAPACITY)
+                lane_cnt = IOCTL_RSC_FABRIC_LANE_INFO_CAPACITY;
             out->LaneCount = lane_cnt;
 
             for (ULONG i = 0; i < lane_cnt; i++) {
@@ -6878,8 +6884,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_FABRIC_RUN: {
-            QCPEP_RSCSW_FABRIC_RUN_IN* in = NULL;
+        case IOCTL_PEP_RSC_FABRIC_RUN: {
+            ioctl_rsc_fabric_run_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
@@ -6889,7 +6895,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             RtlZeroMemory(&result, sizeof(result));
             status = rsc_sw_run_fabric(in->Flags, &result);
 
-            QCPEP_RSCSW_FABRIC_RUN_OUT* out = NULL;
+            ioctl_rsc_fabric_run_response_t* out = NULL;
             size_t out_sz = 0;
             NTSTATUS out_status =
                 WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
@@ -6921,11 +6927,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_FABRIC_HISTORY: {
-            QCPEP_RSCSW_FABRIC_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_RSC_FABRIC_HISTORY: {
+            ioctl_rsc_fabric_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_RSCSW_FABRIC_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_RSCSW_FABRIC_RESULT_INFO);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_rsc_fabric_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_rsc_fabric_result_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -6939,10 +6945,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_RSCSW_FABRIC_HISTORY_INFO_CAPACITY)
-                cap = QCPEP_RSCSW_FABRIC_HISTORY_INFO_CAPACITY;
+            if (cap > IOCTL_RSC_FABRIC_HISTORY_INFO_CAPACITY)
+                cap = IOCTL_RSC_FABRIC_HISTORY_INFO_CAPACITY;
 
-            rscsw_fabric_result_t hist[QCPEP_RSCSW_FABRIC_HISTORY_INFO_CAPACITY];
+            rscsw_fabric_result_t hist[IOCTL_RSC_FABRIC_HISTORY_INFO_CAPACITY];
             ULONG count = 0;
             ULONG dropped = 0;
             RtlZeroMemory(hist, sizeof(hist));
@@ -6983,8 +6989,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DOMAIN_SNAPSHOT: {
-            QCPEP_RSCSW_DOMAIN_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_RSC_DOMAIN_SNAPSHOT: {
+            ioctl_rsc_domain_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -7011,8 +7017,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastTick100ns = snap.last_tick100ns;
 
             ULONG domain_cnt = snap.domain_cnt;
-            if (domain_cnt > QCPEP_RSCSW_DOMAIN_INFO_CAPACITY)
-                domain_cnt = QCPEP_RSCSW_DOMAIN_INFO_CAPACITY;
+            if (domain_cnt > IOCTL_RSC_DOMAIN_INFO_CAPACITY)
+                domain_cnt = IOCTL_RSC_DOMAIN_INFO_CAPACITY;
             out->DomainCount = domain_cnt;
 
             for (ULONG i = 0; i < domain_cnt; i++) {
@@ -7040,8 +7046,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DOMAIN_RUN: {
-            QCPEP_RSCSW_DOMAIN_RUN_IN* in = NULL;
+        case IOCTL_PEP_RSC_DOMAIN_RUN: {
+            ioctl_rsc_domain_run_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
@@ -7051,7 +7057,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             RtlZeroMemory(&result, sizeof(result));
             status = rsc_sw_run_domain(in->Flags, &result);
 
-            QCPEP_RSCSW_DOMAIN_RUN_OUT* out = NULL;
+            ioctl_rsc_domain_run_response_t* out = NULL;
             size_t out_sz = 0;
             NTSTATUS out_status =
                 WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
@@ -7081,11 +7087,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DOMAIN_HISTORY: {
-            QCPEP_RSCSW_DOMAIN_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_RSC_DOMAIN_HISTORY: {
+            ioctl_rsc_domain_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_RSCSW_DOMAIN_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_RSCSW_DOMAIN_RESULT_INFO);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_rsc_domain_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_rsc_domain_result_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -7099,10 +7105,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_RSCSW_DOMAIN_HISTORY_INFO_CAPACITY)
-                cap = QCPEP_RSCSW_DOMAIN_HISTORY_INFO_CAPACITY;
+            if (cap > IOCTL_RSC_DOMAIN_HISTORY_INFO_CAPACITY)
+                cap = IOCTL_RSC_DOMAIN_HISTORY_INFO_CAPACITY;
 
-            rscsw_domain_result_t hist[QCPEP_RSCSW_DOMAIN_HISTORY_INFO_CAPACITY];
+            rscsw_domain_result_t hist[IOCTL_RSC_DOMAIN_HISTORY_INFO_CAPACITY];
             ULONG count = 0;
             ULONG dropped = 0;
             RtlZeroMemory(hist, sizeof(hist));
@@ -7141,8 +7147,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_INTERCONNECT_SNAPSHOT: {
-            QCPEP_RSCSW_INTERCONNECT_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_RSC_INTERCONNECT_SNAPSHOT: {
+            ioctl_rsc_interconnect_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -7172,8 +7178,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastTick100ns = snap.last_tick100ns;
 
             ULONG route_cnt = snap.route_cnt;
-            if (route_cnt > QCPEP_RSCSW_INTERCONNECT_ROUTE_INFO_CAPACITY)
-                route_cnt = QCPEP_RSCSW_INTERCONNECT_ROUTE_INFO_CAPACITY;
+            if (route_cnt > IOCTL_RSC_INTERCONNECT_ROUTE_INFO_CAPACITY)
+                route_cnt = IOCTL_RSC_INTERCONNECT_ROUTE_INFO_CAPACITY;
             out->RouteCount = route_cnt;
 
             for (ULONG i = 0; i < route_cnt; i++) {
@@ -7208,8 +7214,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_INTERCONNECT_RUN: {
-            QCPEP_RSCSW_INTERCONNECT_RUN_IN* in = NULL;
+        case IOCTL_PEP_RSC_INTERCONNECT_RUN: {
+            ioctl_rsc_interconnect_run_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
@@ -7219,7 +7225,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             RtlZeroMemory(&result, sizeof(result));
             status = rsc_sw_run_interconnect(in->Flags, &result);
 
-            QCPEP_RSCSW_INTERCONNECT_RUN_OUT* out = NULL;
+            ioctl_rsc_interconnect_run_response_t* out = NULL;
             size_t out_sz = 0;
             NTSTATUS out_status =
                 WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
@@ -7252,11 +7258,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_INTERCONNECT_HISTORY: {
-            QCPEP_RSCSW_INTERCONNECT_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_RSC_INTERCONNECT_HISTORY: {
+            ioctl_rsc_interconnect_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_RSCSW_INTERCONNECT_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_RSCSW_INTERCONNECT_RESULT_INFO);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_rsc_interconnect_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_rsc_interconnect_result_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -7270,10 +7276,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_RSCSW_INTERCONNECT_HISTORY_INFO_CAPACITY)
-                cap = QCPEP_RSCSW_INTERCONNECT_HISTORY_INFO_CAPACITY;
+            if (cap > IOCTL_RSC_INTERCONNECT_HISTORY_INFO_CAPACITY)
+                cap = IOCTL_RSC_INTERCONNECT_HISTORY_INFO_CAPACITY;
 
-            rscsw_interconnect_result_t hist[QCPEP_RSCSW_INTERCONNECT_HISTORY_INFO_CAPACITY];
+            rscsw_interconnect_result_t hist[IOCTL_RSC_INTERCONNECT_HISTORY_INFO_CAPACITY];
             ULONG count = 0;
             ULONG dropped = 0;
             RtlZeroMemory(hist, sizeof(hist));
@@ -7315,8 +7321,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_TOPOLOGY_SNAPSHOT: {
-            QCPEP_RSCSW_TOPOLOGY_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_RSC_TOPOLOGY_SNAPSHOT: {
+            ioctl_rsc_topology_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -7339,8 +7345,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->Reserved = 0u;
 
             ULONG node_cnt = snap.node_cnt;
-            if (node_cnt > QCPEP_RSCSW_TOPOLOGY_NODE_INFO_CAPACITY)
-                node_cnt = QCPEP_RSCSW_TOPOLOGY_NODE_INFO_CAPACITY;
+            if (node_cnt > IOCTL_RSC_TOPOLOGY_NODE_INFO_CAPACITY)
+                node_cnt = IOCTL_RSC_TOPOLOGY_NODE_INFO_CAPACITY;
             out->NodeCount = node_cnt;
 
             for (ULONG i = 0; i < node_cnt; i++) {
@@ -7367,8 +7373,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             }
 
             ULONG route_cnt = snap.route_cnt;
-            if (route_cnt > QCPEP_RSCSW_TOPOLOGY_ROUTE_INFO_CAPACITY)
-                route_cnt = QCPEP_RSCSW_TOPOLOGY_ROUTE_INFO_CAPACITY;
+            if (route_cnt > IOCTL_RSC_TOPOLOGY_ROUTE_INFO_CAPACITY)
+                route_cnt = IOCTL_RSC_TOPOLOGY_ROUTE_INFO_CAPACITY;
             out->RouteCount = route_cnt;
 
             for (ULONG i = 0; i < route_cnt; i++) {
@@ -7394,8 +7400,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_CATALOG: {
-            QCPEP_RSCSW_DRIVERA_CATALOG_OUT* out = NULL;
+        case IOCTL_PEP_RSC_CATALOG: {
+            ioctl_rsc_subsystem_catalog_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -7424,8 +7430,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->CmdDbQueryCount = snap.cmd_db_query_cnt;
 
             ULONG subsystem_cnt = snap.subsystem_cnt;
-            if (subsystem_cnt > QCPEP_RSCSW_DRIVERA_SUBSYSTEM_INFO_CAPACITY)
-                subsystem_cnt = QCPEP_RSCSW_DRIVERA_SUBSYSTEM_INFO_CAPACITY;
+            if (subsystem_cnt > IOCTL_RSC_SUBSYSTEM_INFO_CAPACITY)
+                subsystem_cnt = IOCTL_RSC_SUBSYSTEM_INFO_CAPACITY;
             out->SubsystemCount = subsystem_cnt;
             for (ULONG i = 0; i < subsystem_cnt; i++) {
                 out->Subsystems[i].SubsystemId = snap.subsystems[i].subsystem_id;
@@ -7448,8 +7454,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             }
 
             ULONG enum_cnt = snap.aop_subsystem_cnt;
-            if (enum_cnt > QCPEP_RSCSW_DRIVERA_AOP_SUBSYSTEM_INFO_CAPACITY)
-                enum_cnt = QCPEP_RSCSW_DRIVERA_AOP_SUBSYSTEM_INFO_CAPACITY;
+            if (enum_cnt > IOCTL_RSC_AOP_SUBSYSTEM_INFO_CAPACITY)
+                enum_cnt = IOCTL_RSC_AOP_SUBSYSTEM_INFO_CAPACITY;
             out->AopSubsystemCount = enum_cnt;
             for (ULONG i = 0; i < enum_cnt; i++) {
                 out->AopSubsystems[i].Value = snap.aop_subsystems[i].value;
@@ -7458,8 +7464,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             }
 
             enum_cnt = snap.arc_res_cnt;
-            if (enum_cnt > QCPEP_RSCSW_DRIVERA_ARC_RESOURCE_INFO_CAPACITY)
-                enum_cnt = QCPEP_RSCSW_DRIVERA_ARC_RESOURCE_INFO_CAPACITY;
+            if (enum_cnt > IOCTL_RSC_ARC_RESOURCE_INFO_CAPACITY)
+                enum_cnt = IOCTL_RSC_ARC_RESOURCE_INFO_CAPACITY;
             out->ArcResourceCount = enum_cnt;
             for (ULONG i = 0; i < enum_cnt; i++) {
                 out->ArcResources[i].Value = snap.arc_resources[i].value;
@@ -7468,8 +7474,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             }
 
             enum_cnt = snap.cmd_db_slv_cnt;
-            if (enum_cnt > QCPEP_RSCSW_DRIVERA_CMDDB_SLV_INFO_CAPACITY)
-                enum_cnt = QCPEP_RSCSW_DRIVERA_CMDDB_SLV_INFO_CAPACITY;
+            if (enum_cnt > IOCTL_RSC_CMDDB_SLV_INFO_CAPACITY)
+                enum_cnt = IOCTL_RSC_CMDDB_SLV_INFO_CAPACITY;
             out->CmdDbSlvCount = enum_cnt;
             for (ULONG i = 0; i < enum_cnt; i++) {
                 out->CmdDbSlvIds[i].Value = snap.cmd_db_slv_ids[i].value;
@@ -7478,8 +7484,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             }
 
             enum_cnt = snap.pdc_drv_cnt;
-            if (enum_cnt > QCPEP_RSCSW_DRIVERA_PDC_DRV_INFO_CAPACITY)
-                enum_cnt = QCPEP_RSCSW_DRIVERA_PDC_DRV_INFO_CAPACITY;
+            if (enum_cnt > IOCTL_RSC_PDC_DRV_INFO_CAPACITY)
+                enum_cnt = IOCTL_RSC_PDC_DRV_INFO_CAPACITY;
             out->PdcDrvCount = enum_cnt;
             for (ULONG i = 0; i < enum_cnt; i++) {
                 out->PdcDrvTypes[i].Value = snap.pdc_drv_types[i].value;
@@ -7488,8 +7494,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             }
 
             enum_cnt = snap.pdc_trigger_cnt;
-            if (enum_cnt > QCPEP_RSCSW_DRIVERA_PDC_TRIGGER_INFO_CAPACITY)
-                enum_cnt = QCPEP_RSCSW_DRIVERA_PDC_TRIGGER_INFO_CAPACITY;
+            if (enum_cnt > IOCTL_RSC_PDC_TRIGGER_INFO_CAPACITY)
+                enum_cnt = IOCTL_RSC_PDC_TRIGGER_INFO_CAPACITY;
             out->PdcTriggerCount = enum_cnt;
             for (ULONG i = 0; i < enum_cnt; i++) {
                 out->PdcTriggers[i].Value = snap.pdc_triggers[i].value;
@@ -7498,8 +7504,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             }
 
             enum_cnt = snap.rpmh_set_cnt;
-            if (enum_cnt > QCPEP_RSCSW_DRIVERA_RPMH_SET_INFO_CAPACITY)
-                enum_cnt = QCPEP_RSCSW_DRIVERA_RPMH_SET_INFO_CAPACITY;
+            if (enum_cnt > IOCTL_RSC_RPMH_SET_INFO_CAPACITY)
+                enum_cnt = IOCTL_RSC_RPMH_SET_INFO_CAPACITY;
             out->RpmhSetCount = enum_cnt;
             for (ULONG i = 0; i < enum_cnt; i++) {
                 out->RpmhSets[i].Value = snap.rpmh_sets[i].value;
@@ -7508,8 +7514,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             }
 
             enum_cnt = snap.npa_client_cnt;
-            if (enum_cnt > QCPEP_RSCSW_DRIVERA_NPA_CLIENT_INFO_CAPACITY)
-                enum_cnt = QCPEP_RSCSW_DRIVERA_NPA_CLIENT_INFO_CAPACITY;
+            if (enum_cnt > IOCTL_RSC_NPA_CLIENT_INFO_CAPACITY)
+                enum_cnt = IOCTL_RSC_NPA_CLIENT_INFO_CAPACITY;
             out->NpaClientCount = enum_cnt;
             for (ULONG i = 0; i < enum_cnt; i++) {
                 out->NpaClientTypes[i].Value = snap.npa_client_types[i].value;
@@ -7518,8 +7524,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             }
 
             enum_cnt = snap.glink_event_cnt;
-            if (enum_cnt > QCPEP_RSCSW_DRIVERA_GLINK_EVENT_INFO_CAPACITY)
-                enum_cnt = QCPEP_RSCSW_DRIVERA_GLINK_EVENT_INFO_CAPACITY;
+            if (enum_cnt > IOCTL_RSC_GLINK_EVENT_INFO_CAPACITY)
+                enum_cnt = IOCTL_RSC_GLINK_EVENT_INFO_CAPACITY;
             out->GlinkEventCount = enum_cnt;
             for (ULONG i = 0; i < enum_cnt; i++) {
                 out->GlinkEvents[i].Value = snap.glink_events[i].value;
@@ -7528,8 +7534,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             }
 
             enum_cnt = snap.tlmm_drive_cnt;
-            if (enum_cnt > QCPEP_RSCSW_DRIVERA_TLMM_DRIVE_INFO_CAPACITY)
-                enum_cnt = QCPEP_RSCSW_DRIVERA_TLMM_DRIVE_INFO_CAPACITY;
+            if (enum_cnt > IOCTL_RSC_TLMM_DRIVE_INFO_CAPACITY)
+                enum_cnt = IOCTL_RSC_TLMM_DRIVE_INFO_CAPACITY;
             out->TlmmDriveCount = enum_cnt;
             for (ULONG i = 0; i < enum_cnt; i++) {
                 out->TlmmDriveTypes[i].Value = snap.tlmm_drive_types[i].value;
@@ -7538,8 +7544,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             }
 
             enum_cnt = snap.tsens_threshold_cnt;
-            if (enum_cnt > QCPEP_RSCSW_DRIVERA_TSENS_THRESHOLD_INFO_CAPACITY)
-                enum_cnt = QCPEP_RSCSW_DRIVERA_TSENS_THRESHOLD_INFO_CAPACITY;
+            if (enum_cnt > IOCTL_RSC_TSENS_THRESHOLD_INFO_CAPACITY)
+                enum_cnt = IOCTL_RSC_TSENS_THRESHOLD_INFO_CAPACITY;
             out->TsensThresholdCount = enum_cnt;
             for (ULONG i = 0; i < enum_cnt; i++) {
                 out->TsensThresholds[i].Value = snap.tsens_thresholds[i].value;
@@ -7548,8 +7554,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             }
 
             enum_cnt = snap.clock_driver_cnt;
-            if (enum_cnt > QCPEP_RSCSW_DRIVERA_CLOCK_DRIVER_INFO_CAPACITY)
-                enum_cnt = QCPEP_RSCSW_DRIVERA_CLOCK_DRIVER_INFO_CAPACITY;
+            if (enum_cnt > IOCTL_RSC_CLOCK_DRIVER_INFO_CAPACITY)
+                enum_cnt = IOCTL_RSC_CLOCK_DRIVER_INFO_CAPACITY;
             out->ClockDriverCount = enum_cnt;
             for (ULONG i = 0; i < enum_cnt; i++) {
                 out->ClockDriverTypes[i].Value = snap.clock_driver_types[i].value;
@@ -7558,8 +7564,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             }
 
             enum_cnt = snap.cmd_db_query_cnt;
-            if (enum_cnt > QCPEP_RSCSW_DRIVERA_CMDDB_QUERY_INFO_CAPACITY)
-                enum_cnt = QCPEP_RSCSW_DRIVERA_CMDDB_QUERY_INFO_CAPACITY;
+            if (enum_cnt > IOCTL_RSC_CMDDB_QUERY_INFO_CAPACITY)
+                enum_cnt = IOCTL_RSC_CMDDB_QUERY_INFO_CAPACITY;
             out->CmdDbQueryCount = enum_cnt;
             for (ULONG i = 0; i < enum_cnt; i++) {
                 out->CmdDbQueryTypes[i].Value = snap.cmd_db_query_types[i].value;
@@ -7572,8 +7578,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_SYNC_SNAPSHOT: {
-            QCPEP_RSCSW_DRIVERA_SYNC_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_RSC_SYNC_SNAPSHOT: {
+            ioctl_rsc_sync_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -7600,8 +7606,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastTick100ns = snap.last_tick100ns;
 
             ULONG lane_cnt = snap.lane_cnt;
-            if (lane_cnt > QCPEP_RSCSW_DRIVERA_SYNC_LANE_INFO_CAPACITY)
-                lane_cnt = QCPEP_RSCSW_DRIVERA_SYNC_LANE_INFO_CAPACITY;
+            if (lane_cnt > IOCTL_RSC_SYNC_LANE_INFO_CAPACITY)
+                lane_cnt = IOCTL_RSC_SYNC_LANE_INFO_CAPACITY;
             out->LaneCount = lane_cnt;
 
             for (ULONG i = 0; i < lane_cnt; i++) {
@@ -7627,8 +7633,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_SYNC_RUN: {
-            QCPEP_RSCSW_DRIVERA_SYNC_RUN_IN* in = NULL;
+        case IOCTL_PEP_RSC_SYNC_RUN: {
+            ioctl_rsc_sync_run_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
@@ -7638,7 +7644,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             RtlZeroMemory(&result, sizeof(result));
             status = rsc_sw_run_sync(in->ProfileId, in->Iterations, in->Flags, &result);
 
-            QCPEP_RSCSW_DRIVERA_SYNC_RUN_OUT* out = NULL;
+            ioctl_rsc_sync_run_response_t* out = NULL;
             size_t out_sz = 0;
             NTSTATUS out_status =
                 WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
@@ -7667,11 +7673,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_SYNC_HISTORY: {
-            QCPEP_RSCSW_DRIVERA_SYNC_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_RSC_SYNC_HISTORY: {
+            ioctl_rsc_sync_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_RSCSW_DRIVERA_SYNC_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_RSCSW_DRIVERA_SYNC_RESULT_INFO);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_rsc_sync_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_rsc_sync_result_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -7685,10 +7691,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_RSCSW_DRIVERA_SYNC_HISTORY_INFO_CAPACITY)
-                cap = QCPEP_RSCSW_DRIVERA_SYNC_HISTORY_INFO_CAPACITY;
+            if (cap > IOCTL_RSC_SYNC_HISTORY_INFO_CAPACITY)
+                cap = IOCTL_RSC_SYNC_HISTORY_INFO_CAPACITY;
 
-            rscsw_sync_result_t hist[QCPEP_RSCSW_DRIVERA_SYNC_HISTORY_INFO_CAPACITY];
+            rscsw_sync_result_t hist[IOCTL_RSC_SYNC_HISTORY_INFO_CAPACITY];
             ULONG count = 0;
             ULONG dropped = 0;
             RtlZeroMemory(hist, sizeof(hist));
@@ -7726,8 +7732,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_VALIDATE_SNAPSHOT: {
-            QCPEP_RSCSW_DRIVERA_VALIDATE_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_RSC_VALIDATE_SNAPSHOT: {
+            ioctl_rsc_validate_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -7754,8 +7760,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastTick100ns = snap.last_tick100ns;
 
             ULONG row_cnt = snap.row_cnt;
-            if (row_cnt > QCPEP_RSCSW_DRIVERA_VALIDATE_ROW_INFO_CAPACITY)
-                row_cnt = QCPEP_RSCSW_DRIVERA_VALIDATE_ROW_INFO_CAPACITY;
+            if (row_cnt > IOCTL_RSC_VALIDATE_ROW_INFO_CAPACITY)
+                row_cnt = IOCTL_RSC_VALIDATE_ROW_INFO_CAPACITY;
             out->RowCount = row_cnt;
 
             for (ULONG i = 0; i < row_cnt; i++) {
@@ -7790,8 +7796,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_VALIDATE_RUN: {
-            QCPEP_RSCSW_DRIVERA_VALIDATE_RUN_IN* in = NULL;
+        case IOCTL_PEP_RSC_VALIDATE_RUN: {
+            ioctl_rsc_validate_run_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
@@ -7801,7 +7807,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             RtlZeroMemory(&result, sizeof(result));
             status = rsc_sw_run_validate(in->ModeId, in->Flags, &result);
 
-            QCPEP_RSCSW_DRIVERA_VALIDATE_RUN_OUT* out = NULL;
+            ioctl_rsc_validate_run_response_t* out = NULL;
             size_t out_sz = 0;
             NTSTATUS out_status =
                 WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
@@ -7831,11 +7837,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_VALIDATE_HISTORY: {
-            QCPEP_RSCSW_DRIVERA_VALIDATE_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_RSC_VALIDATE_HISTORY: {
+            ioctl_rsc_validate_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_RSCSW_DRIVERA_VALIDATE_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_RSCSW_DRIVERA_VALIDATE_RESULT_INFO);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_rsc_validate_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_rsc_validate_result_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -7849,10 +7855,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_RSCSW_DRIVERA_VALIDATE_HISTORY_INFO_CAPACITY)
-                cap = QCPEP_RSCSW_DRIVERA_VALIDATE_HISTORY_INFO_CAPACITY;
+            if (cap > IOCTL_RSC_VALIDATE_HISTORY_INFO_CAPACITY)
+                cap = IOCTL_RSC_VALIDATE_HISTORY_INFO_CAPACITY;
 
-            rscsw_validate_result_t hist[QCPEP_RSCSW_DRIVERA_VALIDATE_HISTORY_INFO_CAPACITY];
+            rscsw_validate_result_t hist[IOCTL_RSC_VALIDATE_HISTORY_INFO_CAPACITY];
             ULONG count = 0;
             ULONG dropped = 0;
             RtlZeroMemory(hist, sizeof(hist));
@@ -7891,8 +7897,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_SEQUENCE_SNAPSHOT: {
-            QCPEP_RSCSW_DRIVERA_SEQUENCE_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_RSC_SEQUENCE_SNAPSHOT: {
+            ioctl_rsc_sequence_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -7921,8 +7927,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastTick100ns = snap.last_tick100ns;
 
             ULONG row_cnt = snap.row_cnt;
-            if (row_cnt > QCPEP_RSCSW_DRIVERA_SEQUENCE_ROW_INFO_CAPACITY)
-                row_cnt = QCPEP_RSCSW_DRIVERA_SEQUENCE_ROW_INFO_CAPACITY;
+            if (row_cnt > IOCTL_RSC_SEQUENCE_ROW_INFO_CAPACITY)
+                row_cnt = IOCTL_RSC_SEQUENCE_ROW_INFO_CAPACITY;
             out->RowCount = row_cnt;
 
             for (ULONG i = 0; i < row_cnt; i++) {
@@ -7956,8 +7962,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_SEQUENCE_RUN: {
-            QCPEP_RSCSW_DRIVERA_SEQUENCE_RUN_IN* in = NULL;
+        case IOCTL_PEP_RSC_SEQUENCE_RUN: {
+            ioctl_rsc_sequence_run_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
@@ -7967,7 +7973,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             RtlZeroMemory(&result, sizeof(result));
             status = rsc_sw_run_sequence(in->ModeId, in->Flags, &result);
 
-            QCPEP_RSCSW_DRIVERA_SEQUENCE_RUN_OUT* out = NULL;
+            ioctl_rsc_sequence_run_response_t* out = NULL;
             size_t out_sz = 0;
             NTSTATUS out_status =
                 WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
@@ -7999,11 +8005,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_SEQUENCE_HISTORY: {
-            QCPEP_RSCSW_DRIVERA_SEQUENCE_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_RSC_SEQUENCE_HISTORY: {
+            ioctl_rsc_sequence_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_RSCSW_DRIVERA_SEQUENCE_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_RSCSW_DRIVERA_SEQUENCE_RESULT_INFO);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_rsc_sequence_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_rsc_sequence_result_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -8017,10 +8023,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_RSCSW_DRIVERA_SEQUENCE_HISTORY_INFO_CAPACITY)
-                cap = QCPEP_RSCSW_DRIVERA_SEQUENCE_HISTORY_INFO_CAPACITY;
+            if (cap > IOCTL_RSC_SEQUENCE_HISTORY_INFO_CAPACITY)
+                cap = IOCTL_RSC_SEQUENCE_HISTORY_INFO_CAPACITY;
 
-            rscsw_sequence_result_t hist[QCPEP_RSCSW_DRIVERA_SEQUENCE_HISTORY_INFO_CAPACITY];
+            rscsw_sequence_result_t hist[IOCTL_RSC_SEQUENCE_HISTORY_INFO_CAPACITY];
             ULONG count = 0;
             ULONG dropped = 0;
             RtlZeroMemory(hist, sizeof(hist));
@@ -8061,8 +8067,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_LOOKUP_SNAPSHOT: {
-            QCPEP_RSCSW_DRIVERA_LOOKUP_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_RSC_LOOKUP_SNAPSHOT: {
+            ioctl_rsc_lookup_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -8094,8 +8100,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastResult.Tick100ns = snap.last_result.tick100ns;
 
             ULONG match_cnt = snap.last_match_cnt;
-            if (match_cnt > QCPEP_RSCSW_DRIVERA_LOOKUP_MATCH_INFO_CAPACITY)
-                match_cnt = QCPEP_RSCSW_DRIVERA_LOOKUP_MATCH_INFO_CAPACITY;
+            if (match_cnt > IOCTL_RSC_LOOKUP_MATCH_INFO_CAPACITY)
+                match_cnt = IOCTL_RSC_LOOKUP_MATCH_INFO_CAPACITY;
             out->LastMatchCount = match_cnt;
 
             for (ULONG i = 0; i < match_cnt; i++) {
@@ -8114,8 +8120,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_LOOKUP_RUN: {
-            QCPEP_RSCSW_DRIVERA_LOOKUP_RUN_IN* in = NULL;
+        case IOCTL_PEP_RSC_LOOKUP_RUN: {
+            ioctl_rsc_lookup_run_request_t* in = NULL;
             size_t in_sz = 0;
             CHAR query_text[65];
             const CHAR* query_text_ptr = NULL;
@@ -8134,7 +8140,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             status = rsc_sw_run_lookup(in->QueryType, in->QueryId, in->Flags, query_text_ptr,
                                        &execution);
 
-            QCPEP_RSCSW_DRIVERA_LOOKUP_RUN_OUT* out = NULL;
+            ioctl_rsc_lookup_run_response_t* out = NULL;
             size_t out_sz = 0;
             NTSTATUS out_status =
                 WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
@@ -8158,8 +8164,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 out->Result.LastAux1 = execution.result.last_aux1;
                 out->Result.Tick100ns = execution.result.tick100ns;
                 out->OverflowCount = execution.overflow_cnt;
-                if (match_cnt > QCPEP_RSCSW_DRIVERA_LOOKUP_MATCH_INFO_CAPACITY)
-                    match_cnt = QCPEP_RSCSW_DRIVERA_LOOKUP_MATCH_INFO_CAPACITY;
+                if (match_cnt > IOCTL_RSC_LOOKUP_MATCH_INFO_CAPACITY)
+                    match_cnt = IOCTL_RSC_LOOKUP_MATCH_INFO_CAPACITY;
                 out->MatchCount = match_cnt;
 
                 for (ULONG i = 0; i < match_cnt; i++) {
@@ -8180,11 +8186,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_LOOKUP_HISTORY: {
-            QCPEP_RSCSW_DRIVERA_LOOKUP_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_RSC_LOOKUP_HISTORY: {
+            ioctl_rsc_lookup_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_RSCSW_DRIVERA_LOOKUP_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_RSCSW_DRIVERA_LOOKUP_RESULT_INFO);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_rsc_lookup_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_rsc_lookup_result_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -8198,10 +8204,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_RSCSW_DRIVERA_LOOKUP_HISTORY_INFO_CAPACITY)
-                cap = QCPEP_RSCSW_DRIVERA_LOOKUP_HISTORY_INFO_CAPACITY;
+            if (cap > IOCTL_RSC_LOOKUP_HISTORY_INFO_CAPACITY)
+                cap = IOCTL_RSC_LOOKUP_HISTORY_INFO_CAPACITY;
 
-            rscsw_lookup_result_t hist[QCPEP_RSCSW_DRIVERA_LOOKUP_HISTORY_INFO_CAPACITY];
+            rscsw_lookup_result_t hist[IOCTL_RSC_LOOKUP_HISTORY_INFO_CAPACITY];
             ULONG count = 0;
             ULONG dropped = 0;
             RtlZeroMemory(hist, sizeof(hist));
@@ -8238,8 +8244,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_PROVISION_SNAPSHOT: {
-            QCPEP_RSCSW_DRIVERA_PROVISION_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_RSC_PROVISION_SNAPSHOT: {
+            ioctl_rsc_provision_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -8258,7 +8264,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastStatus = snap.last_status;
             out->LastModeId = snap.last_mode_id;
             out->LastFlags = snap.last_flags;
-            out->LastPlannedCount = snap.last_prepared_cnt;
+            out->LastPreparedCount = snap.last_prepared_cnt;
             out->LastAppliedCount = snap.last_applied_cnt;
             out->LastFailedCount = snap.last_failed_cnt;
             out->LastPolicyVoteCount = snap.last_policy_vote_cnt;
@@ -8268,8 +8274,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastTick100ns = snap.last_tick100ns;
 
             ULONG row_cnt = snap.row_cnt;
-            if (row_cnt > QCPEP_RSCSW_DRIVERA_PROVISION_ROW_INFO_CAPACITY)
-                row_cnt = QCPEP_RSCSW_DRIVERA_PROVISION_ROW_INFO_CAPACITY;
+            if (row_cnt > IOCTL_RSC_PROVISION_ROW_INFO_CAPACITY)
+                row_cnt = IOCTL_RSC_PROVISION_ROW_INFO_CAPACITY;
             out->RowCount = row_cnt;
 
             for (ULONG i = 0; i < row_cnt; i++) {
@@ -8303,8 +8309,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_PROVISION_RUN: {
-            QCPEP_RSCSW_DRIVERA_PROVISION_RUN_IN* in = NULL;
+        case IOCTL_PEP_RSC_PROVISION_RUN: {
+            ioctl_rsc_provision_run_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
@@ -8314,7 +8320,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             RtlZeroMemory(&result, sizeof(result));
             status = rsc_sw_run_provision(in->ModeId, in->Flags, &result);
 
-            QCPEP_RSCSW_DRIVERA_PROVISION_RUN_OUT* out = NULL;
+            ioctl_rsc_provision_run_response_t* out = NULL;
             size_t out_sz = 0;
             NTSTATUS out_status =
                 WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
@@ -8324,7 +8330,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 out->Result.ModeId = result.mode_id;
                 out->Result.Flags = result.flags;
                 out->Result.Status = result.status;
-                out->Result.PlannedCount = result.prepared_cnt;
+                out->Result.PreparedCount = result.prepared_cnt;
                 out->Result.AppliedCount = result.applied_cnt;
                 out->Result.FailedCount = result.failed_cnt;
                 out->Result.PolicyVoteCount = result.policy_vote_cnt;
@@ -8345,11 +8351,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_PROVISION_HISTORY: {
-            QCPEP_RSCSW_DRIVERA_PROVISION_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_RSC_PROVISION_HISTORY: {
+            ioctl_rsc_provision_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_RSCSW_DRIVERA_PROVISION_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_RSCSW_DRIVERA_PROVISION_RESULT_INFO);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_rsc_provision_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_rsc_provision_result_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -8363,10 +8369,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_RSCSW_DRIVERA_PROVISION_HISTORY_INFO_CAPACITY)
-                cap = QCPEP_RSCSW_DRIVERA_PROVISION_HISTORY_INFO_CAPACITY;
+            if (cap > IOCTL_RSC_PROVISION_HISTORY_INFO_CAPACITY)
+                cap = IOCTL_RSC_PROVISION_HISTORY_INFO_CAPACITY;
 
-            rscsw_provision_result_t hist[QCPEP_RSCSW_DRIVERA_PROVISION_HISTORY_INFO_CAPACITY];
+            rscsw_provision_result_t hist[IOCTL_RSC_PROVISION_HISTORY_INFO_CAPACITY];
             ULONG count = 0;
             ULONG dropped = 0;
             RtlZeroMemory(hist, sizeof(hist));
@@ -8385,7 +8391,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 out->Entries[i].ModeId = hist[i].mode_id;
                 out->Entries[i].Flags = hist[i].flags;
                 out->Entries[i].Status = hist[i].status;
-                out->Entries[i].PlannedCount = hist[i].prepared_cnt;
+                out->Entries[i].PreparedCount = hist[i].prepared_cnt;
                 out->Entries[i].AppliedCount = hist[i].applied_cnt;
                 out->Entries[i].FailedCount = hist[i].failed_cnt;
                 out->Entries[i].PolicyVoteCount = hist[i].policy_vote_cnt;
@@ -8406,8 +8412,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_RAIL_SNAPSHOT: {
-            QCPEP_RSCSW_DRIVERA_RAIL_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_RSC_RAIL_SNAPSHOT: {
+            ioctl_rsc_rail_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -8426,7 +8432,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastStatus = snap.last_status;
             out->LastModeId = snap.last_mode_id;
             out->LastFlags = snap.last_flags;
-            out->LastPlannedCount = snap.last_prepared_cnt;
+            out->LastPreparedCount = snap.last_prepared_cnt;
             out->LastAppliedCount = snap.last_applied_cnt;
             out->LastFailedCount = snap.last_failed_cnt;
             out->LastRailVoteCount = snap.last_rail_vote_cnt;
@@ -8439,8 +8445,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastTick100ns = snap.last_tick100ns;
 
             ULONG row_cnt = snap.row_cnt;
-            if (row_cnt > QCPEP_RSCSW_DRIVERA_RAIL_ROW_INFO_CAPACITY)
-                row_cnt = QCPEP_RSCSW_DRIVERA_RAIL_ROW_INFO_CAPACITY;
+            if (row_cnt > IOCTL_RSC_RAIL_ROW_INFO_CAPACITY)
+                row_cnt = IOCTL_RSC_RAIL_ROW_INFO_CAPACITY;
             out->RowCount = row_cnt;
 
             for (ULONG i = 0; i < row_cnt; i++) {
@@ -8478,8 +8484,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_RAIL_RUN: {
-            QCPEP_RSCSW_DRIVERA_RAIL_RUN_IN* in = NULL;
+        case IOCTL_PEP_RSC_RAIL_RUN: {
+            ioctl_rsc_rail_run_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
@@ -8489,7 +8495,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             RtlZeroMemory(&result, sizeof(result));
             status = rsc_sw_run_rail(in->ModeId, in->Flags, &result);
 
-            QCPEP_RSCSW_DRIVERA_RAIL_RUN_OUT* out = NULL;
+            ioctl_rsc_rail_run_response_t* out = NULL;
             size_t out_sz = 0;
             NTSTATUS out_status =
                 WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
@@ -8499,7 +8505,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 out->Result.ModeId = result.mode_id;
                 out->Result.Flags = result.flags;
                 out->Result.Status = result.status;
-                out->Result.PlannedCount = result.prepared_cnt;
+                out->Result.PreparedCount = result.prepared_cnt;
                 out->Result.AppliedCount = result.applied_cnt;
                 out->Result.FailedCount = result.failed_cnt;
                 out->Result.RailVoteCount = result.rail_vote_cnt;
@@ -8523,11 +8529,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_RAIL_HISTORY: {
-            QCPEP_RSCSW_DRIVERA_RAIL_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_RSC_RAIL_HISTORY: {
+            ioctl_rsc_rail_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_RSCSW_DRIVERA_RAIL_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_RSCSW_DRIVERA_RAIL_RESULT_INFO);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_rsc_rail_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_rsc_rail_result_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -8541,10 +8547,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_RSCSW_DRIVERA_RAIL_HISTORY_INFO_CAPACITY)
-                cap = QCPEP_RSCSW_DRIVERA_RAIL_HISTORY_INFO_CAPACITY;
+            if (cap > IOCTL_RSC_RAIL_HISTORY_INFO_CAPACITY)
+                cap = IOCTL_RSC_RAIL_HISTORY_INFO_CAPACITY;
 
-            rscsw_rail_result_t hist[QCPEP_RSCSW_DRIVERA_RAIL_HISTORY_INFO_CAPACITY];
+            rscsw_rail_result_t hist[IOCTL_RSC_RAIL_HISTORY_INFO_CAPACITY];
             ULONG count = 0;
             ULONG dropped = 0;
             RtlZeroMemory(hist, sizeof(hist));
@@ -8563,7 +8569,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 out->Entries[i].ModeId = hist[i].mode_id;
                 out->Entries[i].Flags = hist[i].flags;
                 out->Entries[i].Status = hist[i].status;
-                out->Entries[i].PlannedCount = hist[i].prepared_cnt;
+                out->Entries[i].PreparedCount = hist[i].prepared_cnt;
                 out->Entries[i].AppliedCount = hist[i].applied_cnt;
                 out->Entries[i].FailedCount = hist[i].failed_cnt;
                 out->Entries[i].RailVoteCount = hist[i].rail_vote_cnt;
@@ -8587,8 +8593,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_TCS_SNAPSHOT: {
-            QCPEP_RSCSW_DRIVERA_TCS_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_RSC_TCS_SNAPSHOT: {
+            ioctl_rsc_tcs_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -8607,7 +8613,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastStatus = snap.last_status;
             out->LastModeId = snap.last_mode_id;
             out->LastFlags = snap.last_flags;
-            out->LastPlannedCount = snap.last_prepared_cnt;
+            out->LastPreparedCount = snap.last_prepared_cnt;
             out->LastProgrammedCount = snap.last_programmed_cnt;
             out->LastFailedCount = snap.last_failed_cnt;
             out->LastPolicyVoteCount = snap.last_policy_vote_cnt;
@@ -8618,8 +8624,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastTick100ns = snap.last_tick100ns;
 
             ULONG row_cnt = snap.row_cnt;
-            if (row_cnt > QCPEP_RSCSW_DRIVERA_TCS_ROW_INFO_CAPACITY)
-                row_cnt = QCPEP_RSCSW_DRIVERA_TCS_ROW_INFO_CAPACITY;
+            if (row_cnt > IOCTL_RSC_TCS_ROW_INFO_CAPACITY)
+                row_cnt = IOCTL_RSC_TCS_ROW_INFO_CAPACITY;
             out->RowCount = row_cnt;
 
             for (ULONG i = 0; i < row_cnt; i++) {
@@ -8659,8 +8665,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_TCS_RUN: {
-            QCPEP_RSCSW_DRIVERA_TCS_RUN_IN* in = NULL;
+        case IOCTL_PEP_RSC_TCS_RUN: {
+            ioctl_rsc_tcs_run_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
@@ -8670,7 +8676,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             RtlZeroMemory(&result, sizeof(result));
             status = rsc_sw_run_tcs(in->ModeId, in->Flags, &result);
 
-            QCPEP_RSCSW_DRIVERA_TCS_RUN_OUT* out = NULL;
+            ioctl_rsc_tcs_run_response_t* out = NULL;
             size_t out_sz = 0;
             NTSTATUS out_status =
                 WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
@@ -8680,7 +8686,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 out->Result.ModeId = result.mode_id;
                 out->Result.Flags = result.flags;
                 out->Result.Status = result.status;
-                out->Result.PlannedCount = result.prepared_cnt;
+                out->Result.PreparedCount = result.prepared_cnt;
                 out->Result.ProgrammedCount = result.programmed_cnt;
                 out->Result.FailedCount = result.failed_cnt;
                 out->Result.PolicyVoteCount = result.policy_vote_cnt;
@@ -8702,11 +8708,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_TCS_HISTORY: {
-            QCPEP_RSCSW_DRIVERA_TCS_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_RSC_TCS_HISTORY: {
+            ioctl_rsc_tcs_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_RSCSW_DRIVERA_TCS_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_RSCSW_DRIVERA_TCS_RESULT_INFO);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_rsc_tcs_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_rsc_tcs_result_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -8720,10 +8726,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_RSCSW_DRIVERA_TCS_HISTORY_INFO_CAPACITY)
-                cap = QCPEP_RSCSW_DRIVERA_TCS_HISTORY_INFO_CAPACITY;
+            if (cap > IOCTL_RSC_TCS_HISTORY_INFO_CAPACITY)
+                cap = IOCTL_RSC_TCS_HISTORY_INFO_CAPACITY;
 
-            rscsw_tcs_result_t hist[QCPEP_RSCSW_DRIVERA_TCS_HISTORY_INFO_CAPACITY];
+            rscsw_tcs_result_t hist[IOCTL_RSC_TCS_HISTORY_INFO_CAPACITY];
             ULONG count = 0;
             ULONG dropped = 0;
             RtlZeroMemory(hist, sizeof(hist));
@@ -8742,7 +8748,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 out->Entries[i].ModeId = hist[i].mode_id;
                 out->Entries[i].Flags = hist[i].flags;
                 out->Entries[i].Status = hist[i].status;
-                out->Entries[i].PlannedCount = hist[i].prepared_cnt;
+                out->Entries[i].PreparedCount = hist[i].prepared_cnt;
                 out->Entries[i].ProgrammedCount = hist[i].programmed_cnt;
                 out->Entries[i].FailedCount = hist[i].failed_cnt;
                 out->Entries[i].PolicyVoteCount = hist[i].policy_vote_cnt;
@@ -8764,8 +8770,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_THERMAL_SNAPSHOT: {
-            QCPEP_RSCSW_DRIVERA_THERMAL_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_RSC_THERMAL_SNAPSHOT: {
+            ioctl_rsc_thermal_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -8784,7 +8790,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastStatus = snap.last_status;
             out->LastModeId = snap.last_mode_id;
             out->LastFlags = snap.last_flags;
-            out->LastPlannedCount = snap.last_prepared_cnt;
+            out->LastPreparedCount = snap.last_prepared_cnt;
             out->LastSampledCount = snap.last_sampled_cnt;
             out->LastAppliedCount = snap.last_applied_cnt;
             out->LastFailedCount = snap.last_failed_cnt;
@@ -8799,8 +8805,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastTick100ns = snap.last_tick100ns;
 
             ULONG row_cnt = snap.row_cnt;
-            if (row_cnt > QCPEP_RSCSW_DRIVERA_THERMAL_ROW_INFO_CAPACITY)
-                row_cnt = QCPEP_RSCSW_DRIVERA_THERMAL_ROW_INFO_CAPACITY;
+            if (row_cnt > IOCTL_RSC_THERMAL_ROW_INFO_CAPACITY)
+                row_cnt = IOCTL_RSC_THERMAL_ROW_INFO_CAPACITY;
             out->RowCount = row_cnt;
 
             for (ULONG i = 0; i < row_cnt; i++) {
@@ -8842,8 +8848,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_THERMAL_RUN: {
-            QCPEP_RSCSW_DRIVERA_THERMAL_RUN_IN* in = NULL;
+        case IOCTL_PEP_RSC_THERMAL_RUN: {
+            ioctl_rsc_thermal_run_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
@@ -8853,7 +8859,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             RtlZeroMemory(&result, sizeof(result));
             status = rsc_sw_run_thermal(in->ModeId, in->Flags, &result);
 
-            QCPEP_RSCSW_DRIVERA_THERMAL_RUN_OUT* out = NULL;
+            ioctl_rsc_thermal_run_response_t* out = NULL;
             size_t out_sz = 0;
             NTSTATUS out_status =
                 WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
@@ -8863,7 +8869,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 out->Result.ModeId = result.mode_id;
                 out->Result.Flags = result.flags;
                 out->Result.Status = result.status;
-                out->Result.PlannedCount = result.prepared_cnt;
+                out->Result.PreparedCount = result.prepared_cnt;
                 out->Result.SampledCount = result.sampled_cnt;
                 out->Result.AppliedCount = result.applied_cnt;
                 out->Result.FailedCount = result.failed_cnt;
@@ -8889,11 +8895,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_THERMAL_HISTORY: {
-            QCPEP_RSCSW_DRIVERA_THERMAL_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_RSC_THERMAL_HISTORY: {
+            ioctl_rsc_thermal_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_RSCSW_DRIVERA_THERMAL_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_RSCSW_DRIVERA_THERMAL_RESULT_INFO);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_rsc_thermal_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_rsc_thermal_result_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -8907,10 +8913,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_RSCSW_DRIVERA_THERMAL_HISTORY_INFO_CAPACITY)
-                cap = QCPEP_RSCSW_DRIVERA_THERMAL_HISTORY_INFO_CAPACITY;
+            if (cap > IOCTL_RSC_THERMAL_HISTORY_INFO_CAPACITY)
+                cap = IOCTL_RSC_THERMAL_HISTORY_INFO_CAPACITY;
 
-            rscsw_thermal_result_t hist[QCPEP_RSCSW_DRIVERA_THERMAL_HISTORY_INFO_CAPACITY];
+            rscsw_thermal_result_t hist[IOCTL_RSC_THERMAL_HISTORY_INFO_CAPACITY];
             ULONG count = 0;
             ULONG dropped = 0;
             RtlZeroMemory(hist, sizeof(hist));
@@ -8929,7 +8935,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 out->Entries[i].ModeId = hist[i].mode_id;
                 out->Entries[i].Flags = hist[i].flags;
                 out->Entries[i].Status = hist[i].status;
-                out->Entries[i].PlannedCount = hist[i].prepared_cnt;
+                out->Entries[i].PreparedCount = hist[i].prepared_cnt;
                 out->Entries[i].SampledCount = hist[i].sampled_cnt;
                 out->Entries[i].AppliedCount = hist[i].applied_cnt;
                 out->Entries[i].FailedCount = hist[i].failed_cnt;
@@ -8955,8 +8961,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_COORD_SNAPSHOT: {
-            QCPEP_RSCSW_DRIVERA_COORD_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_RSC_COORD_SNAPSHOT: {
+            ioctl_rsc_coord_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -8975,7 +8981,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastStatus = snap.last_status;
             out->LastModeId = snap.last_mode_id;
             out->LastFlags = snap.last_flags;
-            out->LastPlannedCount = snap.last_prepared_cnt;
+            out->LastPreparedCount = snap.last_prepared_cnt;
             out->LastAppliedCount = snap.last_applied_cnt;
             out->LastFailedCount = snap.last_failed_cnt;
             out->LastExecutedPhaseMask = snap.last_executed_phase_mask;
@@ -8984,8 +8990,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastTick100ns = snap.last_tick100ns;
 
             ULONG row_cnt = snap.row_cnt;
-            if (row_cnt > QCPEP_RSCSW_DRIVERA_COORD_ROW_INFO_CAPACITY)
-                row_cnt = QCPEP_RSCSW_DRIVERA_COORD_ROW_INFO_CAPACITY;
+            if (row_cnt > IOCTL_RSC_COORD_ROW_INFO_CAPACITY)
+                row_cnt = IOCTL_RSC_COORD_ROW_INFO_CAPACITY;
             out->RowCount = row_cnt;
 
             for (ULONG i = 0; i < row_cnt; i++) {
@@ -9014,8 +9020,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_COORD_RUN: {
-            QCPEP_RSCSW_DRIVERA_COORD_RUN_IN* in = NULL;
+        case IOCTL_PEP_RSC_COORD_RUN: {
+            ioctl_rsc_coord_run_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
@@ -9025,7 +9031,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             RtlZeroMemory(&result, sizeof(result));
             status = rsc_sw_run_coord(in->ModeId, in->Flags, &result);
 
-            QCPEP_RSCSW_DRIVERA_COORD_RUN_OUT* out = NULL;
+            ioctl_rsc_coord_run_response_t* out = NULL;
             size_t out_sz = 0;
             NTSTATUS out_status =
                 WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
@@ -9035,7 +9041,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 out->Result.ModeId = result.mode_id;
                 out->Result.Flags = result.flags;
                 out->Result.Status = result.status;
-                out->Result.PlannedCount = result.prepared_cnt;
+                out->Result.PreparedCount = result.prepared_cnt;
                 out->Result.AppliedCount = result.applied_cnt;
                 out->Result.FailedCount = result.failed_cnt;
                 out->Result.ExecutedPhaseMask = result.executed_phase_mask;
@@ -9065,11 +9071,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_COORD_HISTORY: {
-            QCPEP_RSCSW_DRIVERA_COORD_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_RSC_COORD_HISTORY: {
+            ioctl_rsc_coord_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_RSCSW_DRIVERA_COORD_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_RSCSW_DRIVERA_COORD_RESULT_INFO);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_rsc_coord_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_rsc_coord_result_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -9083,10 +9089,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_RSCSW_DRIVERA_COORD_HISTORY_INFO_CAPACITY)
-                cap = QCPEP_RSCSW_DRIVERA_COORD_HISTORY_INFO_CAPACITY;
+            if (cap > IOCTL_RSC_COORD_HISTORY_INFO_CAPACITY)
+                cap = IOCTL_RSC_COORD_HISTORY_INFO_CAPACITY;
 
-            rscsw_coord_result_t hist[QCPEP_RSCSW_DRIVERA_COORD_HISTORY_INFO_CAPACITY];
+            rscsw_coord_result_t hist[IOCTL_RSC_COORD_HISTORY_INFO_CAPACITY];
             ULONG count = 0;
             ULONG dropped = 0;
             RtlZeroMemory(hist, sizeof(hist));
@@ -9105,7 +9111,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 out->Entries[i].ModeId = hist[i].mode_id;
                 out->Entries[i].Flags = hist[i].flags;
                 out->Entries[i].Status = hist[i].status;
-                out->Entries[i].PlannedCount = hist[i].prepared_cnt;
+                out->Entries[i].PreparedCount = hist[i].prepared_cnt;
                 out->Entries[i].AppliedCount = hist[i].applied_cnt;
                 out->Entries[i].FailedCount = hist[i].failed_cnt;
                 out->Entries[i].ExecutedPhaseMask = hist[i].executed_phase_mask;
@@ -9135,8 +9141,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_AUDIT_SNAPSHOT: {
-            QCPEP_RSCSW_DRIVERA_AUDIT_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_RSC_AUDIT_SNAPSHOT: {
+            ioctl_rsc_audit_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -9167,8 +9173,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastTick100ns = snap.last_tick100ns;
 
             ULONG row_cnt = snap.row_cnt;
-            if (row_cnt > QCPEP_RSCSW_DRIVERA_AUDIT_ROW_INFO_CAPACITY)
-                row_cnt = QCPEP_RSCSW_DRIVERA_AUDIT_ROW_INFO_CAPACITY;
+            if (row_cnt > IOCTL_RSC_AUDIT_ROW_INFO_CAPACITY)
+                row_cnt = IOCTL_RSC_AUDIT_ROW_INFO_CAPACITY;
             out->RowCount = row_cnt;
 
             for (ULONG i = 0; i < row_cnt; i++) {
@@ -9217,8 +9223,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_AUDIT_RUN: {
-            QCPEP_RSCSW_DRIVERA_AUDIT_RUN_IN* in = NULL;
+        case IOCTL_PEP_RSC_AUDIT_RUN: {
+            ioctl_rsc_audit_run_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
@@ -9228,7 +9234,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             RtlZeroMemory(&result, sizeof(result));
             status = rsc_sw_run_audit(in->ModeId, in->Flags, &result);
 
-            QCPEP_RSCSW_DRIVERA_AUDIT_RUN_OUT* out = NULL;
+            ioctl_rsc_audit_run_response_t* out = NULL;
             size_t out_sz = 0;
             NTSTATUS out_status =
                 WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
@@ -9262,11 +9268,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_AUDIT_HISTORY: {
-            QCPEP_RSCSW_DRIVERA_AUDIT_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_RSC_AUDIT_HISTORY: {
+            ioctl_rsc_audit_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_RSCSW_DRIVERA_AUDIT_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_RSCSW_DRIVERA_AUDIT_RESULT_INFO);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_rsc_audit_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_rsc_audit_result_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -9280,10 +9286,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_RSCSW_DRIVERA_AUDIT_HISTORY_INFO_CAPACITY)
-                cap = QCPEP_RSCSW_DRIVERA_AUDIT_HISTORY_INFO_CAPACITY;
+            if (cap > IOCTL_RSC_AUDIT_HISTORY_INFO_CAPACITY)
+                cap = IOCTL_RSC_AUDIT_HISTORY_INFO_CAPACITY;
 
-            rscsw_audit_result_t hist[QCPEP_RSCSW_DRIVERA_AUDIT_HISTORY_INFO_CAPACITY];
+            rscsw_audit_result_t hist[IOCTL_RSC_AUDIT_HISTORY_INFO_CAPACITY];
             ULONG count = 0;
             ULONG dropped = 0;
             RtlZeroMemory(hist, sizeof(hist));
@@ -9326,8 +9332,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_SUPERVISOR_SNAPSHOT: {
-            QCPEP_RSCSW_DRIVERA_SUPERVISOR_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_RSC_SUPERVISOR_SNAPSHOT: {
+            ioctl_rsc_supervisor_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -9362,8 +9368,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastTick100ns = snap.last_tick100ns;
 
             ULONG module_cnt = snap.module_cnt;
-            if (module_cnt > QCPEP_RSCSW_DRIVERA_SUPERVISOR_MODULE_INFO_CAPACITY)
-                module_cnt = QCPEP_RSCSW_DRIVERA_SUPERVISOR_MODULE_INFO_CAPACITY;
+            if (module_cnt > IOCTL_RSC_SUPERVISOR_MODULE_INFO_CAPACITY)
+                module_cnt = IOCTL_RSC_SUPERVISOR_MODULE_INFO_CAPACITY;
             out->ModuleCount = module_cnt;
 
             for (ULONG i = 0; i < module_cnt; i++) {
@@ -9398,8 +9404,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_SUPERVISOR_RUN: {
-            QCPEP_RSCSW_DRIVERA_SUPERVISOR_RUN_IN* in = NULL;
+        case IOCTL_PEP_RSC_SUPERVISOR_RUN: {
+            ioctl_rsc_supervisor_run_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
@@ -9409,7 +9415,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             RtlZeroMemory(&result, sizeof(result));
             status = rsc_sw_run_supervisor(in->ModeId, in->Flags, in->Cycles, &result);
 
-            QCPEP_RSCSW_DRIVERA_SUPERVISOR_RUN_OUT* out = NULL;
+            ioctl_rsc_supervisor_run_response_t* out = NULL;
             size_t out_sz = 0;
             NTSTATUS out_status =
                 WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
@@ -9446,11 +9452,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_SUPERVISOR_HISTORY: {
-            QCPEP_RSCSW_DRIVERA_SUPERVISOR_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_RSC_SUPERVISOR_HISTORY: {
+            ioctl_rsc_supervisor_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_RSCSW_DRIVERA_SUPERVISOR_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_RSCSW_DRIVERA_SUPERVISOR_RESULT_INFO);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_rsc_supervisor_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_rsc_supervisor_result_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -9464,10 +9470,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_RSCSW_DRIVERA_SUPERVISOR_HISTORY_INFO_CAPACITY)
-                cap = QCPEP_RSCSW_DRIVERA_SUPERVISOR_HISTORY_INFO_CAPACITY;
+            if (cap > IOCTL_RSC_SUPERVISOR_HISTORY_INFO_CAPACITY)
+                cap = IOCTL_RSC_SUPERVISOR_HISTORY_INFO_CAPACITY;
 
-            rscsw_supervisor_result_t hist[QCPEP_RSCSW_DRIVERA_SUPERVISOR_HISTORY_INFO_CAPACITY];
+            rscsw_supervisor_result_t hist[IOCTL_RSC_SUPERVISOR_HISTORY_INFO_CAPACITY];
             ULONG count = 0;
             ULONG dropped = 0;
             RtlZeroMemory(hist, sizeof(hist));
@@ -9513,8 +9519,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_AUTOTUNE_SNAPSHOT: {
-            QCPEP_RSCSW_DRIVERA_AUTOTUNE_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_RSC_AUTOTUNE_SNAPSHOT: {
+            ioctl_rsc_autotune_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -9546,8 +9552,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastTick100ns = snap.last_tick100ns;
 
             ULONG module_cnt = snap.module_cnt;
-            if (module_cnt > QCPEP_RSCSW_DRIVERA_AUTOTUNE_MODULE_INFO_CAPACITY)
-                module_cnt = QCPEP_RSCSW_DRIVERA_AUTOTUNE_MODULE_INFO_CAPACITY;
+            if (module_cnt > IOCTL_RSC_AUTOTUNE_MODULE_INFO_CAPACITY)
+                module_cnt = IOCTL_RSC_AUTOTUNE_MODULE_INFO_CAPACITY;
             out->ModuleCount = module_cnt;
 
             for (ULONG i = 0; i < module_cnt; i++) {
@@ -9583,8 +9589,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_AUTOTUNE_RUN: {
-            QCPEP_RSCSW_DRIVERA_AUTOTUNE_RUN_IN* in = NULL;
+        case IOCTL_PEP_RSC_AUTOTUNE_RUN: {
+            ioctl_rsc_autotune_run_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
@@ -9594,7 +9600,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             RtlZeroMemory(&result, sizeof(result));
             status = rsc_sw_run_autotune(in->ModeId, in->Flags, in->Cycles, &result);
 
-            QCPEP_RSCSW_DRIVERA_AUTOTUNE_RUN_OUT* out = NULL;
+            ioctl_rsc_autotune_run_response_t* out = NULL;
             size_t out_sz = 0;
             NTSTATUS out_status =
                 WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
@@ -9628,11 +9634,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_AUTOTUNE_HISTORY: {
-            QCPEP_RSCSW_DRIVERA_AUTOTUNE_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_RSC_AUTOTUNE_HISTORY: {
+            ioctl_rsc_autotune_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_RSCSW_DRIVERA_AUTOTUNE_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_RSCSW_DRIVERA_AUTOTUNE_RESULT_INFO);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_rsc_autotune_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_rsc_autotune_result_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -9646,10 +9652,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_RSCSW_DRIVERA_AUTOTUNE_HISTORY_INFO_CAPACITY)
-                cap = QCPEP_RSCSW_DRIVERA_AUTOTUNE_HISTORY_INFO_CAPACITY;
+            if (cap > IOCTL_RSC_AUTOTUNE_HISTORY_INFO_CAPACITY)
+                cap = IOCTL_RSC_AUTOTUNE_HISTORY_INFO_CAPACITY;
 
-            rscsw_autotune_result_t hist[QCPEP_RSCSW_DRIVERA_AUTOTUNE_HISTORY_INFO_CAPACITY];
+            rscsw_autotune_result_t hist[IOCTL_RSC_AUTOTUNE_HISTORY_INFO_CAPACITY];
             ULONG count = 0;
             ULONG dropped = 0;
             RtlZeroMemory(hist, sizeof(hist));
@@ -9692,8 +9698,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_HARDEN_SNAPSHOT: {
-            QCPEP_RSCSW_DRIVERA_HARDEN_SNAPSHOT_OUT* out = NULL;
+        case IOCTL_PEP_RSC_HARDEN_SNAPSHOT: {
+            ioctl_rsc_harden_snapshot_response_t* out = NULL;
             size_t out_sz = 0;
             status = WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -9730,8 +9736,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             out->LastTick100ns = snap.last_tick100ns;
 
             ULONG module_cnt = snap.module_cnt;
-            if (module_cnt > QCPEP_RSCSW_DRIVERA_HARDEN_MODULE_INFO_CAPACITY)
-                module_cnt = QCPEP_RSCSW_DRIVERA_HARDEN_MODULE_INFO_CAPACITY;
+            if (module_cnt > IOCTL_RSC_HARDEN_MODULE_INFO_CAPACITY)
+                module_cnt = IOCTL_RSC_HARDEN_MODULE_INFO_CAPACITY;
             out->ModuleCount = module_cnt;
 
             for (ULONG i = 0; i < module_cnt; i++) {
@@ -9763,8 +9769,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_HARDEN_RUN: {
-            QCPEP_RSCSW_DRIVERA_HARDEN_RUN_IN* in = NULL;
+        case IOCTL_PEP_RSC_HARDEN_RUN: {
+            ioctl_rsc_harden_run_request_t* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, sizeof(*in), (PVOID*)&in, &in_sz);
             if (!NT_SUCCESS(status))
@@ -9774,7 +9780,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             RtlZeroMemory(&result, sizeof(result));
             status = rsc_sw_run_harden(in->ModeId, in->Flags, in->Cycles, &result);
 
-            QCPEP_RSCSW_DRIVERA_HARDEN_RUN_OUT* out = NULL;
+            ioctl_rsc_harden_run_response_t* out = NULL;
             size_t out_sz = 0;
             NTSTATUS out_status =
                 WdfRequestRetrieveOutputBuffer(req_arg, sizeof(*out), (PVOID*)&out, &out_sz);
@@ -9813,11 +9819,11 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_RSCSW_DRIVERA_HARDEN_HISTORY: {
-            QCPEP_RSCSW_DRIVERA_HARDEN_HISTORY_OUT* out = NULL;
+        case IOCTL_PEP_RSC_HARDEN_HISTORY: {
+            ioctl_rsc_harden_history_response_t* out = NULL;
             size_t out_sz = 0;
-            const size_t hdr_sz = FIELD_OFFSET(QCPEP_RSCSW_DRIVERA_HARDEN_HISTORY_OUT, Entries);
-            const ULONG entry_size = sizeof(QCPEP_RSCSW_DRIVERA_HARDEN_RESULT_INFO);
+            const size_t hdr_sz = FIELD_OFFSET(ioctl_rsc_harden_history_response_t, Entries);
+            const ULONG entry_size = sizeof(ioctl_rsc_harden_result_info_t);
             status =
                 WdfRequestRetrieveOutputBuffer(req_arg, hdr_sz + entry_size, (PVOID*)&out, &out_sz);
             if (!NT_SUCCESS(status))
@@ -9831,10 +9837,10 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
                 info = hdr_sz + entry_size;
                 break;
             }
-            if (cap > QCPEP_RSCSW_DRIVERA_HARDEN_HISTORY_INFO_CAPACITY)
-                cap = QCPEP_RSCSW_DRIVERA_HARDEN_HISTORY_INFO_CAPACITY;
+            if (cap > IOCTL_RSC_HARDEN_HISTORY_INFO_CAPACITY)
+                cap = IOCTL_RSC_HARDEN_HISTORY_INFO_CAPACITY;
 
-            rscsw_harden_result_t hist[QCPEP_RSCSW_DRIVERA_HARDEN_HISTORY_INFO_CAPACITY];
+            rscsw_harden_result_t hist[IOCTL_RSC_HARDEN_HISTORY_INFO_CAPACITY];
             ULONG count = 0;
             ULONG dropped = 0;
             RtlZeroMemory(hist, sizeof(hist));
@@ -9882,7 +9888,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-            /* ---------------- crash_dump / LiveKernelDump IOCTLs (qcpep8280 DMF surface)
+            /* ---------------- crash_dump / LiveKernelDump IOCTLs (DMF interfaces)
              * ----------------. */
 
         case 0x22A000: /* crash_dump: DataSourceCreateFromRequest. */
@@ -9922,7 +9928,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_DMF_DEVICEINTERFACE_SEND: {
+        case IOCTL_PEP_DMF_DEVICEINTERFACE_SEND: {
 
             UCHAR* in = NULL;
             size_t in_sz = 0;
@@ -9984,7 +9990,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_VENDOR_C3502FF8: {
+        case IOCTL_PEP_VENDOR_C3502FF8: {
 
             info = input_buf_length;
             PVOID in = NULL;
@@ -10019,7 +10025,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_THERMAL_PMIC_ALARM_QUERY: {
+        case IOCTL_PEP_THERMAL_PMIC_ALARM_QUERY: {
             ULONG* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, 4, (PVOID*)&in, &in_sz);
@@ -10050,7 +10056,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_THERMAL_PMIC_ALARM_STATE: {
+        case IOCTL_PEP_THERMAL_PMIC_ALARM_STATE: {
             ULONG* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, 4, (PVOID*)&in, &in_sz);
@@ -10074,8 +10080,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_PMIC_HWINFO: {
-            /* qcpep8280 uses pm_send_msg with output length 0xA4 for PMIC hardware info readiness.
+        case IOCTL_PEP_PMIC_HWINFO: {
+            /* PMIC hardware readiness uses a 0xA4-byte pm_send_msg response.
              */
             UCHAR* out = NULL;
             size_t out_sz = 0;
@@ -10101,7 +10107,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_PMIC_CLX_EVENTCOUNT: {
+        case IOCTL_PEP_PMIC_CLX_EVENTCOUNT: {
 
             ULONG* in = NULL;
             size_t in_sz = 0;
@@ -10126,7 +10132,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_BMS_SET_THRESHOLDS: {
+        case IOCTL_PEP_BMS_SET_THRESHOLDS: {
 
             UCHAR* in = NULL;
             size_t in_sz = 0;
@@ -10149,7 +10155,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_BMS_QUERY: {
+        case IOCTL_PEP_BMS_QUERY: {
 
             ULONG* out = NULL;
             size_t out_sz = 0;
@@ -10174,7 +10180,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_DEEPSTANDBY_MODEM_SET: {
+        case IOCTL_PEP_DEEPSTANDBY_MODEM_SET: {
             ULONG* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, 4, (PVOID*)&in, &in_sz);
@@ -10186,7 +10192,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_PPP_GET_RPMH_COMMAND_SET: {
+        case IOCTL_PEP_PPP_GET_RPMH_COMMAND_SET: {
 
             UCHAR* in = NULL;
             size_t in_sz = 0;
@@ -10219,7 +10225,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_PPP_RESOURCE_VOTE: {
+        case IOCTL_PEP_PPP_RESOURCE_VOTE: {
 
             UCHAR* in = NULL;
             size_t in_sz = 0;
@@ -10282,7 +10288,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_PPP_GET_RESOURCE_SETTINGS: {
+        case IOCTL_PEP_PPP_GET_RESOURCE_SETTINGS: {
 
             ULONG* in = NULL;
             size_t in_sz = 0;
@@ -10330,7 +10336,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_PPP_RESOURCE_ACTION: {
+        case IOCTL_PEP_PPP_RESOURCE_ACTION: {
 
             UCHAR* in = NULL;
             size_t in_sz = 0;
@@ -10432,15 +10438,15 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_GPIO_CONFIG:
-        case IOCTL_QCPEP_GPIO_REQUEST: {
+        case IOCTL_PEP_GPIO_CONFIG:
+        case IOCTL_PEP_GPIO_REQUEST: {
             if (!registry_query_u_long(L"PmicIoctlsEnable", 1)) {
                 status = STATUS_INVALID_DEVICE_STATE;
                 info = 0;
                 break;
             }
 
-            ULONG req_in = (io_control_code == IOCTL_QCPEP_GPIO_CONFIG) ? 28u : 12u;
+            ULONG req_in = (io_control_code == IOCTL_PEP_GPIO_CONFIG) ? 28u : 12u;
             ULONG* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, req_in, (PVOID*)&in, &in_sz);
@@ -10452,7 +10458,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             res_key_t k;
             res_value_t v;
 
-            k.res_id = (io_control_code == IOCTL_QCPEP_GPIO_CONFIG) ? 0x30434750u : 0x30524750u;
+            k.res_id = (io_control_code == IOCTL_PEP_GPIO_CONFIG) ? 0x30434750u : 0x30524750u;
             k.sub_type = (in_sz >= sizeof(ULONG)) ? in[0] : 0;
 
             v.value0 = (in_sz >= sizeof(ULONG) * 2) ? in[1] : 0;
@@ -10468,7 +10474,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
 
         case IOCTL_PM_GPIO_CONFIG_DIGITAL_OUTPUT: {
             /* qualcomm's actual PMIC GPIO provider owns these pins. Never claim success just
-             * because the request was cached in QcpepRes. */
+             * because the request was stored in the resource cache. */
 
             PVOID raw = NULL;
             size_t raw_bytes = 0;
@@ -10525,8 +10531,8 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
 
         case IOCTL_PM_GPIO_CONFIG_BIAS_VOLTAGE:
         case IOCTL_PM_GPIO_CONFIG_DIGITAL_INPUT:
-        case IOCTL_QCPEP_GPIO_PMIC_SET_PULL:
-        case IOCTL_QCPEP_GPIO_PMIC_SET_DRIVE:
+        case IOCTL_PEP_GPIO_PMIC_SET_PULL:
+        case IOCTL_PEP_GPIO_PMIC_SET_DRIVE:
         case IOCTL_PM_GPIO_GET_GPIO_STATE:
         case IOCTL_PM_GPIO_SET_GPIO_OUTPUT: {
             /* forward the SC8280 0x8002 GPIO family to the PMIC provider and preserve its result.
@@ -10779,7 +10785,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_SUBSYS_ADSP_STATE: {
+        case IOCTL_PEP_SUBSYS_ADSP_STATE: {
 
             ULONG* in = NULL;
             size_t in_sz = 0;
@@ -10837,7 +10843,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_SUBSYS_ADSP_CTRL: {
+        case IOCTL_PEP_SUBSYS_ADSP_CTRL: {
 
             ULONG* in = NULL;
             size_t in_sz = 0;
@@ -10886,7 +10892,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_SUBSYS_CDSP_STATE: {
+        case IOCTL_PEP_SUBSYS_CDSP_STATE: {
 
             status = ppp_test_check_registry();
             if (!NT_SUCCESS(status)) {
@@ -10935,7 +10941,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_VENDOR_88882000: {
+        case IOCTL_PEP_VENDOR_88882000: {
             if (input_buf_length == 0 || output_buf_length == 0) {
                 status = STATUS_INVALID_PARAMETER;
                 info = 0;
@@ -10976,7 +10982,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_VENDOR_8888204C: {
+        case IOCTL_PEP_VENDOR_8888204C: {
             if (input_buf_length == 0 || output_buf_length == 0) {
                 status = STATUS_INVALID_PARAMETER;
                 info = 0;
@@ -11008,7 +11014,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_VENDOR_88882058: {
+        case IOCTL_PEP_VENDOR_88882058: {
             if (input_buf_length == 0 || output_buf_length == 0) {
                 status = STATUS_INVALID_PARAMETER;
                 info = 0;
@@ -11040,7 +11046,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_VENDOR_8888205C: {
+        case IOCTL_PEP_VENDOR_8888205C: {
             if (input_buf_length == 0 || output_buf_length == 0) {
                 status = STATUS_INVALID_PARAMETER;
                 info = 0;
@@ -11080,7 +11086,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_VENDOR_88882080: {
+        case IOCTL_PEP_VENDOR_88882080: {
             if (input_buf_length == 0 || output_buf_length == 0) {
                 status = STATUS_INVALID_PARAMETER;
                 info = 0;
@@ -11112,7 +11118,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_VENDOR_88882084: /* pwcal rundown: 51212 bytes. */
+        case IOCTL_PEP_VENDOR_88882084: /* pwcal rundown: 51212 bytes. */
         {
             if (input_buf_length == 0 || output_buf_length == 0) {
                 status = STATUS_INVALID_PARAMETER;
@@ -11145,7 +11151,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_VENDOR_88882088: {
+        case IOCTL_PEP_VENDOR_88882088: {
             if (input_buf_length == 0 || output_buf_length == 0) {
                 status = STATUS_INVALID_PARAMETER;
                 info = 0;
@@ -11173,9 +11179,9 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_VENDOR_8888208C:
-        case IOCTL_QCPEP_VENDOR_88884084: {
-            /* ppm test idle IOCTL (qcpep8280): METHOD_BUFFERED in/out using the same system buf. */
+        case IOCTL_PEP_VENDOR_8888208C:
+        case IOCTL_PEP_VENDOR_88884084: {
+            /* processor idle diagnostic IOCTL: METHOD_BUFFERED in/out using the same system buf. */
             PVOID buf = NULL;
             size_t in_sz = 0;
 
@@ -11193,7 +11199,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_VENDOR_88882094: {
+        case IOCTL_PEP_VENDOR_88882094: {
             if (input_buf_length == 0 || output_buf_length == 0) {
                 status = STATUS_INVALID_PARAMETER;
                 info = 0;
@@ -11223,13 +11229,13 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_VENDOR_88882098:
+        case IOCTL_PEP_VENDOR_88882098:
 
             status = STATUS_NOT_SUPPORTED;
             info = 0;
             break;
 
-        case IOCTL_QCPEP_VENDOR_8888209C: {
+        case IOCTL_PEP_VENDOR_8888209C: {
             ULONG* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, 8, (PVOID*)&in, &in_sz);
@@ -11264,7 +11270,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
             break;
         }
 
-        case IOCTL_QCPEP_VENDOR_888820A4: {
+        case IOCTL_PEP_VENDOR_888820A4: {
             ULONG* in = NULL;
             size_t in_sz = 0;
             status = WdfRequestRetrieveInputBuffer(req_arg, 8, (PVOID*)&in, &in_sz);

@@ -1,12 +1,12 @@
 #pragma once
 #include "driver.h"
 
-#define QCPEP_MAGIC 0x51504350u
-#define QCPEP_VEND_VERSION 0x00010007u
+#define VENDOR_PAYLOAD_MAGIC 0x51504350u
+#define VENDOR_PAYLOAD_VERSION 0x00010007u
 
 #pragma pack(push, 1)
 
-typedef struct _QCPEP_VENDOR_HEADER {
+typedef struct vendor_payload_header {
     ULONG Magic;
     ULONG Version;
     ULONG TotalSize;
@@ -30,13 +30,13 @@ typedef struct _QCPEP_VENDOR_HEADER {
     ULONG Reg_PepBcl_Notification_Level;
 
     WCHAR Hid[64];
-} QCPEP_VENDOR_HEADER;
+} vendor_payload_header_t;
 
-typedef struct _QCPEP_VENDOR_CHIPINFO16 {
+typedef struct vendor_chip_info {
     ULONG ChipId;
     ULONG ChipFamily;
     ULONG ChipVersion;
     ULONG ChipSku;
-} QCPEP_VENDOR_CHIPINFO16;
+} vendor_chip_info_t;
 
 #pragma pack(pop)

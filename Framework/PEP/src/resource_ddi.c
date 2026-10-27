@@ -28,15 +28,15 @@ static VOID interface_dereference_no_op(_In_ PVOID ctx)
     UNREFERENCED_PARAMETER(ctx);
 }
 
-static VOID pep_result_init_fail(_Inout_ PQCPEP_PepResultType r, _In_ QCPEP_PepErrorLevelType lvl,
-                                 _In_ QCPEP_PepResultStatusType st)
+static VOID pep_result_init_fail(_Inout_ resource_parse_result_ptr_t r,
+                                 _In_ resource_error_level_t lvl, _In_ resource_parse_status_t st)
 {
     if (!r)
         return;
     RtlZeroMemory(r, sizeof(*r));
     r->errorLevel = lvl;
     r->eStatus = st;
-    (VOID) RtlStringCchCopyA(r->deviceName, RTL_NUMBER_OF(r->deviceName), "qcpep8280");
+    (VOID) RtlStringCchCopyA(r->deviceName, RTL_NUMBER_OF(r->deviceName), "qcpep");
 }
 
 static __forceinline ULONG ddi_fnv1a32(_In_reads_bytes_(len) const UCHAR* data, _In_ ULONG len,
@@ -501,7 +501,7 @@ NTSTATUS runtime_comp_res_copy(_In_z_ const CHAR* acpi_path,
  * Recording a descriptor for DPM never executes its actions here. */
 
 static NTSTATUS parse_desc_validated(_In_ PACPI_EVAL_OUTPUT_BUFFER output_buf,
-                                     _Inout_ PQCPEP_PepResultType pep_result,
+                                     _Inout_ resource_parse_result_ptr_t pep_result,
                                      _In_z_ const CHAR* via)
 {
     runtime_desc_info_t* info;
@@ -512,8 +512,7 @@ static NTSTATUS parse_desc_validated(_In_ PACPI_EVAL_OUTPUT_BUFFER output_buf,
 
     if (!pep_result)
         return STATUS_INVALID_PARAMETER;
-    pep_result_init_fail(pep_result, QCPEP_PEP_RESOURCE_PARSE_DDI_ERROR_LEVEL_CRITICAL,
-                         QCPEP_PEP_RESOURCE_PARSE_DDI_RESULT_RESOURCE_PARSING_FAILURE);
+    pep_result_init_fail(pep_result, RESOURCE_ERROR_CRITICAL, RESOURCE_PARSE_FAILED);
     if (KeGetCurrentIrql() != PASSIVE_LEVEL)
         return STATUS_INVALID_DEVICE_STATE;
     if (!output_buf)
@@ -526,7 +525,7 @@ static NTSTATUS parse_desc_validated(_In_ PACPI_EVAL_OUTPUT_BUFFER output_buf,
 
     info = (runtime_desc_info_t*)ExAllocatePool2(POOL_FLAG_NON_PAGED, sizeof(*info), POOL_TAG);
     if (!info) {
-        pep_result->eStatus = QCPEP_PEP_RESOURCE_PARSE_DDI_RESULT_PEP_INTERNAL_FAILURE;
+        pep_result->eStatus = RESOURCE_PARSE_INTERNAL_FAILURE;
         return STATUS_INSUFFICIENT_RESOURCES;
     }
     if (!validate_runtime_desc(output_buf, output_buf->Length, info)) {
@@ -547,7 +546,7 @@ static NTSTATUS parse_desc_validated(_In_ PACPI_EVAL_OUTPUT_BUFFER output_buf,
      * out from under the loop. still. */
 
     if (output_buf->Length == 0u || output_buf->Length > RUNTIME_MAX_BYTES) {
-        pep_result->eStatus = QCPEP_PEP_RESOURCE_PARSE_DDI_RESULT_PEP_INTERNAL_FAILURE;
+        pep_result->eStatus = RESOURCE_PARSE_INTERNAL_FAILURE;
         TraceEvents(TRACE_LEVEL_WARNING, TRACE_RESOURCE,
                     "ddi: source=%s retention limit exceeded bytes=%lu", via, output_buf->Length);
         ExFreePool(info);
@@ -555,7 +554,7 @@ static NTSTATUS parse_desc_validated(_In_ PACPI_EVAL_OUTPUT_BUFFER output_buf,
     }
     blob = runtime_blob_create(output_buf, output_buf->Length);
     if (!blob) {
-        pep_result->eStatus = QCPEP_PEP_RESOURCE_PARSE_DDI_RESULT_PEP_INTERNAL_FAILURE;
+        pep_result->eStatus = RESOURCE_PARSE_INTERNAL_FAILURE;
         ExFreePool(info);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -563,7 +562,7 @@ static NTSTATUS parse_desc_validated(_In_ PACPI_EVAL_OUTPUT_BUFFER output_buf,
         const runtime_dev_info_t* d = &info->devices[i];
         st = runtime_res_record(d->path, d->comp_mask, blob);
         if (!NT_SUCCESS(st)) {
-            pep_result->eStatus = QCPEP_PEP_RESOURCE_PARSE_DDI_RESULT_PEP_INTERNAL_FAILURE;
+            pep_result->eStatus = RESOURCE_PARSE_INTERNAL_FAILURE;
             (VOID) RtlStringCchCopyA(pep_result->deviceName, RTL_NUMBER_OF(pep_result->deviceName),
                                      d->path);
             TraceEvents(TRACE_LEVEL_WARNING, TRACE_RESOURCE,
@@ -596,8 +595,8 @@ static NTSTATUS parse_desc_validated(_In_ PACPI_EVAL_OUTPUT_BUFFER output_buf,
                 "ddi: source=%s devices=%lu supported=%lu unsupported=%lu bytes=%lu", via,
                 info->dev_cnt, info->supported_devices, info->unsupported_devices,
                 output_buf->Length);
-    pep_result->errorLevel = QCPEP_PEP_RESOURCE_PARSE_DDI_ERROR_LEVEL_NONE;
-    pep_result->eStatus = QCPEP_PEP_RESOURCE_PARSE_DDI_RESULT_VALID;
+    pep_result->errorLevel = RESOURCE_ERROR_NONE;
+    pep_result->eStatus = RESOURCE_PARSE_VALID;
     (VOID) RtlStringCchCopyA(pep_result->deviceName, RTL_NUMBER_OF(pep_result->deviceName),
                              info->devices[0].path);
     ExFreePool(info);
@@ -605,24 +604,22 @@ static NTSTATUS parse_desc_validated(_In_ PACPI_EVAL_OUTPUT_BUFFER output_buf,
 }
 
 static NTSTATUS parse_dev_res_buf_impl(_In_ PACPI_EVAL_OUTPUT_BUFFER output_buf,
-                                       _Inout_ PQCPEP_PepResultType pep_result)
+                                       _Inout_ resource_parse_result_ptr_t pep_result)
 {
     if (!pep_result)
         return STATUS_INVALID_PARAMETER;
-    pep_result_init_fail(pep_result, QCPEP_PEP_RESOURCE_PARSE_DDI_ERROR_LEVEL_CRITICAL,
-                         QCPEP_PEP_RESOURCE_PARSE_DDI_RESULT_RESOURCE_PARSING_FAILURE);
+    pep_result_init_fail(pep_result, RESOURCE_ERROR_CRITICAL, RESOURCE_PARSE_FAILED);
     return parse_desc_validated(output_buf, pep_result, "device");
 }
 
-static NTSTATUS parse_comp_res_buf_impl(_In_ PQCPEP_COMPONENT_OUTPUT_BUFFER_DATA comp_output_buf,
-                                        _Inout_ PQCPEP_PepResultType pep_result)
+static NTSTATUS parse_comp_res_buf_impl(_In_ component_resource_buffers_ptr_t comp_output_buf,
+                                        _Inout_ resource_parse_result_ptr_t pep_result)
 {
     ULONGLONG cnt, i;
     NTSTATUS st = STATUS_INVALID_PARAMETER;
     if (!pep_result)
         return STATUS_INVALID_PARAMETER;
-    pep_result_init_fail(pep_result, QCPEP_PEP_RESOURCE_PARSE_DDI_ERROR_LEVEL_CRITICAL,
-                         QCPEP_PEP_RESOURCE_PARSE_DDI_RESULT_RESOURCE_PARSING_FAILURE);
+    pep_result_init_fail(pep_result, RESOURCE_ERROR_CRITICAL, RESOURCE_PARSE_FAILED);
     if (KeGetCurrentIrql() != PASSIVE_LEVEL)
         return STATUS_INVALID_DEVICE_STATE;
     if (!comp_output_buf)
@@ -644,13 +641,13 @@ static NTSTATUS parse_comp_res_buf_impl(_In_ PQCPEP_COMPONENT_OUTPUT_BUFFER_DATA
 static NTSTATUS parse_res_buf_v1_impl(_In_ PACPI_EVAL_OUTPUT_BUFFER output_buf,
                                       _Inout_opt_ PVOID legacy_ctx)
 {
-    QCPEP_PepResultType* tmp;
+    resource_parse_result_t* tmp;
     NTSTATUS st;
     UNREFERENCED_PARAMETER(legacy_ctx);
     if (KeGetCurrentIrql() != PASSIVE_LEVEL)
         return STATUS_INVALID_DEVICE_STATE;
 
-    tmp = (QCPEP_PepResultType*)ExAllocatePool2(POOL_FLAG_NON_PAGED, sizeof(*tmp), POOL_TAG);
+    tmp = (resource_parse_result_t*)ExAllocatePool2(POOL_FLAG_NON_PAGED, sizeof(*tmp), POOL_TAG);
     if (!tmp)
         return STATUS_INSUFFICIENT_RESOURCES;
     st = parse_dev_res_buf_impl(output_buf, tmp);
@@ -658,7 +655,7 @@ static NTSTATUS parse_res_buf_v1_impl(_In_ PACPI_EVAL_OUTPUT_BUFFER output_buf,
     return st;
 }
 
-static NTSTATUS execute_tlmm_gpio_impl(_Inout_ PQCPEP_PPXTLMM_GPIO_Resource_NodeSt tlmm_gpio_res)
+static NTSTATUS execute_tlmm_gpio_impl(_Inout_ tlmm_gpio_resource_ptr_t tlmm_gpio_res)
 {
     if (!tlmm_gpio_res)
         return STATUS_INVALID_PARAMETER;
@@ -911,7 +908,7 @@ static NTSTATUS bcm_throttle_impl(_In_ UCHAR enable_throttling)
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS usb_wakeup_interrupt_update_impl(_In_ QCPEP_USB_INTERRUPT_DATA interrupt_data)
+static NTSTATUS usb_wakeup_interrupt_update_impl(_In_ usb_interrupt_data_t interrupt_data)
 {
     if (interrupt_data.InterruptID == 0 || interrupt_data.PolarityType == 0)
         return STATUS_INVALID_PARAMETER;
@@ -981,7 +978,7 @@ NTSTATUS ddi_reg_all(_In_ WDFDEVICE dev)
 
     NTSTATUS st;
 
-    st = WdfDeviceCreateDeviceInterface(dev, &GUID_DEVINTERFACE_QCPEP_SOC_PEP, NULL);
+    st = WdfDeviceCreateDeviceInterface(dev, &GUID_DEVINTERFACE_SOC_PEP, NULL);
     if (!NT_SUCCESS(st))
         TraceEvents(TRACE_LEVEL_WARNING, TRACE_RESOURCE,
                     "ddi: SoC interface creation failed status=%08X", st);
@@ -994,7 +991,7 @@ NTSTATUS ddi_reg_all(_In_ WDFDEVICE dev)
         TraceEvents(TRACE_LEVEL_WARNING, TRACE_RESOURCE,
                     "ddi: runtime enumeration interface creation failed status=%08X", st);
     if (NT_SUCCESS(st)) {
-        static QCPEP_PEP_RUNTIME_RESOURCE_ENUMERATION_INTERFACE s_res_enum_v1;
+        static resource_enumeration_interface_t s_res_enum_v1;
         RtlZeroMemory(&s_res_enum_v1, sizeof(s_res_enum_v1));
         s_res_enum_v1.Interface.Size = (USHORT)sizeof(s_res_enum_v1);
         s_res_enum_v1.Interface.Version = 1;
@@ -1016,7 +1013,7 @@ NTSTATUS ddi_reg_all(_In_ WDFDEVICE dev)
                     dev, &GUID_PEP_RUNTIME_RESOURCE_ENUMERATION_INTERFACE_V2, NULL)
               : STATUS_NOT_SUPPORTED);
     if (NT_SUCCESS(st)) {
-        static QCPEP_PEP_RUNTIME_RESOURCE_ENUMERATION_INTERFACE_V2 s_res_enum;
+        static resource_enumeration_interface_v2_t s_res_enum;
         RtlZeroMemory(&s_res_enum, sizeof(s_res_enum));
         s_res_enum.Interface.Size = (USHORT)sizeof(s_res_enum);
         s_res_enum.Interface.Version = 2;
@@ -1034,10 +1031,10 @@ NTSTATUS ddi_reg_all(_In_ WDFDEVICE dev)
     }
 
     st = (registry_query_u_long(L"AllowUnverified8480Interfaces", 0) == 1
-              ? WdfDeviceCreateDeviceInterface(dev, &GUID_QCPEP_QCPPX_DEV_INTERFACE, NULL)
+              ? WdfDeviceCreateDeviceInterface(dev, &GUID_PEP_GPIO_DEVICE_INTERFACE, NULL)
               : STATUS_NOT_SUPPORTED);
     if (NT_SUCCESS(st)) {
-        static QCPEP_QCPPX_INTERFACE s_qcppx;
+        static tlmm_gpio_interface_t s_qcppx;
         RtlZeroMemory(&s_qcppx, sizeof(s_qcppx));
         s_qcppx.Interface.Size = (USHORT)sizeof(s_qcppx);
         s_qcppx.Interface.Version = 1;
@@ -1048,8 +1045,8 @@ NTSTATUS ddi_reg_all(_In_ WDFDEVICE dev)
         s_qcppx.ExecuteTlmmGpio = execute_tlmm_gpio_impl;
 
         WDF_QUERY_INTERFACE_CONFIG cfg;
-        WDF_QUERY_INTERFACE_CONFIG_INIT(&cfg, (PINTERFACE)&s_qcppx,
-                                        &GUID_QCPEP_QCPPX_GPIO_FUNCTION_INTERFACE, NULL);
+        WDF_QUERY_INTERFACE_CONFIG_INIT(&cfg, (PINTERFACE)&s_qcppx, &GUID_PEP_TLMM_GPIO_INTERFACE,
+                                        NULL);
         (VOID) WdfDeviceAddQueryInterface(dev, &cfg);
     }
 
@@ -1058,7 +1055,7 @@ NTSTATUS ddi_reg_all(_In_ WDFDEVICE dev)
         TraceEvents(TRACE_LEVEL_WARNING, TRACE_RESOURCE,
                     "ddi: BCM interface creation failed status=%08X", st);
     if (NT_SUCCESS(st)) {
-        static QCPEP_PEP_BCM_INTERFACE s_bcm;
+        static bcm_interface_t s_bcm;
         RtlZeroMemory(&s_bcm, sizeof(s_bcm));
         s_bcm.Interface.Size = (USHORT)sizeof(s_bcm);
         s_bcm.Interface.Version = 1;
@@ -1078,7 +1075,7 @@ NTSTATUS ddi_reg_all(_In_ WDFDEVICE dev)
               ? WdfDeviceCreateDeviceInterface(dev, &GUID_PEP_PSTATE_TRANSITION_INTERFACE, NULL)
               : STATUS_NOT_SUPPORTED);
     if (NT_SUCCESS(st)) {
-        static QCPEP_PEP_PSTATE_TRANSITION_INTERFACE s_pstate;
+        static pstate_transition_interface_t s_pstate;
         RtlZeroMemory(&s_pstate, sizeof(s_pstate));
         s_pstate.Interface.Size = (USHORT)sizeof(s_pstate);
         s_pstate.Interface.Version = 1;
@@ -1096,11 +1093,10 @@ NTSTATUS ddi_reg_all(_In_ WDFDEVICE dev)
 
     /* ---------------- USB wakeup interrupt update DDI ----------------. */
     st = (registry_query_u_long(L"AllowUnverified8480Interfaces", 0) == 1
-              ? WdfDeviceCreateDeviceInterface(dev, &GUID_DEVINTERFACE_PEP_USB_WAKEUPINTERRUTS_DDI,
-                                               NULL)
+              ? WdfDeviceCreateDeviceInterface(dev, &GUID_PEP_USB_WAKEUP_INTERRUPTS_INTERFACE, NULL)
               : STATUS_NOT_SUPPORTED);
     if (NT_SUCCESS(st)) {
-        static QCPEP_PEP_USB_WAKEUP_INTERRUPT_INTERFACE s_usb_wake_ddi;
+        static usb_wakeup_interrupt_interface_t s_usb_wake_ddi;
         RtlZeroMemory(&s_usb_wake_ddi, sizeof(s_usb_wake_ddi));
         s_usb_wake_ddi.Interface.Size = (USHORT)sizeof(s_usb_wake_ddi);
         s_usb_wake_ddi.Interface.Version = 1;
@@ -1113,12 +1109,12 @@ NTSTATUS ddi_reg_all(_In_ WDFDEVICE dev)
 
         WDF_QUERY_INTERFACE_CONFIG cfg;
         WDF_QUERY_INTERFACE_CONFIG_INIT(&cfg, (PINTERFACE)&s_usb_wake_ddi,
-                                        &GUID_DEVINTERFACE_PEP_USB_WAKEUPINTERRUTS_DDI, NULL);
+                                        &GUID_PEP_USB_WAKEUP_INTERRUPTS_INTERFACE, NULL);
         (VOID) WdfDeviceAddQueryInterface(dev, &cfg);
     }
 
     if (registry_query_u_long(L"AllowUnverified8480Interfaces", 0) == 1) {
-        static QCPEP_PEP_ENABLE_GFX_ACD_INTERFACE s_gfx_acd_ddi;
+        static gfx_acd_interface_t s_gfx_acd_ddi;
         RtlZeroMemory(&s_gfx_acd_ddi, sizeof(s_gfx_acd_ddi));
         s_gfx_acd_ddi.Interface.Size = (USHORT)sizeof(s_gfx_acd_ddi);
         s_gfx_acd_ddi.Interface.Version = 1;

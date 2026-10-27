@@ -85,8 +85,7 @@ typedef struct owners {
     gic_d0_map_win_t d0_gic;
     gic_irq37_owned_win_t gic_irq37_owner;
 
-    /* firmware-configured HLOS DRV2 d0 lifetime. original signed qcpep8480 maps the fixed
-     * firmware DRV2 window with MmMapIoSpaceEx, independently of _CRS memory descriptors. */
+    /* firmware-configured DRV2 lifetime; the fixed window is mapped independently of _CRS. */
 
     struct {
         WDFDEVICE dev;
@@ -397,7 +396,7 @@ static int rpmh_wait_deadline(void* ctx, uint32_t ms)
 /* authorized owner must call this *after* scheduler promotion and before advertising RPMh
  * capabilities; the binding itself grants NOTHING. */
 
-/* production callbacks that keep the ONE QCPEP_RPMH_WORK_OPS Context equal to the
+/* production callbacks that keep the ONE work callback context equal to the
  * backend-retained owner. mask/DPC/queue, WDF work and AMC drain all share this same
  * lifetime; a drain pointer alone cannot be used for physical GIC or WDF operations. */
 
@@ -649,7 +648,7 @@ static int rpmh_bind_completion_wait(owners_t* o)
                                    &io);
 }
 
-/* see qcpep_rpmh_sync_deferred8845.c: a returned BUSY is never an on-wire result. */
+/* a deferred submission returning BUSY is never an on-wire result. */
 
 typedef struct amc_retry_ctx {
     rpmh_sync_deferred_t* wait;

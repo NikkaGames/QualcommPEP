@@ -17,7 +17,7 @@ typedef struct rpmh_amc_drain {
 } rpmh_amc_drain_t;
 
 int rpmh_amc_drain_bind(rpmh_amc_drain_t*, rpmh_deferred_scheduler_t*);
-/* direct QCPEP_RPMH_WORK_OPS callbacks for an independently-bound owner. */
+/* direct work-owner callbacks for an independently-bound owner. */
 
 int rpmh_amc_drain_has_finished(void*);
 int rpmh_amc_drain_finish_one(void*);

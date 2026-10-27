@@ -1,4 +1,4 @@
-/* Auto-generated from driverA/qcpep8280.sys.h */
+/* icb master catalog aliases. */
     { 0x0u, "APPSS_PROC" },
     { 0x1u, "MSS_PROC" },
     { 0x2u, "MNOC_BIMC" },

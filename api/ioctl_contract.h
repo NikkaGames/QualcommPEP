@@ -1,12 +1,12 @@
 #pragma once
 #include "driver.h"
 
-typedef struct _QCPEP_IOCTL_REQS {
+typedef struct ioctl_requirements {
     ULONG Ioctl;
     ULONG MinIn;
     ULONG MinOut;
     ULONG ExactOut;
-} QCPEP_IOCTL_REQS;
+} ioctl_requirements_t;
 
 NTSTATUS ioctl_require_exact_out(_In_ WDFREQUEST req, _In_ ULONG exact_bytes,
                                  _Outptr_result_bytebuffer_(exact_bytes) PVOID* out,

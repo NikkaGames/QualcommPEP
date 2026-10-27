@@ -106,9 +106,9 @@ VOID ex_soc_record_apply(_In_ ULONG ioctl_code, _In_z_ const CHAR* dev_id, _In_ 
     else
         g_ex_soc_failure_cnt++;
 
-    if (ioctl_code == IOCTL_QCPEP_SUBSYS_ADSP_STATE)
+    if (ioctl_code == IOCTL_PEP_SUBSYS_ADSP_STATE)
         g_ex_soc_adsp_state_ioctl_cnt++;
-    else if (ioctl_code == IOCTL_QCPEP_SUBSYS_ADSP_CTRL)
+    else if (ioctl_code == IOCTL_PEP_SUBSYS_ADSP_CTRL)
         g_ex_soc_adsp_ctrl_ioctl_cnt++;
 
     g_ex_soc_last_ioctl_code = ioctl_code;

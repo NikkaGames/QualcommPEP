@@ -1,4 +1,4 @@
-/* Auto-generated from driverA/qcpep8280.sys.h */
+/* arc resource catalog aliases. */
     { 0x0u, "CX" },
     { 0x1u, "MX" },
     { 0x2u, "MXA" },

@@ -305,8 +305,8 @@ NTSTATUS pmic_gpio_send(_In_ WDFDEVICE dev, _In_ ULONG ioctl, _In_opt_ PVOID in_
             expected_output = 8u;
             break;
         case IOCTL_PM_GPIO_CONFIG_BIAS_VOLTAGE:
-        case IOCTL_QCPEP_GPIO_PMIC_SET_PULL:
-        case IOCTL_QCPEP_GPIO_PMIC_SET_DRIVE:
+        case IOCTL_PEP_GPIO_PMIC_SET_PULL:
+        case IOCTL_PEP_GPIO_PMIC_SET_DRIVE:
         case IOCTL_PM_GPIO_SET_GPIO_OUTPUT:
             break;
         default:

@@ -1,4 +1,4 @@
-/* Auto-generated from driverA/qcpep8280.sys.h */
+/* npa client catalog aliases. */
     { 0x1u, "CLIENT_RESERVED1" },
     { 0x2u, "CLIENT_RESERVED2" },
     { 0x4u, "CLIENT_CUSTOM1" },

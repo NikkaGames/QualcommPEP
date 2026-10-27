@@ -1,4 +1,4 @@
-/* Auto-generated from driverA/qcpep8280.sys.h */
+/* ppp resource catalog aliases. */
     { 0x0u, "INITIAL" },
     { 0x0u, "SMPS_A_INITIAL" },
     { 0x0u, "SMPS1_A" },

@@ -75,7 +75,7 @@ typedef struct globals {
     UNICODE_STRING services_registry_path;
     BOOLEAN control_dev_created;
     ULONGLONG spmi_connection_id;
-    QCPEP_CONFIG config;
+    ioctl_config_t config;
 } globals_t;
 
 extern globals_t g;
@@ -99,7 +99,7 @@ EVT_WDF_IO_QUEUE_IO_STOP evt_io_stop;
 
 NTSTATUS registry_init(_In_ WDFDRIVER driver);
 VOID registry_deinit(VOID);
-NTSTATUS registry_read_config(_Out_ QCPEP_CONFIG* cfg);
+NTSTATUS registry_read_config(_Out_ ioctl_config_t* cfg);
 ULONG registry_query_u_long(_In_z_ PCWSTR name, _In_ ULONG default_value);
 NTSTATUS registry_query_unicode_string_alloc(_In_z_ PCWSTR name, _Out_ UNICODE_STRING* out,
                                              _In_ USHORT max_chars);

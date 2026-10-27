@@ -1,7 +1,7 @@
 #include "etw.h"
 #include <TraceLoggingProvider.h>
 
-TRACELOGGING_DEFINE_PROVIDER(g_provider, "qcpep8280",
+TRACELOGGING_DEFINE_PROVIDER(g_provider, "qcpep",
                              (0xa64d8f5b, 0x6d53, 0x4f4b, 0x9c, 0x53, 0xeb, 0xf2, 0xcf, 0xa9, 0xcc,
                               0x6c));
 

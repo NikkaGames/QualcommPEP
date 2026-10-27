@@ -162,7 +162,7 @@ int oem_wdf_published_owner_stopped_win(void* handle, uint64_t owner_epoch);
 /* io.irq_lock_ctx must be the SAME WDFINTERRUPT used by its WDF ISR. A failed try is not
  * permission to reissue previously programmed TCS commands or release an issued ticket. */
 
-/* refusal values match QcpepAmcBusyIrq* after the transport translates them. A zero
+/* refusal values match AMC busy-IRQ statuses after the transport translates them. A zero
  * indicates no refusal; this is NOT a lock or an ownership grant. */
 uint32_t oem_wdf_read_last_tcs_lock_refusal_win(void* interrupt);
 int oem_wdf_enter_tcs_irq_lock_win(void* interrupt);

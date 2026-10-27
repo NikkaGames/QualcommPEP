@@ -1,8 +1,7 @@
 #ifndef POFX_PSTATE_PAYLOAD_H
 #define POFX_PSTATE_PAYLOAD_H
-/* legacy WDF PoFx power-control payload framing (ARM64 8-byte pointers). The qcpep PoFx
- * handlers must report STATUS_NOT_SUPPORTED until a complete component hardware backend
- * performs the operation and validates its completion. */
+/* WDF PoFx payload framing uses 8-byte pointers on ARM64.
+ * report STATUS_NOT_SUPPORTED until the backend can execute and verify the operation. */
 
 #include <stddef.h>
 #include <stdint.h>

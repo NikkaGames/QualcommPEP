@@ -1,3 +1,3 @@
-/* Auto-generated from driverA/qcpep8280.sys.h */
+/* pcu resource state catalog aliases. */
     { 0x0u, "CurrFreq" },
     { 0x1u, "MaxFreq" },

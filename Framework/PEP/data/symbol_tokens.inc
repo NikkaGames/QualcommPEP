@@ -1,4 +1,4 @@
-/* Auto-generated from driverA module symbols (qcpep8280.sys.h/.c) */
+/* recovered lookup keys; preserve catalog spelling and indices. */
     "ACTION_TYPE_UNPARK_ONLY_TWO_CORES",
     "AOP",
     "AOPLpmMonStatsEnabled",
@@ -12221,7 +12221,7 @@
     "xecute_tlmm_gpio",
     "xoClockLoggingEnable",
 
-/* Auto-generated additional targeted string tokens from driverA/qcpep8280.sys.c */
+
     "+RPMH_BCM_BCM_STATUS",
     "/Tlmm/",
     "/Tlmm/*",
@@ -12594,7 +12594,7 @@
     "src\\\\PppRpmhInterface.c",
     "status == GLINK_STATUS_SUCCESS",
 
-/* Auto-generated additional targeted format/trace tokens from driverA/qcpep8280.sys.c */
+
     "%s::INFO::%s()| APSS_Timer_Ticks = %llu, PDC_Profiling_Unit_Ticks = %llu",
     "%s::INFO::%s()| Virtual Address of HI PDC Timer = 0x%p, LO PDC Timer = 0x%p, HI PDC Profiling Unit = 0x%p, LO PDC Pr",
     "Assertion failure: ( ICBARB_ERROR_SUCCESS == error) Z:\\\\b\\\\WP\\\\PEP\\\\rel\\\\10.6\\\\Framework\\\\PEP\\\\src\\\\PEP_BusData.c:388",
@@ -12910,7 +12910,7 @@
     "rpmh_client_register_completion_callback Test PASSED. Callback is registered.\\r\\n",
     "{class: clock, res: qdss, val: %d}",
 
-/* Additional targeted DriverA strings/enums imported from qcpep8280.sys.c/.h */
+
     "Assertion failure: ( ICBARB_ERROR_SUCCESS == error) Z:\\\\b\\\\WP\\\\PEP\\\\rel\\\\10.6\\\\Framework\\\\PEP\\\\src\\\\PEP_BusData.c:388",
     "Assertion failure: ( NT_SUCCESS(PepClockGetClockId(clkName, &clkId))) Z:\\\\b\\\\WP\\\\PEP\\\\rel\\\\10.6\\\\Framework\\\\PEP\\\\s",
     "Assertion failure: ( NULL != (gDebuggerInfo[TempdbgType].DebuggerSuppressibleClockList)) Z:\\\\b\\\\WP\\\\PEP\\\\r",
@@ -13493,7 +13493,7 @@
     "rpmh_client_register_completion_callback Test PASSED. Callback is registered.\\r\\n",
     "src\\\\PppRpmhInterface.c",
 
-/* Additional DriverA module-context identifiers imported from qcpep8280.sys.c/.h */
+
     "AddANode",
     "AddBusResource",
     "AddDelayResource",
@@ -13905,7 +13905,7 @@
     "xport_qmp_tx_cmd_version",
     "xport_qmp_tx_cmd_version_ack",
 
-/* Additional full DriverA identifier set imported from qcpep8280.sys.c/.h */
+
     "ALLOCATE_FUNCTION",
     "ALLOCATE_FUNCTION_EX",
     "ARM64_SYSREG",
@@ -16614,7 +16614,7 @@
     "xport_qmp_isr",
     "xport_qmp_send_event",
 
-/* Additional full DriverA string-literal set imported from qcpep8280.sys.c */
+
     " ",
     " (NOT BEING TESTED)...\\r\\n",
     " Client has been applied to the hardware.\\r\\n",
@@ -18023,7 +18023,7 @@
     "{class: image, res: pwr_state, name: %s, val: %s}",
     "{class: lpm_mon, type: %ls, dur: %d, flush: %d, ts_adj: %d%s}",
 
-/* Additional DriverA module-focused IDC strings imported from qcpep8280.sys.database.idc */
+
     "??$AllocateCleanMem@UClockResourceNodeTypeSt@@@@YAPEAUClockResourceNodeTypeSt@@K_K@Z",
     "??$AllocateCleanMem@UNpaRequiredResourceSt@@@@YAPEAUNpaRequiredResourceSt@@K_K@Z",
     "??$AllocateCleanMem@URpmhCommitNodeTypeSt@@@@YAPEAURpmhCommitNodeTypeSt@@K_K@Z",
@@ -20500,7 +20500,7 @@
     "void rpmh_prepare_for_hibernate();",
     "void rpmh_rsc_clocks_init();",
 
-/* Additional DriverA module-focused binary strings imported from qcpep8280.sys */
+
     "%s::INFO::%s()| Virtual Address of HI PDC Timer = 0x%p, LO PDC Timer = 0x%p, HI PDC Profiling Unit = 0x%p, LO PDC Profiling Unit = 0x%p",
     "'RPMH_INTERRUPT_CONTEXT",
     ")[GLINK_OS_DEFERRED_THREAD_CREATION_CONTEXT",
@@ -21069,7 +21069,7 @@
     "eG/arc/client/rail_cx",
     "rpmh_client_register_completion_callback Test PASSED. Callback is registered.",
 
-/* Additional DriverA module-focused image strings imported from qcpep8280.sys.i64 */
+
     "!KClockTimerKTimerExpirationNonHr$KClockTimerKTimerExpirationPseudoHr",
     "!PPP_CXOBUF_RESOURCE_SUBTYPE_NONE\"PPP_CXOBUF_RESOURCE_SUBTYPE_BBCLK\"PPP_CXOBUF_RESOURCE_SUBTYPE_RFCLK$PPP_CXOBUF_RESOURCE_SUBTYPE_DIFFCLK$PPP_CXOBUF_RESOURCE_SUBTYPE_LNBBCLK%PPP_CXOBUF_RESOURCE_SUBTYPE_CLK_DIST%PPP_CXOBUF_RESOURCE_SUBTYPE_SLEEPCLK#PPP_CXOBUF_RESOURCE_SUBTYPE_DIVCLK PPP_CXOBUF_RESOURCE_SUBTYPE_MAX",
     "\"#typev Acpi_DeviceData_c2076 61 \"%0GetNpaClientHandle failed in ProcessResourceNode for device: %10!s!, client is NULL \" //   LEVEL=TRACE_LEVEL_ERROR IFRLOG=gPepResParseIfrHandle FLAGS=PEP_FLAG_ACPI_PARSING\",",
@@ -23673,7 +23673,7 @@
     "xNodeHandler@@YAIPEAUnpa_resource@@PEAUnpa_client@@I@Z",
     "xoBuffersResourceSettings@@YAJPEAU_PPP_RESOURCE_VOTE@@PEAU_PM_RESOURCE_SERVICE_INTERFACE@@@Z",
 
-/* Additional DriverA module-focused PDB strings imported from qcpep8280.pdb */
+
     "#typev Acpi_DeviceData_c2076 61 \"%0GetNpaClientHandle failed in ProcessResourceNode for device: %10!s!, client is NULL \" //   LEVEL=TRACE_LEVEL_ERROR IFRLOG=gPepResParseIfrHandle FLAGS=PEP_FLAG_ACPI_PARSING",
     "#typev Acpi_DsmData_c492 31 \"%0PepParseAndUpdateSsStates: Failed to update AOP for SS: %10!s! status %11!s! \" //   LEVEL=TRACE_LEVEL_ERROR IFRLOG=gPepDrvIfrHandle FLAGS=PEP_FLAG_ACPI_PARSING",
     "#typev Acpi_ResourceData_c120 11 \"%0Invalid TLMM GPIO V2 resource package, PinNum: %10!d!\" //   LEVEL=TRACE_LEVEL_ERROR IFRLOG=gPepResParseIfrHandle FLAGS=PEP_FLAG_ACPI_PARSING",

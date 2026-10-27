@@ -1,4 +1,4 @@
-/* Auto-generated from driverA/qcpep8280.sys.h */
+/* tlmm drive catalog aliases. */
     { 0x0u, "DRIVE_2MA" },
     { 0x1u, "DRIVE_4MA" },
     { 0x2u, "DRIVE_6MA" },

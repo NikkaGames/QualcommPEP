@@ -350,7 +350,7 @@ static NTSTATUS ds_toggle_modem_locked(_In_ ULONG mode)
         return STATUS_SUCCESS;
 
     if (!g_ds.modem_target) {
-        NTSTATUS s = ds_open_io_target_by_name(g_ds.dev, QCPEP_DOS_SYMLINK_GLOBAL_DEEPSTANDBY,
+        NTSTATUS s = ds_open_io_target_by_name(g_ds.dev, MODEM_STANDBY_GLOBAL_SYMBOLIC_LINK,
                                                &g_ds.modem_target);
         if (!NT_SUCCESS(s)) {
             g_ds.modem_enabled = 0;

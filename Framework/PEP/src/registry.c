@@ -28,7 +28,7 @@ ULONG registry_query_u_long(_In_z_ PCWSTR name, _In_ ULONG default_value)
     return v;
 }
 
-NTSTATUS registry_read_config(_Out_ QCPEP_CONFIG* cfg)
+NTSTATUS registry_read_config(_Out_ ioctl_config_t* cfg)
 {
     if (!cfg)
         return STATUS_INVALID_PARAMETER;

@@ -4,10 +4,10 @@
 #include "limits.h"
 
 typedef enum pep_dev_acceptance_type {
-    QC_PEP_DEV_NOT_ACCEPTED = 0,
-    QC_PEP_DEV_ACCEPTED_RESERVED = 1,
-    QC_PEP_DEV_ACCEPTED = 2,
-    QC_PEP_DEV_ACEPTED_MAX = 3,
+    DEV_NOT_ACCEPTED = 0,
+    DEV_ACCEPTED_RESERVED = 1,
+    DEV_ACCEPTED = 2,
+    DEV_ACCEPTANCE_MAX = 3,
 } pep_dev_acceptance_type_t;
 
 typedef enum pep_dev_reg_state {

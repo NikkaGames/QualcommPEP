@@ -15,5 +15,5 @@ typedef struct _THERMAL_WAIT_READ {
     ULONG Timeout;
 } THERMAL_WAIT_READ, *PTHERMAL_WAIT_READ;
 
-/* keep it ABI-flexible. */
+/* policy values use a 32-bit wire encoding. */
 typedef ULONG THERMAL_POLICY, *PTHERMAL_POLICY;

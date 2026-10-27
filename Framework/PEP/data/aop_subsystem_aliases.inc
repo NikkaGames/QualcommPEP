@@ -1,4 +1,4 @@
-/* Auto-generated from driverA/qcpep8280.sys.h */
+/* aop subsystem catalog aliases. */
     { 0x0u, "MODEM" },
     { 0x1u, "SUBSYSTEM_AUDIO" },
     { 0x2u, "SENSORS" },

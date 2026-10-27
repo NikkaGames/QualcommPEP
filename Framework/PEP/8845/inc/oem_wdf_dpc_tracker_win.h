@@ -23,7 +23,7 @@ typedef struct oem_wdf_dpc_tracker_win {
 } oem_wdf_dpc_tracker_win_t;
 
 int oem_wdf_dpc_tracker_init_win(oem_wdf_dpc_tracker_win_t*, void*, uint64_t);
-/* must be the sole QCPEP_RPMH_WORK_OPS.queue_dpc path for this interrupt. FALSE from
+/* must be the sole queue_dpc callback path for this interrupt. FALSE from
  * WdfInterruptQueueDpcForIsr means no new callback is queued; retire ONLY that queue
  * attempt and quarantine the owner. */
 

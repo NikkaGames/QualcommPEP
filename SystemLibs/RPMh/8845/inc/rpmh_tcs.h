@@ -73,9 +73,8 @@ extern "C" {
 #define TCS_MSGID_WRITE_CMD (TCS_MSGID_LENGTH | TCS_MSGID_RES_REQ | TCS_MSGID_WRITE)
 #define TCS_MSGID_READ_CMD (TCS_MSGID_LENGTH | TCS_MSGID_RES_REQ)
 
-/* signed qcpep8480.sys TCS init (RVA 0x23E7ACâ€“0x23E7F0) and the qcpep8280 reference
- * tcs_init read the HLOS RSC configuration from the driver register at +0x0C. Its HLOS TCS
- * count occupies bits [17:12] and the command capacity bits [31:27]. */
+/* HLOS configuration at +0x0C encodes TCS count in bits [17:12]
+ * and commands per TCS in bits [31:27]. */
 
 typedef struct rsc_hlos_geometry {
     uint8_t tcs_cnt;

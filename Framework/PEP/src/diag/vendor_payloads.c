@@ -469,11 +469,11 @@ static VOID append_diag_flags_a(_Inout_updates_bytes_(capacity) PCHAR buf, _In_ 
                                 _Inout_ size_t* offset, _In_ ULONG flags)
 {
     append_fmt_a(buf, capacity, offset, "flags=0x%08X{%s%s%s%s%s}", flags,
-                 (flags & QCPEP_RSCSW_DIAG_FLAG_INCLUDE_FULL_SWEEP) ? "full_sweep " : "",
-                 (flags & QCPEP_RSCSW_DIAG_FLAG_TOGGLE_STATE) ? "toggle " : "",
-                 (flags & QCPEP_RSCSW_DIAG_FLAG_VERIFY_QUERY) ? "verify " : "",
-                 (flags & QCPEP_RSCSW_DIAG_FLAG_INCLUDE_ARCMGR) ? "arcmgr " : "",
-                 (flags & QCPEP_RSCSW_DIAG_FLAG_REFRESH_EACH) ? "refresh " : "");
+                 (flags & IOCTL_RSC_DIAG_FLAG_INCLUDE_FULL_SWEEP) ? "full_sweep " : "",
+                 (flags & IOCTL_RSC_DIAG_FLAG_TOGGLE_STATE) ? "toggle " : "",
+                 (flags & IOCTL_RSC_DIAG_FLAG_VERIFY_QUERY) ? "verify " : "",
+                 (flags & IOCTL_RSC_DIAG_FLAG_INCLUDE_ARCMGR) ? "arcmgr " : "",
+                 (flags & IOCTL_RSC_DIAG_FLAG_REFRESH_EACH) ? "refresh " : "");
 }
 
 static const CHAR* rsc_sw_profile_name(_In_ ULONG profile_id)
@@ -498,21 +498,21 @@ static VOID append_profile_flags_a(_Inout_updates_bytes_(capacity) PCHAR buf, _I
                                    _Inout_ size_t* offset, _In_ ULONG flags)
 {
     append_fmt_a(buf, capacity, offset, "flags=0x%08X{%s%s%s%s}", flags,
-                 (flags & QCPEP_RSCSW_PROFILE_FLAG_RUN_MATRIX) ? "matrix " : "",
-                 (flags & QCPEP_RSCSW_PROFILE_FLAG_INCLUDE_FULL_SWEEP) ? "full_sweep " : "",
-                 (flags & QCPEP_RSCSW_PROFILE_FLAG_FORCE_VERIFY) ? "verify " : "",
-                 (flags & QCPEP_RSCSW_PROFILE_FLAG_FORCE_TOGGLE) ? "toggle " : "");
+                 (flags & IOCTL_RSC_PROFILE_FLAG_RUN_MATRIX) ? "matrix " : "",
+                 (flags & IOCTL_RSC_PROFILE_FLAG_INCLUDE_FULL_SWEEP) ? "full_sweep " : "",
+                 (flags & IOCTL_RSC_PROFILE_FLAG_FORCE_VERIFY) ? "verify " : "",
+                 (flags & IOCTL_RSC_PROFILE_FLAG_FORCE_TOGGLE) ? "toggle " : "");
 }
 
 static VOID append_coverage_flags_a(_Inout_updates_bytes_(capacity) PCHAR buf, _In_ size_t capacity,
                                     _Inout_ size_t* offset, _In_ ULONG flags)
 {
     append_fmt_a(buf, capacity, offset, "flags=0x%08X{%s%s%s%s%s}", flags,
-                 (flags & QCPEP_RSCSW_COVERAGE_FLAG_REQUIRE_ACTIVE) ? "active " : "",
-                 (flags & QCPEP_RSCSW_COVERAGE_FLAG_REQUIRE_SUCCESS_THRESHOLD) ? "success " : "",
-                 (flags & QCPEP_RSCSW_COVERAGE_FLAG_REQUIRE_RECENT_ACTIVITY) ? "recent " : "",
-                 (flags & QCPEP_RSCSW_COVERAGE_FLAG_INCLUDE_DEPENDENCY_LOAD) ? "deps " : "",
-                 (flags & QCPEP_RSCSW_COVERAGE_FLAG_STRICT_THRESHOLD) ? "strict " : "");
+                 (flags & IOCTL_RSC_COVERAGE_FLAG_REQUIRE_ACTIVE) ? "active " : "",
+                 (flags & IOCTL_RSC_COVERAGE_FLAG_REQUIRE_SUCCESS_THRESHOLD) ? "success " : "",
+                 (flags & IOCTL_RSC_COVERAGE_FLAG_REQUIRE_RECENT_ACTIVITY) ? "recent " : "",
+                 (flags & IOCTL_RSC_COVERAGE_FLAG_INCLUDE_DEPENDENCY_LOAD) ? "deps " : "",
+                 (flags & IOCTL_RSC_COVERAGE_FLAG_STRICT_THRESHOLD) ? "strict " : "");
 }
 
 static VOID append_remediation_flags_a(_Inout_updates_bytes_(capacity) PCHAR buf,
@@ -520,12 +520,12 @@ static VOID append_remediation_flags_a(_Inout_updates_bytes_(capacity) PCHAR buf
                                        _In_ ULONG flags)
 {
     append_fmt_a(buf, capacity, offset, "flags=0x%08X{%s%s%s%s%s%s}", flags,
-                 (flags & QCPEP_RSCSW_REMEDIATION_FLAG_APPLY_RECOMMENDATIONS) ? "apply " : "",
-                 (flags & QCPEP_RSCSW_REMEDIATION_FLAG_TARGET_INACTIVE) ? "inactive " : "",
-                 (flags & QCPEP_RSCSW_REMEDIATION_FLAG_TARGET_LOW_SUCCESS) ? "success " : "",
-                 (flags & QCPEP_RSCSW_REMEDIATION_FLAG_TARGET_STALE_ACTIVITY) ? "stale " : "",
-                 (flags & QCPEP_RSCSW_REMEDIATION_FLAG_INCLUDE_DEPENDENCY_LOAD) ? "deps " : "",
-                 (flags & QCPEP_RSCSW_REMEDIATION_FLAG_STRICT_THRESHOLD) ? "strict " : "");
+                 (flags & IOCTL_RSC_REMEDIATION_FLAG_APPLY_RECOMMENDATIONS) ? "apply " : "",
+                 (flags & IOCTL_RSC_REMEDIATION_FLAG_TARGET_INACTIVE) ? "inactive " : "",
+                 (flags & IOCTL_RSC_REMEDIATION_FLAG_TARGET_LOW_SUCCESS) ? "success " : "",
+                 (flags & IOCTL_RSC_REMEDIATION_FLAG_TARGET_STALE_ACTIVITY) ? "stale " : "",
+                 (flags & IOCTL_RSC_REMEDIATION_FLAG_INCLUDE_DEPENDENCY_LOAD) ? "deps " : "",
+                 (flags & IOCTL_RSC_REMEDIATION_FLAG_STRICT_THRESHOLD) ? "strict " : "");
 }
 
 static VOID append_remediation_reason_flags_a(_Inout_updates_bytes_(capacity) PCHAR buf,
@@ -533,28 +533,27 @@ static VOID append_remediation_reason_flags_a(_Inout_updates_bytes_(capacity) PC
                                               _In_ ULONG flags)
 {
     append_fmt_a(buf, capacity, offset, "reasons=0x%08X{%s%s%s%s%s%s}", flags,
-                 (flags & QCPEP_RSCSW_REMEDIATION_REASON_INACTIVE) ? "inactive " : "",
-                 (flags & QCPEP_RSCSW_REMEDIATION_REASON_LOW_SUCCESS) ? "low_success " : "",
-                 (flags & QCPEP_RSCSW_REMEDIATION_REASON_STALE_ACTIVITY) ? "stale " : "",
-                 (flags & QCPEP_RSCSW_REMEDIATION_REASON_DEPENDENCY_PRESSURE) ? "dep_pressure "
-                                                                              : "",
-                 (flags & QCPEP_RSCSW_REMEDIATION_REASON_LAST_STATUS_FAIL) ? "last_fail " : "",
-                 (flags & QCPEP_RSCSW_REMEDIATION_REASON_HIGH_FAILURE_RATE) ? "high_fail " : "");
+                 (flags & IOCTL_RSC_REMEDIATION_REASON_INACTIVE) ? "inactive " : "",
+                 (flags & IOCTL_RSC_REMEDIATION_REASON_LOW_SUCCESS) ? "low_success " : "",
+                 (flags & IOCTL_RSC_REMEDIATION_REASON_STALE_ACTIVITY) ? "stale " : "",
+                 (flags & IOCTL_RSC_REMEDIATION_REASON_DEPENDENCY_PRESSURE) ? "dep_pressure " : "",
+                 (flags & IOCTL_RSC_REMEDIATION_REASON_LAST_STATUS_FAIL) ? "last_fail " : "",
+                 (flags & IOCTL_RSC_REMEDIATION_REASON_HIGH_FAILURE_RATE) ? "high_fail " : "");
 }
 
 static VOID append_stabilization_flags_a(_Inout_updates_bytes_(capacity) PCHAR buf,
                                          _In_ size_t capacity, _Inout_ size_t* offset,
                                          _In_ ULONG flags)
 {
-    append_fmt_a(
-        buf, capacity, offset, "flags=0x%08X{%s%s%s%s%s%s%s}", flags,
-        (flags & QCPEP_RSCSW_STABILIZATION_FLAG_INCLUDE_CONTROL_LANE) ? "control " : "",
-        (flags & QCPEP_RSCSW_STABILIZATION_FLAG_INCLUDE_INTERCONNECT_LANE) ? "interconnect " : "",
-        (flags & QCPEP_RSCSW_STABILIZATION_FLAG_INCLUDE_THERMAL_LANE) ? "thermal " : "",
-        (flags & QCPEP_RSCSW_STABILIZATION_FLAG_RUN_PROFILES) ? "profiles " : "",
-        (flags & QCPEP_RSCSW_STABILIZATION_FLAG_EXECUTE_REMEDIATION) ? "remediate " : "",
-        (flags & QCPEP_RSCSW_STABILIZATION_FLAG_VERIFY_POST) ? "verify " : "",
-        (flags & QCPEP_RSCSW_STABILIZATION_FLAG_STRICT_COVERAGE) ? "strict " : "");
+    append_fmt_a(buf, capacity, offset, "flags=0x%08X{%s%s%s%s%s%s%s}", flags,
+                 (flags & IOCTL_RSC_STABILIZATION_FLAG_INCLUDE_CONTROL_LANE) ? "control " : "",
+                 (flags & IOCTL_RSC_STABILIZATION_FLAG_INCLUDE_INTERCONNECT_LANE) ? "interconnect "
+                                                                                  : "",
+                 (flags & IOCTL_RSC_STABILIZATION_FLAG_INCLUDE_THERMAL_LANE) ? "thermal " : "",
+                 (flags & IOCTL_RSC_STABILIZATION_FLAG_RUN_PROFILES) ? "profiles " : "",
+                 (flags & IOCTL_RSC_STABILIZATION_FLAG_EXECUTE_REMEDIATION) ? "remediate " : "",
+                 (flags & IOCTL_RSC_STABILIZATION_FLAG_VERIFY_POST) ? "verify " : "",
+                 (flags & IOCTL_RSC_STABILIZATION_FLAG_STRICT_COVERAGE) ? "strict " : "");
 }
 
 static VOID append_conformance_flags_a(_Inout_updates_bytes_(capacity) PCHAR buf,
@@ -562,14 +561,13 @@ static VOID append_conformance_flags_a(_Inout_updates_bytes_(capacity) PCHAR buf
                                        _In_ ULONG flags)
 {
     append_fmt_a(buf, capacity, offset, "flags=0x%08X{%s%s%s%s%s%s%s}", flags,
-                 (flags & QCPEP_RSCSW_CONFORMANCE_FLAG_REQUIRE_ACTIVE) ? "active " : "",
-                 (flags & QCPEP_RSCSW_CONFORMANCE_FLAG_REQUIRE_SUCCESS_THRESHOLD) ? "success " : "",
-                 (flags & QCPEP_RSCSW_CONFORMANCE_FLAG_REQUIRE_RECENT_ACTIVITY) ? "recent " : "",
-                 (flags & QCPEP_RSCSW_CONFORMANCE_FLAG_REQUIRE_DEPENDENCY_SHAPE) ? "dep_shape "
-                                                                                 : "",
-                 (flags & QCPEP_RSCSW_CONFORMANCE_FLAG_REQUIRE_CATALOG_MATCH) ? "catalog " : "",
-                 (flags & QCPEP_RSCSW_CONFORMANCE_FLAG_STRICT_THRESHOLD) ? "strict " : "",
-                 (flags & QCPEP_RSCSW_CONFORMANCE_FLAG_INCLUDE_ARCMGR) ? "arcmgr " : "");
+                 (flags & IOCTL_RSC_CONFORMANCE_FLAG_REQUIRE_ACTIVE) ? "active " : "",
+                 (flags & IOCTL_RSC_CONFORMANCE_FLAG_REQUIRE_SUCCESS_THRESHOLD) ? "success " : "",
+                 (flags & IOCTL_RSC_CONFORMANCE_FLAG_REQUIRE_RECENT_ACTIVITY) ? "recent " : "",
+                 (flags & IOCTL_RSC_CONFORMANCE_FLAG_REQUIRE_DEPENDENCY_SHAPE) ? "dep_shape " : "",
+                 (flags & IOCTL_RSC_CONFORMANCE_FLAG_REQUIRE_CATALOG_MATCH) ? "catalog " : "",
+                 (flags & IOCTL_RSC_CONFORMANCE_FLAG_STRICT_THRESHOLD) ? "strict " : "",
+                 (flags & IOCTL_RSC_CONFORMANCE_FLAG_INCLUDE_ARCMGR) ? "arcmgr " : "");
 }
 
 static VOID append_conformance_reason_flags_a(_Inout_updates_bytes_(capacity) PCHAR buf,
@@ -577,28 +575,27 @@ static VOID append_conformance_reason_flags_a(_Inout_updates_bytes_(capacity) PC
                                               _In_ ULONG flags)
 {
     append_fmt_a(buf, capacity, offset, "reasons=0x%08X{%s%s%s%s%s%s%s}", flags,
-                 (flags & QCPEP_RSCSW_CONFORMANCE_REASON_INACTIVE) ? "inactive " : "",
-                 (flags & QCPEP_RSCSW_CONFORMANCE_REASON_LOW_SUCCESS) ? "low_success " : "",
-                 (flags & QCPEP_RSCSW_CONFORMANCE_REASON_LOW_ACTIVITY) ? "low_activity " : "",
-                 (flags & QCPEP_RSCSW_CONFORMANCE_REASON_DEPENDENCY_GAP) ? "dep_gap " : "",
-                 (flags & QCPEP_RSCSW_CONFORMANCE_REASON_STATUS_FAIL) ? "status_fail " : "",
-                 (flags & QCPEP_RSCSW_CONFORMANCE_REASON_CATALOG_MISMATCH) ? "catalog_mismatch "
-                                                                           : "",
-                 (flags & QCPEP_RSCSW_CONFORMANCE_REASON_HIGH_FAILURE_RATE) ? "high_fail " : "");
+                 (flags & IOCTL_RSC_CONFORMANCE_REASON_INACTIVE) ? "inactive " : "",
+                 (flags & IOCTL_RSC_CONFORMANCE_REASON_LOW_SUCCESS) ? "low_success " : "",
+                 (flags & IOCTL_RSC_CONFORMANCE_REASON_LOW_ACTIVITY) ? "low_activity " : "",
+                 (flags & IOCTL_RSC_CONFORMANCE_REASON_DEPENDENCY_GAP) ? "dep_gap " : "",
+                 (flags & IOCTL_RSC_CONFORMANCE_REASON_STATUS_FAIL) ? "status_fail " : "",
+                 (flags & IOCTL_RSC_CONFORMANCE_REASON_CATALOG_MISMATCH) ? "catalog_mismatch " : "",
+                 (flags & IOCTL_RSC_CONFORMANCE_REASON_HIGH_FAILURE_RATE) ? "high_fail " : "");
 }
 
 static const CHAR* rsc_sw_orchestration_stage_name(_In_ ULONG stage_id)
 {
     switch (stage_id) {
-        case QCPEP_RSCSW_ORCHESTRATION_STAGE_COVERAGE:
+        case IOCTL_RSC_ORCHESTRATION_STAGE_COVERAGE:
             return "coverage";
-        case QCPEP_RSCSW_ORCHESTRATION_STAGE_REMEDIATION:
+        case IOCTL_RSC_ORCHESTRATION_STAGE_REMEDIATION:
             return "remediation";
-        case QCPEP_RSCSW_ORCHESTRATION_STAGE_STABILIZATION:
+        case IOCTL_RSC_ORCHESTRATION_STAGE_STABILIZATION:
             return "stabilization";
-        case QCPEP_RSCSW_ORCHESTRATION_STAGE_CONFORMANCE:
+        case IOCTL_RSC_ORCHESTRATION_STAGE_CONFORMANCE:
             return "conformance";
-        case QCPEP_RSCSW_ORCHESTRATION_STAGE_PROFILES:
+        case IOCTL_RSC_ORCHESTRATION_STAGE_PROFILES:
             return "profiles";
         default:
             return "unknown";
@@ -610,47 +607,47 @@ static VOID append_orchestration_flags_a(_Inout_updates_bytes_(capacity) PCHAR b
                                          _In_ ULONG flags)
 {
     append_fmt_a(buf, capacity, offset, "flags=0x%08X{%s%s%s%s%s%s%s%s}", flags,
-                 (flags & QCPEP_RSCSW_ORCHESTRATION_FLAG_RUN_COVERAGE) ? "coverage " : "",
-                 (flags & QCPEP_RSCSW_ORCHESTRATION_FLAG_RUN_REMEDIATION) ? "remediation " : "",
-                 (flags & QCPEP_RSCSW_ORCHESTRATION_FLAG_RUN_STABILIZATION) ? "stabilization " : "",
-                 (flags & QCPEP_RSCSW_ORCHESTRATION_FLAG_RUN_CONFORMANCE) ? "conformance " : "",
-                 (flags & QCPEP_RSCSW_ORCHESTRATION_FLAG_RUN_PROFILES) ? "profiles " : "",
-                 (flags & QCPEP_RSCSW_ORCHESTRATION_FLAG_STRICT) ? "strict " : "",
-                 (flags & QCPEP_RSCSW_ORCHESTRATION_FLAG_INCLUDE_ARCMGR) ? "arcmgr " : "",
-                 (flags & QCPEP_RSCSW_ORCHESTRATION_FLAG_REFRESH_EACH_STAGE) ? "refresh " : "");
+                 (flags & IOCTL_RSC_ORCHESTRATION_FLAG_RUN_COVERAGE) ? "coverage " : "",
+                 (flags & IOCTL_RSC_ORCHESTRATION_FLAG_RUN_REMEDIATION) ? "remediation " : "",
+                 (flags & IOCTL_RSC_ORCHESTRATION_FLAG_RUN_STABILIZATION) ? "stabilization " : "",
+                 (flags & IOCTL_RSC_ORCHESTRATION_FLAG_RUN_CONFORMANCE) ? "conformance " : "",
+                 (flags & IOCTL_RSC_ORCHESTRATION_FLAG_RUN_PROFILES) ? "profiles " : "",
+                 (flags & IOCTL_RSC_ORCHESTRATION_FLAG_STRICT) ? "strict " : "",
+                 (flags & IOCTL_RSC_ORCHESTRATION_FLAG_INCLUDE_ARCMGR) ? "arcmgr " : "",
+                 (flags & IOCTL_RSC_ORCHESTRATION_FLAG_REFRESH_EACH_STAGE) ? "refresh " : "");
 }
 
 static VOID append_policy_flags_a(_Inout_updates_bytes_(capacity) PCHAR buf, _In_ size_t capacity,
                                   _Inout_ size_t* offset, _In_ ULONG flags)
 {
     append_fmt_a(buf, capacity, offset, "flags=0x%08X{%s%s%s%s%s}", flags,
-                 (flags & QCPEP_RSCSW_POLICY_FLAG_VOTE) ? "vote " : "",
-                 (flags & QCPEP_RSCSW_POLICY_FLAG_REMOVE) ? "remove " : "",
-                 (flags & QCPEP_RSCSW_POLICY_FLAG_PROPAGATED) ? "propagated " : "",
-                 (flags & QCPEP_RSCSW_POLICY_FLAG_PARENT) ? "parent " : "",
-                 (flags & QCPEP_RSCSW_POLICY_FLAG_ACTIVE) ? "active " : "");
+                 (flags & IOCTL_RSC_POLICY_FLAG_VOTE) ? "vote " : "",
+                 (flags & IOCTL_RSC_POLICY_FLAG_REMOVE) ? "remove " : "",
+                 (flags & IOCTL_RSC_POLICY_FLAG_PROPAGATED) ? "propagated " : "",
+                 (flags & IOCTL_RSC_POLICY_FLAG_PARENT) ? "parent " : "",
+                 (flags & IOCTL_RSC_POLICY_FLAG_ACTIVE) ? "active " : "");
 }
 
 static VOID append_fabric_flags_a(_Inout_updates_bytes_(capacity) PCHAR buf, _In_ size_t capacity,
                                   _Inout_ size_t* offset, _In_ ULONG flags)
 {
     append_fmt_a(buf, capacity, offset, "flags=0x%08X{%s%s%s%s%s}", flags,
-                 (flags & QCPEP_RSCSW_FABRIC_FLAG_REQUIRE_ACTIVE) ? "active " : "",
-                 (flags & QCPEP_RSCSW_FABRIC_FLAG_REQUIRE_POLICY_ACTIVITY) ? "policy " : "",
-                 (flags & QCPEP_RSCSW_FABRIC_FLAG_REQUIRE_DEPENDENCY_HEALTH) ? "deps " : "",
-                 (flags & QCPEP_RSCSW_FABRIC_FLAG_INCLUDE_THERMAL_PRESSURE) ? "thermal " : "",
-                 (flags & QCPEP_RSCSW_FABRIC_FLAG_STRICT) ? "strict " : "");
+                 (flags & IOCTL_RSC_FABRIC_FLAG_REQUIRE_ACTIVE) ? "active " : "",
+                 (flags & IOCTL_RSC_FABRIC_FLAG_REQUIRE_POLICY_ACTIVITY) ? "policy " : "",
+                 (flags & IOCTL_RSC_FABRIC_FLAG_REQUIRE_DEPENDENCY_HEALTH) ? "deps " : "",
+                 (flags & IOCTL_RSC_FABRIC_FLAG_INCLUDE_THERMAL_PRESSURE) ? "thermal " : "",
+                 (flags & IOCTL_RSC_FABRIC_FLAG_STRICT) ? "strict " : "");
 }
 
 static VOID append_domain_flags_a(_Inout_updates_bytes_(capacity) PCHAR buf, _In_ size_t capacity,
                                   _Inout_ size_t* offset, _In_ ULONG flags)
 {
     append_fmt_a(buf, capacity, offset, "flags=0x%08X{%s%s%s%s%s}", flags,
-                 (flags & QCPEP_RSCSW_DOMAIN_FLAG_REQUIRE_ACTIVE) ? "active " : "",
-                 (flags & QCPEP_RSCSW_DOMAIN_FLAG_REQUIRE_POLICY_ACTIVITY) ? "policy " : "",
-                 (flags & QCPEP_RSCSW_DOMAIN_FLAG_REQUIRE_DEPENDENCY_HEALTH) ? "deps " : "",
-                 (flags & QCPEP_RSCSW_DOMAIN_FLAG_INCLUDE_THERMAL_PRESSURE) ? "thermal " : "",
-                 (flags & QCPEP_RSCSW_DOMAIN_FLAG_STRICT) ? "strict " : "");
+                 (flags & IOCTL_RSC_DOMAIN_FLAG_REQUIRE_ACTIVE) ? "active " : "",
+                 (flags & IOCTL_RSC_DOMAIN_FLAG_REQUIRE_POLICY_ACTIVITY) ? "policy " : "",
+                 (flags & IOCTL_RSC_DOMAIN_FLAG_REQUIRE_DEPENDENCY_HEALTH) ? "deps " : "",
+                 (flags & IOCTL_RSC_DOMAIN_FLAG_INCLUDE_THERMAL_PRESSURE) ? "thermal " : "",
+                 (flags & IOCTL_RSC_DOMAIN_FLAG_STRICT) ? "strict " : "");
 }
 
 static VOID append_interconnect_flags_a(_Inout_updates_bytes_(capacity) PCHAR buf,
@@ -658,12 +655,12 @@ static VOID append_interconnect_flags_a(_Inout_updates_bytes_(capacity) PCHAR bu
                                         _In_ ULONG flags)
 {
     append_fmt_a(buf, capacity, offset, "flags=0x%08X{%s%s%s%s%s}", flags,
-                 (flags & QCPEP_RSCSW_INTERCONNECT_FLAG_REQUIRE_ACTIVE_ROUTES) ? "active " : "",
-                 (flags & QCPEP_RSCSW_INTERCONNECT_FLAG_REQUIRE_BANDWIDTH_HEADROOM) ? "headroom "
-                                                                                    : "",
-                 (flags & QCPEP_RSCSW_INTERCONNECT_FLAG_REQUIRE_POLICY_LINK) ? "policy " : "",
-                 (flags & QCPEP_RSCSW_INTERCONNECT_FLAG_INCLUDE_THERMAL_PRESSURE) ? "thermal " : "",
-                 (flags & QCPEP_RSCSW_INTERCONNECT_FLAG_STRICT) ? "strict " : "");
+                 (flags & IOCTL_RSC_INTERCONNECT_FLAG_REQUIRE_ACTIVE_ROUTES) ? "active " : "",
+                 (flags & IOCTL_RSC_INTERCONNECT_FLAG_REQUIRE_BANDWIDTH_HEADROOM) ? "headroom "
+                                                                                  : "",
+                 (flags & IOCTL_RSC_INTERCONNECT_FLAG_REQUIRE_POLICY_LINK) ? "policy " : "",
+                 (flags & IOCTL_RSC_INTERCONNECT_FLAG_INCLUDE_THERMAL_PRESSURE) ? "thermal " : "",
+                 (flags & IOCTL_RSC_INTERCONNECT_FLAG_STRICT) ? "strict " : "");
 }
 
 static VOID append_interconnect_route_flags_a(_Inout_updates_bytes_(capacity) PCHAR buf,
@@ -671,12 +668,12 @@ static VOID append_interconnect_route_flags_a(_Inout_updates_bytes_(capacity) PC
                                               _In_ ULONG flags)
 {
     append_fmt_a(buf, capacity, offset, "flags=0x%08X{%s%s%s%s%s%s}", flags,
-                 (flags & QCPEP_RSCSW_INTERCONNECT_ROUTE_FLAG_ACTIVE) ? "active " : "",
-                 (flags & QCPEP_RSCSW_INTERCONNECT_ROUTE_FLAG_POLICY_LINKED) ? "policy " : "",
-                 (flags & QCPEP_RSCSW_INTERCONNECT_ROUTE_FLAG_THERMAL_HIGH) ? "thermal " : "",
-                 (flags & QCPEP_RSCSW_INTERCONNECT_ROUTE_FLAG_STATUS_FAIL) ? "status " : "",
-                 (flags & QCPEP_RSCSW_INTERCONNECT_ROUTE_FLAG_UNDER_PROVISIONED) ? "under " : "",
-                 (flags & QCPEP_RSCSW_INTERCONNECT_ROUTE_FLAG_OVER_UTILIZED) ? "over " : "");
+                 (flags & IOCTL_RSC_INTERCONNECT_ROUTE_FLAG_ACTIVE) ? "active " : "",
+                 (flags & IOCTL_RSC_INTERCONNECT_ROUTE_FLAG_POLICY_LINKED) ? "policy " : "",
+                 (flags & IOCTL_RSC_INTERCONNECT_ROUTE_FLAG_THERMAL_HIGH) ? "thermal " : "",
+                 (flags & IOCTL_RSC_INTERCONNECT_ROUTE_FLAG_STATUS_FAIL) ? "status " : "",
+                 (flags & IOCTL_RSC_INTERCONNECT_ROUTE_FLAG_UNDER_PROVISIONED) ? "under " : "",
+                 (flags & IOCTL_RSC_INTERCONNECT_ROUTE_FLAG_OVER_UTILIZED) ? "over " : "");
 }
 
 static const CHAR* rsc_sw_sync_profile_name(_In_ ULONG profile_id)
@@ -1946,9 +1943,9 @@ static const CHAR* rsc_sw_link_type_name(_In_ ULONG link_type)
 static const CHAR* rsc_sw_checkpoint_op_name(_In_ ULONG operation)
 {
     switch (operation) {
-        case QCPEP_RSCSW_CHECKPOINT_OP_CAPTURE:
+        case IOCTL_RSC_CHECKPOINT_OP_CAPTURE:
             return "capture";
-        case QCPEP_RSCSW_CHECKPOINT_OP_APPLY:
+        case IOCTL_RSC_CHECKPOINT_OP_APPLY:
             return "apply";
         default:
             return "unknown";
@@ -2193,7 +2190,7 @@ NTSTATUS build_dev_info(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(15376) PVOID bu
 
     for (int i = 0; i < 4; i++) {
         pep_stats_dev_type_t* e = &d->dev_info[188 + i];
-        fill_dev_type(e, "qcpep_dbg", 0);
+        fill_dev_type(e, "driver_stats", 0);
         e->current_d_state = (int)g_stats.d0_entry;
         e->current_f_state = (int)g_stats.d0_exit;
         e->current_p_state[0] = (int)g_stats.po_fx_idle_state;
@@ -2219,7 +2216,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
     const size_t text_cap = 32768;
     size_t off = 0;
 
-    append_fmt_a(text, text_cap, &off, "qcpep8280 pwcal rundown (clean-room)\n");
+    append_fmt_a(text, text_cap, &off, "power controller state\n");
     append_fmt_a(text, text_cap, &off, "info --on\n");
     append_fmt_a(text, text_cap, &off,
                  "ticks=%llu ioctl=%ld d0e=%ld d0x=%ld pwr_req=%ld pwr_not=%ld comp_act=%ld "
@@ -4000,142 +3997,156 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
         }
 
         {
-            rscsw_catalog_snapshot_t drivera;
-            RtlZeroMemory(&drivera, sizeof(drivera));
-            if (NT_SUCCESS(rsc_sw_get_catalog_snapshot(&drivera))) {
+            rscsw_catalog_snapshot_t resource_catalog;
+            RtlZeroMemory(&resource_catalog, sizeof(resource_catalog));
+            if (NT_SUCCESS(rsc_sw_get_catalog_snapshot(&resource_catalog))) {
                 append_fmt_a(
                     text, text_cap, &off,
-                    "rscsw_drivera_catalog: ver=%lu subsystems=%lu aop=%lu arc=%lu cmddb=%lu "
+                    "rsc_catalog: ver=%lu subsystems=%lu aop=%lu arc=%lu cmddb=%lu "
                     "pdc_drv=%lu pdc_trig=%lu "
                     "rpmh=%lu npa=%lu glink=%lu tlmm=%lu tsens=%lu clk=%lu cmddb_query=%lu\n",
-                    drivera.version, drivera.subsystem_cnt, drivera.aop_subsystem_cnt,
-                    drivera.arc_res_cnt, drivera.cmd_db_slv_cnt, drivera.pdc_drv_cnt,
-                    drivera.pdc_trigger_cnt, drivera.rpmh_set_cnt, drivera.npa_client_cnt,
-                    drivera.glink_event_cnt, drivera.tlmm_drive_cnt, drivera.tsens_threshold_cnt,
-                    drivera.clock_driver_cnt, drivera.cmd_db_query_cnt);
+                    resource_catalog.version, resource_catalog.subsystem_cnt,
+                    resource_catalog.aop_subsystem_cnt, resource_catalog.arc_res_cnt,
+                    resource_catalog.cmd_db_slv_cnt, resource_catalog.pdc_drv_cnt,
+                    resource_catalog.pdc_trigger_cnt, resource_catalog.rpmh_set_cnt,
+                    resource_catalog.npa_client_cnt, resource_catalog.glink_event_cnt,
+                    resource_catalog.tlmm_drive_cnt, resource_catalog.tsens_threshold_cnt,
+                    resource_catalog.clock_driver_cnt, resource_catalog.cmd_db_query_cnt);
 
-                ULONG subsystem_cnt = drivera.subsystem_cnt;
+                ULONG subsystem_cnt = resource_catalog.subsystem_cnt;
                 if (subsystem_cnt > RSCSW_SUBSYSTEM_CAPACITY)
                     subsystem_cnt = RSCSW_SUBSYSTEM_CAPACITY;
                 for (ULONG i = 0; i < subsystem_cnt; i++) {
                     append_fmt_a(
                         text, text_cap, &off,
-                        "  drivera_sub[%lu:%s]: drv=%lu ppp=%lu glink=%lu arc=%lu cmddb={slv=%lu "
+                        "  rsc_sub[%lu:%s]: drv=%lu ppp=%lu glink=%lu arc=%lu cmddb={slv=%lu "
                         "q=%lu} "
                         "pdc={drv=%lu trig=%lu} rpmh=%lu npa=0x%X tlmm=%lu tsens=%lu clk=%lu "
                         "aop=%ld\n",
-                        drivera.subsystems[i].subsystem_id, drivera.subsystems[i].name,
-                        drivera.subsystems[i].driver_map_id, drivera.subsystems[i].ppp_res_type,
-                        drivera.subsystems[i].glink_event_type, drivera.subsystems[i].arc_res_type,
-                        drivera.subsystems[i].cmd_db_slave_id,
-                        drivera.subsystems[i].cmd_db_query_type, drivera.subsystems[i].pdc_drv_type,
-                        drivera.subsystems[i].pdc_trigger_type, drivera.subsystems[i].rpmh_set,
-                        drivera.subsystems[i].npa_client_type,
-                        drivera.subsystems[i].tlmm_drive_type,
-                        drivera.subsystems[i].tsens_threshold_type,
-                        drivera.subsystems[i].clock_driver_type,
-                        (LONG)drivera.subsystems[i].aop_subsystem_type);
+                        resource_catalog.subsystems[i].subsystem_id,
+                        resource_catalog.subsystems[i].name,
+                        resource_catalog.subsystems[i].driver_map_id,
+                        resource_catalog.subsystems[i].ppp_res_type,
+                        resource_catalog.subsystems[i].glink_event_type,
+                        resource_catalog.subsystems[i].arc_res_type,
+                        resource_catalog.subsystems[i].cmd_db_slave_id,
+                        resource_catalog.subsystems[i].cmd_db_query_type,
+                        resource_catalog.subsystems[i].pdc_drv_type,
+                        resource_catalog.subsystems[i].pdc_trigger_type,
+                        resource_catalog.subsystems[i].rpmh_set,
+                        resource_catalog.subsystems[i].npa_client_type,
+                        resource_catalog.subsystems[i].tlmm_drive_type,
+                        resource_catalog.subsystems[i].tsens_threshold_type,
+                        resource_catalog.subsystems[i].clock_driver_type,
+                        (LONG)resource_catalog.subsystems[i].aop_subsystem_type);
                 }
 
-                ULONG show = drivera.aop_subsystem_cnt;
+                ULONG show = resource_catalog.aop_subsystem_cnt;
                 if (show > 8u)
                     show = 8u;
                 for (ULONG i = 0; i < show; i++) {
                     append_fmt_a(text, text_cap, &off, "  aop_enum[%lu]=0x%X %s\n", i,
-                                 drivera.aop_subsystems[i].value, drivera.aop_subsystems[i].name);
+                                 resource_catalog.aop_subsystems[i].value,
+                                 resource_catalog.aop_subsystems[i].name);
                 }
 
-                show = drivera.arc_res_cnt;
+                show = resource_catalog.arc_res_cnt;
                 if (show > 12u)
                     show = 12u;
                 for (ULONG i = 0; i < show; i++) {
                     append_fmt_a(text, text_cap, &off, "  arc_enum[%lu]=0x%X %s\n", i,
-                                 drivera.arc_resources[i].value, drivera.arc_resources[i].name);
+                                 resource_catalog.arc_resources[i].value,
+                                 resource_catalog.arc_resources[i].name);
                 }
 
-                show = drivera.cmd_db_slv_cnt;
+                show = resource_catalog.cmd_db_slv_cnt;
                 if (show > 8u)
                     show = 8u;
                 for (ULONG i = 0; i < show; i++) {
                     append_fmt_a(text, text_cap, &off, "  cmddb_slv[%lu]=0x%X %s\n", i,
-                                 drivera.cmd_db_slv_ids[i].value, drivera.cmd_db_slv_ids[i].name);
+                                 resource_catalog.cmd_db_slv_ids[i].value,
+                                 resource_catalog.cmd_db_slv_ids[i].name);
                 }
 
-                show = drivera.pdc_drv_cnt;
+                show = resource_catalog.pdc_drv_cnt;
                 if (show > 8u)
                     show = 8u;
                 for (ULONG i = 0; i < show; i++) {
                     append_fmt_a(text, text_cap, &off, "  pdc_drv[%lu]=0x%X %s\n", i,
-                                 drivera.pdc_drv_types[i].value, drivera.pdc_drv_types[i].name);
+                                 resource_catalog.pdc_drv_types[i].value,
+                                 resource_catalog.pdc_drv_types[i].name);
                 }
 
-                show = drivera.pdc_trigger_cnt;
+                show = resource_catalog.pdc_trigger_cnt;
                 if (show > 12u)
                     show = 12u;
                 for (ULONG i = 0; i < show; i++) {
                     append_fmt_a(text, text_cap, &off, "  pdc_trig[%lu]=0x%X %s\n", i,
-                                 drivera.pdc_triggers[i].value, drivera.pdc_triggers[i].name);
+                                 resource_catalog.pdc_triggers[i].value,
+                                 resource_catalog.pdc_triggers[i].name);
                 }
 
-                show = drivera.rpmh_set_cnt;
+                show = resource_catalog.rpmh_set_cnt;
                 if (show > 8u)
                     show = 8u;
                 for (ULONG i = 0; i < show; i++) {
                     append_fmt_a(text, text_cap, &off, "  rpmh_set[%lu]=0x%X %s\n", i,
-                                 drivera.rpmh_sets[i].value, drivera.rpmh_sets[i].name);
+                                 resource_catalog.rpmh_sets[i].value,
+                                 resource_catalog.rpmh_sets[i].name);
                 }
 
-                show = drivera.npa_client_cnt;
+                show = resource_catalog.npa_client_cnt;
                 if (show > 16u)
                     show = 16u;
                 for (ULONG i = 0; i < show; i++) {
                     append_fmt_a(text, text_cap, &off, "  npa_client[%lu]=0x%X %s\n", i,
-                                 drivera.npa_client_types[i].value,
-                                 drivera.npa_client_types[i].name);
+                                 resource_catalog.npa_client_types[i].value,
+                                 resource_catalog.npa_client_types[i].name);
                 }
 
-                show = drivera.glink_event_cnt;
+                show = resource_catalog.glink_event_cnt;
                 if (show > 16u)
                     show = 16u;
                 for (ULONG i = 0; i < show; i++) {
                     append_fmt_a(text, text_cap, &off, "  glink_evt[%lu]=0x%X %s\n", i,
-                                 drivera.glink_events[i].value, drivera.glink_events[i].name);
+                                 resource_catalog.glink_events[i].value,
+                                 resource_catalog.glink_events[i].name);
                 }
 
-                show = drivera.tlmm_drive_cnt;
+                show = resource_catalog.tlmm_drive_cnt;
                 if (show > 8u)
                     show = 8u;
                 for (ULONG i = 0; i < show; i++) {
                     append_fmt_a(text, text_cap, &off, "  tlmm_drive[%lu]=0x%X %s\n", i,
-                                 drivera.tlmm_drive_types[i].value,
-                                 drivera.tlmm_drive_types[i].name);
+                                 resource_catalog.tlmm_drive_types[i].value,
+                                 resource_catalog.tlmm_drive_types[i].name);
                 }
 
-                show = drivera.tsens_threshold_cnt;
+                show = resource_catalog.tsens_threshold_cnt;
                 if (show > 8u)
                     show = 8u;
                 for (ULONG i = 0; i < show; i++) {
                     append_fmt_a(text, text_cap, &off, "  tsens_th[%lu]=0x%X %s\n", i,
-                                 drivera.tsens_thresholds[i].value,
-                                 drivera.tsens_thresholds[i].name);
+                                 resource_catalog.tsens_thresholds[i].value,
+                                 resource_catalog.tsens_thresholds[i].name);
                 }
 
-                show = drivera.clock_driver_cnt;
+                show = resource_catalog.clock_driver_cnt;
                 if (show > 8u)
                     show = 8u;
                 for (ULONG i = 0; i < show; i++) {
                     append_fmt_a(text, text_cap, &off, "  clk_driver[%lu]=0x%X %s\n", i,
-                                 drivera.clock_driver_types[i].value,
-                                 drivera.clock_driver_types[i].name);
+                                 resource_catalog.clock_driver_types[i].value,
+                                 resource_catalog.clock_driver_types[i].name);
                 }
 
-                show = drivera.cmd_db_query_cnt;
+                show = resource_catalog.cmd_db_query_cnt;
                 if (show > 8u)
                     show = 8u;
                 for (ULONG i = 0; i < show; i++) {
                     append_fmt_a(text, text_cap, &off, "  cmddb_query[%lu]=0x%X %s\n", i,
-                                 drivera.cmd_db_query_types[i].value,
-                                 drivera.cmd_db_query_types[i].name);
+                                 resource_catalog.cmd_db_query_types[i].value,
+                                 resource_catalog.cmd_db_query_types[i].name);
                 }
             }
         }
@@ -4145,7 +4156,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
             RtlZeroMemory(&sync, sizeof(sync));
             if (NT_SUCCESS(rsc_sw_get_sync_snapshot(&sync))) {
                 append_fmt_a(text, text_cap, &off,
-                             "rscsw_drivera_sync: ver=%lu run=%lu fail=%lu last={st=0x%08X "
+                             "rsc_sync: ver=%lu run=%lu fail=%lu last={st=0x%08X "
                              "profile=%s(%lu) iter=%lu apply=%lu fail=%lu "
                              "interconnect=0x%08X domain=0x%08X ",
                              sync.version, sync.run_cnt, sync.failure_cnt, (ULONG)sync.last_status,
@@ -4163,7 +4174,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
 
                 for (ULONG i = 0; i < lane_cnt; i++) {
                     append_fmt_a(text, text_cap, &off,
-                                 "  drivera_sync_lane[%lu:%s]: profile=%s(%lu) drv=%lu arc=%lu "
+                                 "  rsc_sync_lane[%lu:%s]: profile=%s(%lu) drv=%lu arc=%lu "
                                  "cmddb=%lu rpmh=%lu npa=0x%X glink=%lu "
                                  "target={state=%lu clk_khz=%lu flags=0x%08X reason=0x%08X} "
                                  "last={st=0x%08X t=%llu}\n",
@@ -4187,9 +4198,8 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
             RtlZeroMemory(sync_hist, sizeof(sync_hist));
             if (NT_SUCCESS(rsc_sw_get_sync_history(sync_hist, RTL_NUMBER_OF(sync_hist),
                                                    &sync_hist_cnt, &sync_hist_dropped))) {
-                append_fmt_a(text, text_cap, &off,
-                             "rscsw_drivera_sync_history: count=%lu dropped=%lu\n", sync_hist_cnt,
-                             sync_hist_dropped);
+                append_fmt_a(text, text_cap, &off, "rsc_sync_history: count=%lu dropped=%lu\n",
+                             sync_hist_cnt, sync_hist_dropped);
                 for (ULONG i = 0; i < sync_hist_cnt; i++) {
                     append_fmt_a(
                         text, text_cap, &off,
@@ -4215,7 +4225,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
             RtlZeroMemory(&validate, sizeof(validate));
             if (NT_SUCCESS(rsc_sw_get_validate_snapshot(&validate))) {
                 append_fmt_a(text, text_cap, &off,
-                             "rscsw_drivera_validate: ver=%lu run=%lu fail=%lu last={st=0x%08X "
+                             "rsc_validate: ver=%lu run=%lu fail=%lu last={st=0x%08X "
                              "mode=%s(%lu) checked=%lu repaired=%lu "
                              "errors=%lu warnings=%lu score=%lu ",
                              validate.version, validate.run_cnt, validate.failure_cnt,
@@ -4236,7 +4246,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
                 for (ULONG i = 0; i < row_cnt; i++) {
                     append_fmt_a(
                         text, text_cap, &off,
-                        "  drivera_validate_row[%lu:%s]: mode=%s(%lu) drv=%lu issue=0x%08X "
+                        "  rsc_validate_row[%lu:%s]: mode=%s(%lu) drv=%lu issue=0x%08X "
                         "warn=0x%08X score=%lu "
                         "arc=%lu cmddb={slv=%lu q=%lu} pdc={drv=%lu trig=%lu} rpmh=%lu npa=0x%X "
                         "glink=%lu ppp=%lu "
@@ -4267,8 +4277,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
             if (NT_SUCCESS(rsc_sw_get_validate_history(validate_hist, RTL_NUMBER_OF(validate_hist),
                                                        &validate_hist_cnt,
                                                        &validate_hist_dropped))) {
-                append_fmt_a(text, text_cap, &off,
-                             "rscsw_drivera_validate_history: count=%lu dropped=%lu\n",
+                append_fmt_a(text, text_cap, &off, "rsc_validate_history: count=%lu dropped=%lu\n",
                              validate_hist_cnt, validate_hist_dropped);
                 for (ULONG i = 0; i < validate_hist_cnt; i++) {
                     append_fmt_a(text, text_cap, &off,
@@ -4298,7 +4307,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
             if (NT_SUCCESS(rsc_sw_get_sequence_snapshot(&sequence))) {
                 append_fmt_a(
                     text, text_cap, &off,
-                    "rscsw_drivera_sequence: ver=%lu run=%lu fail=%lu last={st=0x%08X mode=%s(%lu) "
+                    "rsc_sequence: ver=%lu run=%lu fail=%lu last={st=0x%08X mode=%s(%lu) "
                     "phases=0x%X steps=%lu "
                     "applied=%lu failed=%lu policy=%lu interconnect=0x%08X domain=0x%08X ",
                     sequence.version, sequence.run_cnt, sequence.failure_cnt,
@@ -4319,7 +4328,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
                 for (ULONG i = 0; i < row_cnt; i++) {
                     append_fmt_a(
                         text, text_cap, &off,
-                        "  drivera_seq_row[%lu:%s]: mode=%s(%lu) drv=%lu primary=0x%X mask=0x%X "
+                        "  rsc_seq_row[%lu:%s]: mode=%s(%lu) drv=%lu primary=0x%X mask=0x%X "
                         "active={st=%lu clk=%lu fl=0x%08X} sleep={st=%lu clk=%lu fl=0x%08X} "
                         "wake={st=%lu clk=%lu fl=0x%08X} "
                         "cmddb=%lu rpmh=%lu npa=0x%X glink=%lu ppp=%lu last={phase=0x%X st=0x%08X "
@@ -4349,8 +4358,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
             if (NT_SUCCESS(rsc_sw_get_sequence_history(sequence_hist, RTL_NUMBER_OF(sequence_hist),
                                                        &sequence_hist_cnt,
                                                        &sequence_hist_dropped))) {
-                append_fmt_a(text, text_cap, &off,
-                             "rscsw_drivera_sequence_history: count=%lu dropped=%lu\n",
+                append_fmt_a(text, text_cap, &off, "rsc_sequence_history: count=%lu dropped=%lu\n",
                              sequence_hist_cnt, sequence_hist_dropped);
                 for (ULONG i = 0; i < sequence_hist_cnt; i++) {
                     append_fmt_a(text, text_cap, &off,
@@ -4381,7 +4389,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
             RtlZeroMemory(&lookup, sizeof(lookup));
             if (NT_SUCCESS(rsc_sw_get_lookup_snapshot(&lookup))) {
                 append_fmt_a(text, text_cap, &off,
-                             "rscsw_drivera_lookup: ver=%lu run=%lu fail=%lu last={st=0x%08X "
+                             "rsc_lookup: ver=%lu run=%lu fail=%lu last={st=0x%08X "
                              "query=%s(%lu) qid=%lu match=%lu overflow=%lu "
                              "pattern=0x%08X last_match={kind=%s(%lu) id=%lu mask=0x%08X score=%lu "
                              "aux=%lu,%lu} ",
@@ -4407,7 +4415,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
 
                 for (ULONG i = 0; i < match_cnt; i++) {
                     append_fmt_a(text, text_cap, &off,
-                                 "  drivera_lookup_match[%lu]: kind=%s(%lu) id=%lu name=%s "
+                                 "  rsc_lookup_match[%lu]: kind=%s(%lu) id=%lu name=%s "
                                  "mask=0x%08X score=%lu aux=%lu,%lu\n",
                                  i, rsc_sw_lookup_kind_name(lookup.last_matches[i].kind),
                                  lookup.last_matches[i].kind, lookup.last_matches[i].id,
@@ -4425,8 +4433,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
             RtlZeroMemory(lookup_hist, sizeof(lookup_hist));
             if (NT_SUCCESS(rsc_sw_get_lookup_history(lookup_hist, RTL_NUMBER_OF(lookup_hist),
                                                      &lookup_hist_cnt, &lookup_hist_dropped))) {
-                append_fmt_a(text, text_cap, &off,
-                             "rscsw_drivera_lookup_history: count=%lu dropped=%lu\n",
+                append_fmt_a(text, text_cap, &off, "rsc_lookup_history: count=%lu dropped=%lu\n",
                              lookup_hist_cnt, lookup_hist_dropped);
                 for (ULONG i = 0; i < lookup_hist_cnt; i++) {
                     append_fmt_a(text, text_cap, &off,
@@ -4455,7 +4462,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
             if (NT_SUCCESS(rsc_sw_get_provision_snapshot(&provision))) {
                 append_fmt_a(
                     text, text_cap, &off,
-                    "rscsw_drivera_provision: ver=%lu run=%lu fail=%lu last={st=0x%08X "
+                    "rsc_provision: ver=%lu run=%lu fail=%lu last={st=0x%08X "
                     "mode=%s(%lu) planned=%lu applied=%lu "
                     "failed=%lu policy=%lu interconnect=0x%08X domain=0x%08X confidence=%lu ",
                     provision.version, provision.run_cnt, provision.failure_cnt,
@@ -4477,7 +4484,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
                 for (ULONG i = 0; i < row_cnt; i++) {
                     append_fmt_a(
                         text, text_cap, &off,
-                        "  drivera_provision_row[%lu:%s]: mode=%s(%lu) drv=%lu arc=%lu cmddb=%lu "
+                        "  rsc_provision_row[%lu:%s]: mode=%s(%lu) drv=%lu arc=%lu cmddb=%lu "
                         "rpmh=%lu npa=0x%X glink=%lu "
                         "ppp=%lu icb={m=0x%X s=0x%X} aop=%lu clk=%lu tlmm=%lu tsens=%lu "
                         "target={state=%lu clk=%lu flags=0x%08X policy=0x%08X} confidence=%lu "
@@ -4507,8 +4514,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
             if (NT_SUCCESS(
                     rsc_sw_get_provision_history(provision_hist, RTL_NUMBER_OF(provision_hist),
                                                  &provision_hist_cnt, &provision_hist_dropped))) {
-                append_fmt_a(text, text_cap, &off,
-                             "rscsw_drivera_provision_history: count=%lu dropped=%lu\n",
+                append_fmt_a(text, text_cap, &off, "rsc_provision_history: count=%lu dropped=%lu\n",
                              provision_hist_cnt, provision_hist_dropped);
                 for (ULONG i = 0; i < provision_hist_cnt; i++) {
                     append_fmt_a(text, text_cap, &off,
@@ -4540,7 +4546,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
             RtlZeroMemory(&rail, sizeof(rail));
             if (NT_SUCCESS(rsc_sw_get_rail_snapshot(&rail))) {
                 append_fmt_a(text, text_cap, &off,
-                             "rscsw_drivera_rail: ver=%lu run=%lu fail=%lu last={st=0x%08X "
+                             "rsc_rail: ver=%lu run=%lu fail=%lu last={st=0x%08X "
                              "mode=%s(%lu) planned=%lu applied=%lu "
                              "failed=%lu rail=%lu bw=%lu policy=%lu glink=%lu interconnect=0x%08X "
                              "domain=0x%08X confidence=%lu ",
@@ -4562,7 +4568,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
 
                 for (ULONG i = 0; i < row_cnt; i++) {
                     append_fmt_a(text, text_cap, &off,
-                                 "  drivera_rail_row[%lu:%s]: mode=%s(%lu) drv=%lu arc=%lu "
+                                 "  rsc_rail_row[%lu:%s]: mode=%s(%lu) drv=%lu arc=%lu "
                                  "cmddb=%lu rpmh=%lu npa=0x%X glink=%lu "
                                  "ppp=%lu icb={m=0x%X s=0x%X} aop=%lu clk=%lu tlmm=%lu tsens=%lu "
                                  "pdc_trig=%lu "
@@ -4594,9 +4600,8 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
             RtlZeroMemory(rail_hist, sizeof(rail_hist));
             if (NT_SUCCESS(rsc_sw_get_rail_history(rail_hist, RTL_NUMBER_OF(rail_hist),
                                                    &rail_hist_cnt, &rail_hist_dropped))) {
-                append_fmt_a(text, text_cap, &off,
-                             "rscsw_drivera_rail_history: count=%lu dropped=%lu\n", rail_hist_cnt,
-                             rail_hist_dropped);
+                append_fmt_a(text, text_cap, &off, "rsc_rail_history: count=%lu dropped=%lu\n",
+                             rail_hist_cnt, rail_hist_dropped);
                 for (ULONG i = 0; i < rail_hist_cnt; i++) {
                     append_fmt_a(
                         text, text_cap, &off,
@@ -4626,7 +4631,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
             RtlZeroMemory(&tcs, sizeof(tcs));
             if (NT_SUCCESS(rsc_sw_get_tcs_snapshot(&tcs))) {
                 append_fmt_a(text, text_cap, &off,
-                             "rscsw_drivera_tcs: ver=%lu run=%lu fail=%lu last={st=0x%08X "
+                             "rsc_tcs: ver=%lu run=%lu fail=%lu last={st=0x%08X "
                              "mode=%s(%lu) planned=%lu programmed=%lu "
                              "failed=%lu policy=%lu glink=%lu interconnect=0x%08X domain=0x%08X "
                              "confidence=%lu ",
@@ -4648,7 +4653,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
                 for (ULONG i = 0; i < row_cnt; i++) {
                     append_fmt_a(
                         text, text_cap, &off,
-                        "  drivera_tcs_row[%lu:%s]: mode=%s(%lu) drv=%lu arc=%lu cmddb={slv=%lu "
+                        "  rsc_tcs_row[%lu:%s]: mode=%s(%lu) drv=%lu arc=%lu cmddb={slv=%lu "
                         "q=%lu} rpmh={set=%lu pri=%lu tcs=%lu} "
                         "cmd={addr=0x%08X data=0x%08X flags=0x%08X} npa=0x%X glink=%lu ppp=%lu "
                         "icb={m=0x%X s=0x%X} pdc_trig=%lu aop=%lu clk=%lu tsens=%lu "
@@ -4680,9 +4685,8 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
             RtlZeroMemory(tcs_hist, sizeof(tcs_hist));
             if (NT_SUCCESS(rsc_sw_get_tcs_history(tcs_hist, RTL_NUMBER_OF(tcs_hist), &tcs_hist_cnt,
                                                   &tcs_hist_dropped))) {
-                append_fmt_a(text, text_cap, &off,
-                             "rscsw_drivera_tcs_history: count=%lu dropped=%lu\n", tcs_hist_cnt,
-                             tcs_hist_dropped);
+                append_fmt_a(text, text_cap, &off, "rsc_tcs_history: count=%lu dropped=%lu\n",
+                             tcs_hist_cnt, tcs_hist_dropped);
                 for (ULONG i = 0; i < tcs_hist_cnt; i++) {
                     append_fmt_a(
                         text, text_cap, &off,
@@ -4712,7 +4716,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
             if (NT_SUCCESS(rsc_sw_get_thermal_snapshot(&thermal))) {
                 append_fmt_a(
                     text, text_cap, &off,
-                    "rscsw_drivera_thermal: ver=%lu run=%lu fail=%lu last={st=0x%08X mode=%s(%lu) "
+                    "rsc_thermal: ver=%lu run=%lu fail=%lu last={st=0x%08X mode=%s(%lu) "
                     "planned=%lu sampled=%lu "
                     "applied=%lu failed=%lu mitigated=%lu recovered=%lu policy=%lu glink=%lu "
                     "interconnect=0x%08X "
@@ -4737,7 +4741,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
                 for (ULONG i = 0; i < row_cnt; i++) {
                     append_fmt_a(
                         text, text_cap, &off,
-                        "  drivera_thermal_row[%lu:%s]: mode=%s(%lu) drv=%lu arc=%lu "
+                        "  rsc_thermal_row[%lu:%s]: mode=%s(%lu) drv=%lu arc=%lu "
                         "cmddb={slv=%lu q=%lu} rpmh=%lu npa=0x%X "
                         "glink=%lu ppp=%lu icb={m=0x%X s=0x%X} tsens=%lu tlmm=%lu clk=%lu "
                         "pdc_trig=%lu aop=%lu sensor=%lu "
@@ -4772,8 +4776,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
             RtlZeroMemory(thermal_hist, sizeof(thermal_hist));
             if (NT_SUCCESS(rsc_sw_get_thermal_history(thermal_hist, RTL_NUMBER_OF(thermal_hist),
                                                       &thermal_hist_cnt, &thermal_hist_dropped))) {
-                append_fmt_a(text, text_cap, &off,
-                             "rscsw_drivera_thermal_history: count=%lu dropped=%lu\n",
+                append_fmt_a(text, text_cap, &off, "rsc_thermal_history: count=%lu dropped=%lu\n",
                              thermal_hist_cnt, thermal_hist_dropped);
                 for (ULONG i = 0; i < thermal_hist_cnt; i++) {
                     append_fmt_a(
@@ -4808,7 +4811,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
             RtlZeroMemory(&coord, sizeof(coord));
             if (NT_SUCCESS(rsc_sw_get_coord_snapshot(&coord))) {
                 append_fmt_a(text, text_cap, &off,
-                             "rscsw_drivera_coord: ver=%lu run=%lu fail=%lu last={st=0x%08X "
+                             "rsc_coord: ver=%lu run=%lu fail=%lu last={st=0x%08X "
                              "mode=%s(%lu) planned=%lu applied=%lu failed=%lu "
                              "phases={exec=0x%08X fail=0x%08X} confidence=%lu ",
                              coord.version, coord.run_cnt, coord.failure_cnt,
@@ -4828,7 +4831,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
                 for (ULONG i = 0; i < row_cnt; i++) {
                     append_fmt_a(
                         text, text_cap, &off,
-                        "  drivera_coord_row[%lu:%s]: mode=%s(%lu) drv=%lu ppp=%lu icb={m=0x%X "
+                        "  rsc_coord_row[%lu:%s]: mode=%s(%lu) drv=%lu ppp=%lu icb={m=0x%X "
                         "s=0x%X} "
                         "before={st=%lu clk=%lu flags=0x%08X} after={st=%lu clk=%lu flags=0x%08X} "
                         "phases=0x%08X fail=0x%08X confidence=%lu last={st=0x%08X t=%llu}\n",
@@ -4853,9 +4856,8 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
             RtlZeroMemory(coord_hist, sizeof(coord_hist));
             if (NT_SUCCESS(rsc_sw_get_coord_history(coord_hist, RTL_NUMBER_OF(coord_hist),
                                                     &coord_hist_cnt, &coord_hist_dropped))) {
-                append_fmt_a(text, text_cap, &off,
-                             "rscsw_drivera_coord_history: count=%lu dropped=%lu\n", coord_hist_cnt,
-                             coord_hist_dropped);
+                append_fmt_a(text, text_cap, &off, "rsc_coord_history: count=%lu dropped=%lu\n",
+                             coord_hist_cnt, coord_hist_dropped);
                 for (ULONG i = 0; i < coord_hist_cnt; i++) {
                     append_fmt_a(
                         text, text_cap, &off,
@@ -4893,7 +4895,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
             RtlZeroMemory(&audit, sizeof(audit));
             if (NT_SUCCESS(rsc_sw_get_audit_snapshot(&audit))) {
                 append_fmt_a(text, text_cap, &off,
-                             "rscsw_drivera_audit: ver=%lu run=%lu fail=%lu last={st=0x%08X "
+                             "rsc_audit: ver=%lu run=%lu fail=%lu last={st=0x%08X "
                              "mode=%s(%lu) checked=%lu repaired=%lu "
                              "error=%lu warning=%lu score=%lu status={validate=0x%08X coord=0x%08X "
                              "interconnect=0x%08X domain=0x%08X} ",
@@ -4916,7 +4918,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
                 for (ULONG i = 0; i < row_cnt; i++) {
                     append_fmt_a(
                         text, text_cap, &off,
-                        "  drivera_audit_row[%lu:%s]: mode=%s(%lu) drv=%lu arc=%lu cmddb={slv=0x%X "
+                        "  rsc_audit_row[%lu:%s]: mode=%s(%lu) drv=%lu arc=%lu cmddb={slv=0x%X "
                         "qry=0x%X} ppp=%lu "
                         "icb={m=0x%X s=0x%X} aop=%lu domain={id=%lu count=%lu} route={primary=%lu "
                         "count=%lu peak=%lu} "
@@ -4958,9 +4960,8 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
             RtlZeroMemory(audit_hist, sizeof(audit_hist));
             if (NT_SUCCESS(rsc_sw_get_audit_history(audit_hist, RTL_NUMBER_OF(audit_hist),
                                                     &audit_hist_cnt, &audit_hist_dropped))) {
-                append_fmt_a(text, text_cap, &off,
-                             "rscsw_drivera_audit_history: count=%lu dropped=%lu\n", audit_hist_cnt,
-                             audit_hist_dropped);
+                append_fmt_a(text, text_cap, &off, "rsc_audit_history: count=%lu dropped=%lu\n",
+                             audit_hist_cnt, audit_hist_dropped);
                 for (ULONG i = 0; i < audit_hist_cnt; i++) {
                     append_fmt_a(
                         text, text_cap, &off,
@@ -4991,7 +4992,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
             if (NT_SUCCESS(rsc_sw_get_supervisor_snapshot(&supervisor))) {
                 append_fmt_a(
                     text, text_cap, &off,
-                    "rscsw_drivera_supervisor: ver=%lu run=%lu fail=%lu last={st=0x%08X "
+                    "rsc_supervisor: ver=%lu run=%lu fail=%lu last={st=0x%08X "
                     "mode=%s(%lu) cycles=%lu/%lu fail_count=%lu "
                     "checked=%lu repaired=%lu error=%lu warning=%lu score=%lu "
                     "status={audit=0x%08X coord=0x%08X thermal=0x%08X interconnect=0x%08X "
@@ -5018,7 +5019,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
 
                 for (ULONG i = 0; i < module_cnt; i++) {
                     append_fmt_a(text, text_cap, &off,
-                                 "  drivera_supervisor_module[%lu:%s]: issue=%lu warning=%lu "
+                                 "  rsc_supervisor_module[%lu:%s]: issue=%lu warning=%lu "
                                  "repair=%lu sample=%lu score=%lu "
                                  "integrity_penalty=%lu gaps={dep=%lu domain=%lu route=%lu "
                                  "fanout=%lu} coverage=%lu topology=%lu semantic=%lu drift=%lu "
@@ -5051,8 +5052,8 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
                     supervisor_hist, RTL_NUMBER_OF(supervisor_hist), &supervisor_hist_cnt,
                     &supervisor_hist_dropped))) {
                 append_fmt_a(text, text_cap, &off,
-                             "rscsw_drivera_supervisor_history: count=%lu dropped=%lu\n",
-                             supervisor_hist_cnt, supervisor_hist_dropped);
+                             "rsc_supervisor_history: count=%lu dropped=%lu\n", supervisor_hist_cnt,
+                             supervisor_hist_dropped);
                 for (ULONG i = 0; i < supervisor_hist_cnt; i++) {
                     append_fmt_a(
                         text, text_cap, &off,
@@ -5092,7 +5093,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
             if (NT_SUCCESS(rsc_sw_get_autotune_snapshot(&autotune))) {
                 append_fmt_a(
                     text, text_cap, &off,
-                    "rscsw_drivera_autotune: ver=%lu run=%lu fail=%lu last={st=0x%08X mode=%s(%lu) "
+                    "rsc_autotune: ver=%lu run=%lu fail=%lu last={st=0x%08X mode=%s(%lu) "
                     "cycles=%lu/%lu checked=%lu "
                     "adjusted=%lu failed_adjust=%lu warning=%lu error=%lu score=%lu "
                     "status={supervisor=0x%08X thermal=0x%08X} ",
@@ -5116,7 +5117,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
                 for (ULONG i = 0; i < module_cnt; i++) {
                     append_fmt_a(
                         text, text_cap, &off,
-                        "  drivera_autotune_module[%lu:%s]: target=%lu effective=%lu observed=%lu "
+                        "  rsc_autotune_module[%lu:%s]: target=%lu effective=%lu observed=%lu "
                         "delta=%lu "
                         "risk=%lu integrity=%lu dependency=%lu gaps={domain=%lu route=%lu "
                         "fanout=%lu} thermal_pressure=%lu action=0x%08X "
@@ -5150,8 +5151,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
             if (NT_SUCCESS(rsc_sw_get_autotune_history(autotune_hist, RTL_NUMBER_OF(autotune_hist),
                                                        &autotune_hist_cnt,
                                                        &autotune_hist_dropped))) {
-                append_fmt_a(text, text_cap, &off,
-                             "rscsw_drivera_autotune_history: count=%lu dropped=%lu\n",
+                append_fmt_a(text, text_cap, &off, "rsc_autotune_history: count=%lu dropped=%lu\n",
                              autotune_hist_cnt, autotune_hist_dropped);
                 for (ULONG i = 0; i < autotune_hist_cnt; i++) {
                     append_fmt_a(
@@ -5188,7 +5188,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
             if (NT_SUCCESS(rsc_sw_get_harden_snapshot(&harden))) {
                 append_fmt_a(
                     text, text_cap, &off,
-                    "rscsw_drivera_harden: ver=%lu run=%lu fail=%lu last={st=0x%08X mode=%s(%lu) "
+                    "rsc_harden: ver=%lu run=%lu fail=%lu last={st=0x%08X mode=%s(%lu) "
                     "cycles=%lu/%lu checked=%lu "
                     "hardened=%lu failed=%lu warning=%lu error=%lu score=%lu "
                     "status={autotune=0x%08X supervisor=0x%08X audit=0x%08X coord=0x%08X "
@@ -5214,7 +5214,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
                 for (ULONG i = 0; i < module_cnt; i++) {
                     append_fmt_a(
                         text, text_cap, &off,
-                        "  drivera_harden_module[%lu:%s]: health=%lu risk=%lu recovery=%lu "
+                        "  rsc_harden_module[%lu:%s]: health=%lu risk=%lu recovery=%lu "
                         "integrity=%lu dependency=%lu gaps={domain=%lu route=%lu fanout=%lu} "
                         "coverage=%lu topology=%lu semantic=%lu drift=%lu action=0x%08X "
                         "last={st=0x%08X t=%llu}\n",
@@ -5242,8 +5242,7 @@ NTSTATUS build_pw_cal_rundown(_In_ p_dev_ctx_t ctx, _Out_writes_bytes_(51212) PV
             RtlZeroMemory(harden_hist, sizeof(harden_hist));
             if (NT_SUCCESS(rsc_sw_get_harden_history(harden_hist, RTL_NUMBER_OF(harden_hist),
                                                      &harden_hist_cnt, &harden_hist_dropped))) {
-                append_fmt_a(text, text_cap, &off,
-                             "rscsw_drivera_harden_history: count=%lu dropped=%lu\n",
+                append_fmt_a(text, text_cap, &off, "rsc_harden_history: count=%lu dropped=%lu\n",
                              harden_hist_cnt, harden_hist_dropped);
                 for (ULONG i = 0; i < harden_hist_cnt; i++) {
                     append_fmt_a(

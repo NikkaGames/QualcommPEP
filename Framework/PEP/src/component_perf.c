@@ -36,10 +36,7 @@ typedef struct comp_perf_dev {
     comp_perf_comp_t* components;
 } comp_perf_dev_t;
 
-/* qualcomm UFS/IC17/IC18/IC21 F/P transitions require actual NPA/PoFx execution, firmware
- * completion and a verified hardware state readback. routes this gate through the
- * production hardware-backend verification path (qcpep_hw_backend8845). It returns TRUE
- * only when a complete, epoch-valid. */
+/* component transitions require an admitted hardware backend with verified completion. */
 
 BOOLEAN comp_perf_hardware_backend_ready(VOID)
 {

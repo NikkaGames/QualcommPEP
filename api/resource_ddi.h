@@ -3,7 +3,7 @@
 #include <wdf.h>
 #include <acpiioct.h>
 
-typedef struct _QCPEP_PPXTLMM_GPIO_Resource_NodeSt {
+typedef struct tlmm_gpio_resource {
     ULONG PinNumber;
     ULONG GPIOState;
     ULONG FunctionSelect;
@@ -11,24 +11,24 @@ typedef struct _QCPEP_PPXTLMM_GPIO_Resource_NodeSt {
     ULONG PullValue;
     ULONG DriveStrength;
     ULONG EnableLPM;
-} QCPEP_PPXTLMM_GPIO_Resource_NodeSt, *PQCPEP_PPXTLMM_GPIO_Resource_NodeSt;
+} tlmm_gpio_resource_t, *tlmm_gpio_resource_ptr_t;
 
-typedef enum _QCPEP_PepResultStatusType {
-    QCPEP_PEP_RESOURCE_PARSE_DDI_RESULT_VALID = 0,
-    QCPEP_PEP_RESOURCE_PARSE_DDI_RESULT_RESOURCE_PARSING_FAILURE = 1,
-    QCPEP_PEP_RESOURCE_PARSE_DDI_RESULT_SLPM_CONSTRAINTS_FAILURE = 2,
-    QCPEP_PEP_RESOURCE_PARSE_DDI_RESULT_PEP_INTERNAL_FAILURE = 3,
-} QCPEP_PepResultStatusType;
+typedef enum resource_parse_status {
+    RESOURCE_PARSE_VALID = 0,
+    RESOURCE_PARSE_FAILED = 1,
+    RESOURCE_PARSE_CONSTRAINTS_FAILED = 2,
+    RESOURCE_PARSE_INTERNAL_FAILURE = 3,
+} resource_parse_status_t;
 
-typedef enum _QCPEP_PepErrorLevelType {
-    QCPEP_PEP_RESOURCE_PARSE_DDI_ERROR_LEVEL_NONE = 0,
-    QCPEP_PEP_RESOURCE_PARSE_DDI_ERROR_LEVEL_CRITICAL = 1,
-    QCPEP_PEP_RESOURCE_PARSE_DDI_ERROR_LEVEL_WARNING = 2,
-} QCPEP_PepErrorLevelType;
+typedef enum resource_error_level {
+    RESOURCE_ERROR_NONE = 0,
+    RESOURCE_ERROR_CRITICAL = 1,
+    RESOURCE_ERROR_WARNING = 2,
+} resource_error_level_t;
 
-typedef struct _QCPEP_PepResultType {
-    QCPEP_PepErrorLevelType errorLevel;
-    QCPEP_PepResultStatusType eStatus;
+typedef struct resource_parse_result {
+    resource_error_level_t errorLevel;
+    resource_parse_status_t eStatus;
     CHAR deviceName[256];
     ULONGLONG componentID;
     CHAR stateType[256];
@@ -36,84 +36,81 @@ typedef struct _QCPEP_PepResultType {
     ULONGLONG stateSetIndex;
     CHAR resourceType[256];
     PVOID additionalInformation;
-} QCPEP_PepResultType, *PQCPEP_PepResultType;
+} resource_parse_result_t, *resource_parse_result_ptr_t;
 
-typedef struct _QCPEP_COMPONENT_OUTPUT_BUFFER_DATA {
+typedef struct component_resource_buffers {
     ULONGLONG ComponentCount;
     PACPI_EVAL_OUTPUT_BUFFER ComponentResourceDataList[1];
-} QCPEP_COMPONENT_OUTPUT_BUFFER_DATA, *PQCPEP_COMPONENT_OUTPUT_BUFFER_DATA;
+} component_resource_buffers_t, *component_resource_buffers_ptr_t;
 
-typedef NTSTATUS (*QCPEP_PARSE_DEVICE_RESOURCE_BUFFER)(_In_ PACPI_EVAL_OUTPUT_BUFFER output_buf,
-                                                       _Inout_ PQCPEP_PepResultType pep_result);
+typedef NTSTATUS (*parse_device_resources_t)(_In_ PACPI_EVAL_OUTPUT_BUFFER output_buf,
+                                             _Inout_ resource_parse_result_ptr_t pep_result);
 
-typedef NTSTATUS (*QCPEP_PARSE_RESOURCE_BUFFER_V1)(_In_ PACPI_EVAL_OUTPUT_BUFFER output_buf,
-                                                   _Inout_opt_ PVOID legacy_ctx);
+typedef NTSTATUS (*parse_legacy_resources_t)(_In_ PACPI_EVAL_OUTPUT_BUFFER output_buf,
+                                             _Inout_opt_ PVOID legacy_ctx);
 
-typedef NTSTATUS (*QCPEP_PARSE_COMPONENT_RESOURCE_BUFFER)(_In_ PQCPEP_COMPONENT_OUTPUT_BUFFER_DATA
-                                                              comp_output_buf,
-                                                          _Inout_ PQCPEP_PepResultType pep_result);
+typedef NTSTATUS (*parse_component_resources_t)(_In_ component_resource_buffers_ptr_t
+                                                    comp_output_buf,
+                                                _Inout_ resource_parse_result_ptr_t pep_result);
 
-typedef NTSTATUS (*QCPEP_QCPPX_API_EXECUTE_GPIO)(
-    _Inout_ PQCPEP_PPXTLMM_GPIO_Resource_NodeSt tlmm_gpio_res);
+typedef NTSTATUS (*execute_tlmm_gpio_t)(_Inout_ tlmm_gpio_resource_ptr_t tlmm_gpio_res);
 
-typedef NTSTATUS (*QCPEP_PSTATE_TRANSITION_CB)(_In_ UNICODE_STRING proc_name, _In_ ULONG arg1,
-                                               _In_ ULONG arg2, _In_ ULONG arg3, _In_ ULONG arg4);
+typedef NTSTATUS (*pstate_transition_t)(_In_ UNICODE_STRING proc_name, _In_ ULONG arg1,
+                                        _In_ ULONG arg2, _In_ ULONG arg3, _In_ ULONG arg4);
 
-typedef struct _QCPEP_USB_INTERRUPT_DATA {
+typedef struct usb_interrupt_data {
     ULONG InterruptID;
     ULONG PolarityType;
-} QCPEP_USB_INTERRUPT_DATA;
+} usb_interrupt_data_t;
 
-typedef NTSTATUS (*QCPEP_USB_WAKEUP_UPDATE_CB)(_In_ QCPEP_USB_INTERRUPT_DATA interrupt_data);
+typedef NTSTATUS (*usb_wakeup_update_t)(_In_ usb_interrupt_data_t interrupt_data);
 
-typedef NTSTATUS (*QCPEP_ENABLE_GFX_ACD_CB)(_In_ UCHAR enable);
+typedef NTSTATUS (*enable_gfx_acd_t)(_In_ UCHAR enable);
 
-typedef NTSTATUS (*QCPEP_BCM_GET_DATA_CB)(_Inout_opt_ PVOID req, _Inout_opt_ PVOID data);
+typedef NTSTATUS (*bcm_get_data_t)(_Inout_opt_ PVOID req, _Inout_opt_ PVOID data);
 
-typedef NTSTATUS (*QCPEP_BCM_GET_DATA_SIZE_CB)(_In_opt_z_ PCHAR master, _In_opt_z_ PCHAR slave,
-                                               _Out_opt_ PULONG num_cmds_per_bw);
+typedef NTSTATUS (*bcm_get_data_size_t)(_In_opt_z_ PCHAR master, _In_opt_z_ PCHAR slave,
+                                        _Out_opt_ PULONG num_cmds_per_bw);
 
-typedef NTSTATUS (*QCPEP_BCM_THROTTLE_CB)(_In_ UCHAR enable_throttling);
+typedef NTSTATUS (*bcm_throttle_t)(_In_ UCHAR enable_throttling);
 
-typedef struct _QCPEP_PEP_RUNTIME_RESOURCE_ENUMERATION_INTERFACE {
+typedef struct resource_enumeration_interface {
     INTERFACE Interface;
-    QCPEP_PARSE_RESOURCE_BUFFER_V1 ParseResourceBuffer;
-} QCPEP_PEP_RUNTIME_RESOURCE_ENUMERATION_INTERFACE,
-    *PQCPEP_PEP_RUNTIME_RESOURCE_ENUMERATION_INTERFACE;
+    parse_legacy_resources_t ParseResourceBuffer;
+} resource_enumeration_interface_t, *resource_enumeration_interface_ptr_t;
 
-typedef struct _QCPEP_PEP_RUNTIME_RESOURCE_ENUMERATION_INTERFACE_V2 {
+typedef struct resource_enumeration_interface_v2 {
     INTERFACE Interface;
-    QCPEP_PARSE_DEVICE_RESOURCE_BUFFER ParseDeviceResourceBuffer;
-    QCPEP_PARSE_COMPONENT_RESOURCE_BUFFER ParseComponentResourceBuffer;
-} QCPEP_PEP_RUNTIME_RESOURCE_ENUMERATION_INTERFACE_V2,
-    *PQCPEP_PEP_RUNTIME_RESOURCE_ENUMERATION_INTERFACE_V2;
+    parse_device_resources_t ParseDeviceResourceBuffer;
+    parse_component_resources_t ParseComponentResourceBuffer;
+} resource_enumeration_interface_v2_t, *resource_enumeration_interface_v2_ptr_t;
 
-typedef struct _QCPEP_QCPPX_INTERFACE {
+typedef struct tlmm_gpio_interface {
     INTERFACE Interface;
-    QCPEP_QCPPX_API_EXECUTE_GPIO ExecuteTlmmGpio;
-} QCPEP_QCPPX_INTERFACE, *PQCPEP_QCPPX_INTERFACE;
+    execute_tlmm_gpio_t ExecuteTlmmGpio;
+} tlmm_gpio_interface_t, *tlmm_gpio_interface_ptr_t;
 
-typedef struct _QCPEP_PEP_BCM_INTERFACE {
+typedef struct bcm_interface {
     INTERFACE Interface;
-    QCPEP_BCM_GET_DATA_CB GetData;
-    QCPEP_BCM_GET_DATA_SIZE_CB GetDataSize;
-    QCPEP_BCM_THROTTLE_CB Throttle;
-} QCPEP_PEP_BCM_INTERFACE, *PQCPEP_PEP_BCM_INTERFACE;
+    bcm_get_data_t GetData;
+    bcm_get_data_size_t GetDataSize;
+    bcm_throttle_t Throttle;
+} bcm_interface_t, *bcm_interface_ptr_t;
 
-typedef struct _QCPEP_PEP_PSTATE_TRANSITION_INTERFACE {
+typedef struct pstate_transition_interface {
     INTERFACE Interface;
-    QCPEP_PSTATE_TRANSITION_CB DriverStateTransition;
-} QCPEP_PEP_PSTATE_TRANSITION_INTERFACE, *PQCPEP_PEP_PSTATE_TRANSITION_INTERFACE;
+    pstate_transition_t DriverStateTransition;
+} pstate_transition_interface_t, *pstate_transition_interface_ptr_t;
 
-typedef struct _QCPEP_PEP_USB_WAKEUP_INTERRUPT_INTERFACE {
+typedef struct usb_wakeup_interrupt_interface {
     INTERFACE Interface;
-    QCPEP_USB_WAKEUP_UPDATE_CB UpdateUsbWakeupInterrupt;
-} QCPEP_PEP_USB_WAKEUP_INTERRUPT_INTERFACE, *PQCPEP_PEP_USB_WAKEUP_INTERRUPT_INTERFACE;
+    usb_wakeup_update_t UpdateUsbWakeupInterrupt;
+} usb_wakeup_interrupt_interface_t, *usb_wakeup_interrupt_interface_ptr_t;
 
-typedef struct _QCPEP_PEP_ENABLE_GFX_ACD_INTERFACE {
+typedef struct gfx_acd_interface {
     INTERFACE Interface;
-    QCPEP_ENABLE_GFX_ACD_CB EnableGfxAcd;
-} QCPEP_PEP_ENABLE_GFX_ACD_INTERFACE, *PQCPEP_PEP_ENABLE_GFX_ACD_INTERFACE;
+    enable_gfx_acd_t EnableGfxAcd;
+} gfx_acd_interface_t, *gfx_acd_interface_ptr_t;
 
 NTSTATUS ddi_reg_all(_In_ WDFDEVICE dev);
 

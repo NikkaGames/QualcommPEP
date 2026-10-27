@@ -50,12 +50,12 @@ static NTSTATUS try_reg_ex_soc_dmf_target(_In_ WDFDEVICE dev, _In_ ULONG port_id
     RtlZeroMemory(&payload, sizeof(payload));
     payload.interface_guid = dmf_exsoc_interface_guid;
     payload.port_id = (USHORT)port_id;
-    payload.state_ioctl = IOCTL_QCPEP_SUBSYS_ADSP_STATE;
-    payload.ctrl_ioctl = IOCTL_QCPEP_SUBSYS_ADSP_CTRL;
+    payload.state_ioctl = IOCTL_PEP_SUBSYS_ADSP_STATE;
+    payload.ctrl_ioctl = IOCTL_PEP_SUBSYS_ADSP_CTRL;
     payload.input_size = sizeof(ULONGLONG);
 
     ULONG bytes = 0;
-    NTSTATUS st = forward_send(dev, IOCTL_QCPEP_DMF_DEVICEINTERFACE_SEND, &payload, sizeof(payload),
+    NTSTATUS st = forward_send(dev, IOCTL_PEP_DMF_DEVICEINTERFACE_SEND, &payload, sizeof(payload),
                                NULL, 0, &bytes);
 
     if (NT_SUCCESS(st)) {
@@ -126,7 +126,7 @@ NTSTATUS create_control_dev(_In_ WDFDRIVER driver)
     if (!p_init)
         return STATUS_INSUFFICIENT_RESOURCES;
 
-    RtlInitUnicodeString(&name, QCPEP_DEVICE_NAME);
+    RtlInitUnicodeString(&name, CONTROL_DEVICE_NAME);
     status = WdfDeviceInitAssignName(p_init, &name);
     if (!NT_SUCCESS(status))
         goto exit;
@@ -170,15 +170,15 @@ NTSTATUS create_control_dev(_In_ WDFDRIVER driver)
         (VOID) WdfDeviceCreateDeviceInterface(dev, &GUID_TSENS_QUERY, NULL);
         (VOID) WdfDeviceCreateDeviceInterface(dev, &GUID_READ_STABLE_TSENS, NULL);
     }
-    (VOID) WdfDeviceCreateDeviceInterface(dev, &GUID_DEVINTERFACE_BranchTrack, NULL);
+    (VOID) WdfDeviceCreateDeviceInterface(dev, &GUID_DEVINTERFACE_BRANCH_TRACK, NULL);
 
-    RtlInitUnicodeString(&sym, QCPEP_DOS_SYMLINK);
+    RtlInitUnicodeString(&sym, CONTROL_SYMBOLIC_LINK);
     (VOID) WdfDeviceCreateSymbolicLink(dev, &sym);
 
-    RtlInitUnicodeString(&sym2, QCPEP_DOS_SYMLINK_THM);
+    RtlInitUnicodeString(&sym2, THERMAL_SYMBOLIC_LINK);
     (VOID) WdfDeviceCreateSymbolicLink(dev, &sym2);
 
-    RtlInitUnicodeString(&sym_global, QCPEP_DOS_SYMLINK_GLOBAL_DEEPSTANDBY);
+    RtlInitUnicodeString(&sym_global, MODEM_STANDBY_GLOBAL_SYMBOLIC_LINK);
     (VOID) WdfDeviceCreateSymbolicLink(dev, &sym_global);
 
     WdfControlFinishInitializing(dev);

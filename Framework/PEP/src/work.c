@@ -839,7 +839,7 @@ ULONG_PTR pep_power_control_req(_Inout_opt_ PVOID data)
 
     if (IsEqualGUID(r->power_control_code, &guid_power_set_selextsource)) {
         if (!is_passive) {
-            /* match driverA behavior for invalid IRQL on this path. */
+            /* reject invalid IRQL on this path. */
             pep_bug_check_power_control(r);
         }
 
@@ -853,7 +853,7 @@ ULONG_PTR pep_power_control_req(_Inout_opt_ PVOID data)
 
     if (IsEqualGUID(r->power_control_code, &guid_log_command)) {
         if (!is_passive) {
-            /* match driverA behavior for invalid IRQL on this path. */
+            /* reject invalid IRQL on this path. */
             pep_bug_check_power_control(r);
         }
 

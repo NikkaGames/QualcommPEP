@@ -1,9 +1,6 @@
 #include "rpmh_tcs.h"
 
-/* signed SC8480 TCS init at RVA 0x23E7ACâ€“0x23E7F0, independently agreeing with
- * qcpep8280.sys.c tcs_init(), VA 0x1401471D0. v2 is decoded as (config >> 12) & 0x3F for
- * RSC_DRV_HLOS, and v7 as config >> 27. Both are checked against the selected driver
- * configuration before any TCS is programmed. */
+/* validate the HLOS TCS count and command capacity before programming a TCS. */
 
 int rpmh_tcs_check_hlos_geometry(uint32_t parent_child_config, uint8_t required_tcs,
                                  uint8_t required_commands, rsc_hlos_geometry_t* result)

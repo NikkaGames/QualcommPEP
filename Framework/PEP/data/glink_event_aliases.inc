@@ -1,4 +1,4 @@
-/* Auto-generated from driverA/qcpep8280.sys.h */
+/* glink event catalog aliases. */
     { 0x0u, "EVENT_INIT" },
     { 0x1u, "EVENT_REGISTER_XPORT" },
     { 0x2u, "EVENT_CH_OPEN" },

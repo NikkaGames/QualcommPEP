@@ -1,7 +1,7 @@
 #pragma once
 #include "driver.h"
 
-/* crash_dump / LiveKernelDump IOCTL surface present in qcpep8280 (DMF modules). */
+/* crash-dump and live-kernel-dump request contracts. */
 
 #define CRASH_SRC_CAPACITY 8u
 #define CRASH_HISTORY_CAPACITY 128u

@@ -8,9 +8,7 @@
 #endif
 
 C_ASSERT(sizeof(ACPI_EVAL_INPUT_BUFFER_EX) == 0x104u);
-/* independently verified in both signed qcpep8480.sys references: PAGE ACPI helper carries
- * literal 0x41696541 next to 0x0032C018. 8280 IDA identifies the homologous helper; reject
- * SDK ABI drift. */
+/* require the extended ACPI input layout and signature used by the evaluation IOCTL. */
 
 C_ASSERT(ACPI_EVAL_INPUT_BUFFER_SIGNATURE_EX == 0x41696541u);
 C_ASSERT(FIELD_OFFSET(ACPI_EVAL_INPUT_BUFFER_EX, MethodName) == sizeof(ULONG));

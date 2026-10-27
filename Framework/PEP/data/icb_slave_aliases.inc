@@ -1,4 +1,4 @@
-/* Auto-generated from driverA/qcpep8280.sys.h */
+/* icb slave catalog aliases. */
     { 0x0u, "EBI1" },
     { 0x1u, "APPSS_L2" },
     { 0x2u, "BIMC_SNOC" },

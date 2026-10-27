@@ -274,7 +274,7 @@ ULONG_PTR pep_reg_dev(_Inout_opt_ PVOID data)
     /* no existing node means no device ownership. */
 
     p->dev_handle = NULL;
-    p->dev_accepted = QC_PEP_DEV_NOT_ACCEPTED;
+    p->dev_accepted = DEV_NOT_ACCEPTED;
     if (!p->dev_id || !p->dev_id->Buffer || !p->dev_id->Length || !p->reg || !g_pep_dev_list_lock ||
         KeGetCurrentIrql() != PASSIVE_LEVEL)
         return 1;
@@ -404,7 +404,7 @@ ULONG_PTR pep_reg_dev(_Inout_opt_ PVOID data)
     new_f = NULL;
     new_perf_ctx = NULL;
     p->dev_handle = n;
-    p->dev_accepted = QC_PEP_DEV_ACCEPTED;
+    p->dev_accepted = DEV_ACCEPTED;
 done:
     WdfWaitLockRelease(g_pep_dev_list_lock);
     if (new_perf_ctx)

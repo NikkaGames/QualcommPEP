@@ -73,7 +73,6 @@
       <WarningLevel>Level3</WarningLevel>
       <TreatWarningAsError>false</TreatWarningAsError>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>QCPEP_BUILD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(IntDir);..\Framework\DeviceLib\inc;..\Framework\PEP\8845\inc;..\Framework\PEP\inc;..\SystemLibs\ARC\inc;..\SystemLibs\CmdDb\inc;..\SystemLibs\DAL\inc;..\SystemLibs\ICB\8845\inc;..\SystemLibs\NPA\inc;..\SystemLibs\PPP\8845\inc;..\SystemLibs\RPMh\8845\inc;..\SystemLibs\TLMM\8845\inc;..\SystemLibs\Tsens\inc;..\SystemLibs\clock\8845\inc;..\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <WppEnabled>false</WppEnabled>
       <WppKernelMode>true</WppKernelMode>
@@ -86,7 +85,7 @@
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
     </DriverSign>
     <Inf>
-      <TimeStamp>700.32000.0.411</TimeStamp>
+      <TimeStamp>700.32000.0.412</TimeStamp>
     </Inf>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
@@ -94,7 +93,6 @@
       <WarningLevel>Level3</WarningLevel>
       <TreatWarningAsError>false</TreatWarningAsError>
       <Optimization>MaxSpeed</Optimization>
-      <PreprocessorDefinitions>QCPEP_BUILD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(IntDir);..\Framework\DeviceLib\inc;..\Framework\PEP\8845\inc;..\Framework\PEP\inc;..\SystemLibs\ARC\inc;..\SystemLibs\CmdDb\inc;..\SystemLibs\DAL\inc;..\SystemLibs\ICB\8845\inc;..\SystemLibs\NPA\inc;..\SystemLibs\PPP\8845\inc;..\SystemLibs\RPMh\8845\inc;..\SystemLibs\TLMM\8845\inc;..\SystemLibs\Tsens\inc;..\SystemLibs\clock\8845\inc;..\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <WppEnabled>false</WppEnabled>
       <WppKernelMode>true</WppKernelMode>
@@ -107,7 +105,7 @@
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
     </DriverSign>
     <Inf>
-      <TimeStamp>700.32000.0.411</TimeStamp>
+      <TimeStamp>700.32000.0.412</TimeStamp>
     </Inf>
   </ItemDefinitionGroup>
   <ItemGroup>
