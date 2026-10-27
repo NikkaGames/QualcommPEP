@@ -59,7 +59,7 @@ typedef enum tlmm_result {
 
 int tlmm_decode_dsd_t_fields(const uint32_t fields[6], tlmm_gpio_t* config);
 /* integration must confirm the Molokai pin tile selection; DSDT _CRS and a PCI/ACPI res
- * assignment are NOT implicit ownership. */
+ * assignment are not implicit ownership. */
 
 /* still requires provider-owned TLMM MMIO and does not imply device/PoFx ownership. */
 

@@ -720,10 +720,7 @@ power_result_t graph_transition(res_graph_t* g, const char* path, uint32_t state
     return power_execute(run.sequence, &d->state, &backend, trace, scratch);
 }
 
-/* combined admission and initial d0 helper. evidence shows 8280/8480
- * SetPrepareDeviceStates can execute actual state-provider work. The guarded Windows
- * PREPARE bridge calls this helper only after the complete authoritative provider/hardware
- * acceptance checks. */
+/* PREPARE executes initial D0 only after complete provider and hardware admission. */
 
 power_result_t graph_prepare_d0(res_graph_t* g, const char* path, power_execution_t* trace,
                                 power_scratch_t* scratch)

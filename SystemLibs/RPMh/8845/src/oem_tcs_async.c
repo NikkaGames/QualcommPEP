@@ -1,8 +1,8 @@
 #include "oem_tcs_async.h"
 #include <string.h>
 
-/* every API below is called under the SAME verified controller/lock. The bridge is not
- * wired into production, and an observed IRQ37 or firmware HLOS DRV2 assignment is NOT
+/* every API below is called under the same verified controller/lock. the bridge is not
+ * wired into production, and an observed IRQ37 or firmware HLOS DRV2 assignment is not
  * proof of rights to these registers. */
 
 static int admitted(const oem_tcs_async_t* a, uint8_t slot)
@@ -106,7 +106,7 @@ int oem_tcs_async_retire(oem_tcs_async_t* a, uint8_t slot, uint64_t token)
         return 0;
     }
     if (irq & (1u << slot))
-        return 0; /* w1C MUST precede retirement. */
+        return 0; /* w1C must precede retirement. */
     a->state[slot] = OEM_TCS_RETIRE_UNCERTAIN;
     if (!a->ops.write32(a->ops.ctx, TCS_CONTROL(slot),
                         ctrl & ~(TCS_CONTROL_AMC_MODE_EN | TCS_CONTROL_AMC_TRIGGER)) ||

@@ -26,8 +26,7 @@ static volatile LONG s_locks_init_state;
 
 static volatile LONG s_transport_init_state;
 
-/* fail-closed ownership contract. The stock SC8480 hardware lifecycle and Molokai PDP/SCMI
- * ownership have not been reconstructed. */
+/* DVFS remains disabled until transport ownership and completion are verified. */
 
 BOOLEAN molokai_transport_ownership_verified(VOID)
 {

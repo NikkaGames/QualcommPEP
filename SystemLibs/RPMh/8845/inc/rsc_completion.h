@@ -39,11 +39,10 @@ typedef struct rsc_completion {
 } rsc_completion_t;
 
 void rsc_completion_init(rsc_completion_t* p);
-/* called ONLY by a verified Windows owner/IRQ binding. */
+/* called only by a verified Windows owner/IRQ binding. */
 int rsc_completion_bind(rsc_completion_t* p, uint32_t epoch, uint8_t independently_granted_amcs,
                         uint8_t irq_bound);
-/* not an owner grant. The old Submit API remains for legacy tests and bookkeeping but can
- * never qualify for /122 hardware completion. */
+/* bookkeeping submissions cannot establish hardware completion. */
 
 int rsc_completion_submit_batch(rsc_completion_t* p, uint32_t epoch, uint8_t slot, uint32_t req_id,
                                 uint16_t expected_command_mask, uint8_t stale_status_cleared);
@@ -60,7 +59,7 @@ int rsc_completion_submit(rsc_completion_t* p, uint32_t epoch, uint8_t slot, uin
 /* this call makes no hardware modifications and must never be used as proof of ownership. */
 
 uint8_t rsc_completion_observe_irq(rsc_completion_t* p, uint32_t epoch, uint32_t irq_status);
-/* separately report proven hardware acknowledgement and command completion. Caller is
+/* separately report proven hardware acknowledgement and command completion. caller is
  * responsible for checking all command statuses and clearing the TCS completion interrupt
  * with appropriate barriers on the verified owner. */
 
@@ -70,7 +69,7 @@ int rsc_completion_take(rsc_completion_t* p, uint32_t epoch, uint8_t slot, uint3
                         uint8_t* aborted);
 /* software state is not atomic: the owner must synchronize submit, IRQ observation,
  * confirmation, take and revoke with ISR/DPC and teardown. Hardware teardown must be
- * synchronized with ISR/DPC BEFORE this call. */
+ * synchronized with ISR/DPC before this call. */
 
 void rsc_completion_revoke(rsc_completion_t* p);
 #ifdef __cplusplus

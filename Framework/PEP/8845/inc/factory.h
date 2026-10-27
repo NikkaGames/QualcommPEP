@@ -1,7 +1,4 @@
-/* oem-derived FOOTSWITCH NPA client factory boundary. 8280 Aggr_AddFsResource /
- * CreateFsResourceNPAHandles use the res names "/fs/<domain>/enable" and
- * "/fs/<domain>/hwctrlenable", a PepClockGetDomainId lookup, and native NPA client
- * creation/recreation. */
+/* footswitch clients use separate /enable and /hwctrlenable resource families. */
 
 #ifndef FOOTSWITCH_FACTORY_H
 #define FOOTSWITCH_FACTORY_H

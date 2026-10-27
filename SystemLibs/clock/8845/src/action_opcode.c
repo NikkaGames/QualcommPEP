@@ -1,7 +1,7 @@
-#include "opcode8480.h"
+#include "action_opcode.h"
 #include <string.h>
 
-int decode_clock_opcode8480(const power_action_t* action, clock_action8480_t* decoded)
+int decode_clock_opcode(const power_action_t* action, clock_opcode_t* decoded)
 {
     if (!decoded)
         return 0;
@@ -10,7 +10,7 @@ int decode_clock_opcode8480(const power_action_t* action, clock_action8480_t* de
         return 0;
     if (action->u.clock.extra_cnt == 0u &&
         (action->u.clock.vote == 1u || action->u.clock.vote == 2u)) {
-        decoded->kind = action->u.clock.vote == 1u ? CLOCK8480_ENABLE : CLOCK8480_DISABLE;
+        decoded->kind = action->u.clock.vote == 1u ? CLOCK_OP_ENABLE : CLOCK_OP_DISABLE;
         return 1;
     }
     /* the supplied Molokai BSMD packages carry exactly two parameters for this opcode.
@@ -18,7 +18,7 @@ int decode_clock_opcode8480(const power_action_t* action, clock_action8480_t* de
      * verify hardware. */
 
     if (action->u.clock.vote == 8u && action->u.clock.extra_cnt == 2u) {
-        decoded->kind = CLOCK8480_ENABLE_SET_FREQ;
+        decoded->kind = CLOCK_OP_ENABLE_SET_FREQ;
         decoded->parameter0 = action->u.clock.extra[0];
         decoded->parameter1 = action->u.clock.extra[1];
         decoded->param_cnt = 2u;
@@ -29,7 +29,7 @@ int decode_clock_opcode8480(const power_action_t* action, clock_action8480_t* de
         action->u.clock.extra[0] == 18u &&
         strncmp(action->u.clock.name, "gcc_ufs_phy_ice_core_clk", sizeof(action->u.clock.name)) ==
             0) {
-        decoded->kind = CLOCK8480_CFG;
+        decoded->kind = CLOCK_OP_CFG;
         decoded->parameter0 = 18u;
         decoded->param_cnt = 1u;
         return 1;

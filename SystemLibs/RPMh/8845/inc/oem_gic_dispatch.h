@@ -1,7 +1,7 @@
 #ifndef OEM_GIC_DISPATCH_H
 #define OEM_GIC_DISPATCH_H
 /* no GICD mapping or controller ownership is provided by this module; the caller supplies
- * a verified, owned window. It MUST NOT be used to mask any IRQ until the platform
+ * a verified, owned window. It must not be used to mask any IRQ until the platform
  * establishes the Windows interrupt-controller integration and DRV2 exclusive rights. */
 
 #include <stdint.h>

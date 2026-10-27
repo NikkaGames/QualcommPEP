@@ -1,6 +1,6 @@
 #ifndef VOTE_ARBITER_H
 #define VOTE_ARBITER_H
-/* portable shared-client vote core. NOT a firmware vote encoder. */
+/* portable shared-client vote core. not a firmware vote encoder. */
 
 #include <stdint.h>
 #ifdef __cplusplus
@@ -72,7 +72,7 @@ typedef enum vote_result {
     VOTE_STATE_UNKNOWN
 } vote_result_t;
 
-/* caller MUST first establish exclusive firmware/res ownership. Registration writes AND
+/* caller must first establish exclusive firmware/res ownership. Registration writes AND
  * verifies confirmed_initial; calling this with zero on a shared or externally powered
  * rail may disable it. */
 

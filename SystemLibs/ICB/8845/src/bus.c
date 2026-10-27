@@ -1,5 +1,4 @@
-/* icb_bus8845.c - /100 Molokai interconnect bandwidth owner, portable core (see inc/bus.h
- * for the arithmetic, the per-kind vote encoding and their src in the vendor ICB arbiter). */
+/* aggregate client bandwidth and encode BCM requests using firmware topology. */
 
 #include "bus.h"
 #include "molokai_catalog.h"

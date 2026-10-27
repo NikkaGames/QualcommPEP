@@ -26,9 +26,9 @@ typedef enum rsc_pnp_result {
     RSC_PNP_NO_INTERRUPT = 4
 } rsc_pnp_result_t;
 
-/* memory resources MUST be taken directly from the translated PnP res list assigned to
+/* memory resources must be taken directly from the translated PnP res list assigned to
  * THIS WDFDEVICE, not firmware DTS, a hard-coded address, or another driver's res list.
- * Success still does NOT grant any TCS slots; owned_amc_mask stays zero. */
+ * success still does not grant any TCS slots; owned_amc_mask stays zero. */
 
 rsc_pnp_result_t rsc_check_translated_assignment(const rsc_pnp_memory_t* memory, size_t cnt,
                                                  unsigned interrupt_cnt);

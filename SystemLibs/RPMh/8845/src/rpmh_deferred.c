@@ -65,7 +65,7 @@ rpmh_tcs_result_t rpmh_tcs_arm_deferred(rpmh_tcs_t* dev, rsc_completion_t* ledge
         return TCS_BUSY;
     }
     /* recheck under the owner lock: PnP teardown, ISR capture, worker and transport handoff
-     * MUST synchronize with this exact transaction. */
+     * must synchronize with this exact transaction. */
 
     if (!(dev->external_grant_mask & (uint8_t)bit) || !dev->completion_handler_bound ||
         !(dev->owned_amc_mask & (uint8_t)bit) || ledger->epoch != epoch || !ledger->irq_bound ||
@@ -82,7 +82,7 @@ rpmh_tcs_result_t rpmh_tcs_arm_deferred(rpmh_tcs_t* dev, rsc_completion_t* ledge
         result = TCS_BUSY;
         goto done;
     }
-    /* the physical eligibility snapshot belongs to the SAME OEM command mutex interval as the
+    /* the physical eligibility snapshot belongs to the same OEM command mutex interval as the
      * ISR and publication. WDF connect/disconnect must synchronize their state changes through
      * the same owner mutex. */
 
@@ -98,7 +98,7 @@ rpmh_tcs_result_t rpmh_tcs_arm_deferred(rpmh_tcs_t* dev, rsc_completion_t* ledge
         goto done;
     }
     irq_locked = 1;
-    /* native owner and ticket must still match AFTER lock acquisition. */
+    /* native owner and ticket must still match after lock acquisition. */
 
     if (!(dev->external_grant_mask & (uint8_t)bit) || !(dev->owned_amc_mask & (uint8_t)bit) ||
         !dev->completion_handler_bound || !dev->dpc_consumes_completion || ledger->epoch != epoch ||
@@ -120,7 +120,7 @@ rpmh_tcs_result_t rpmh_tcs_arm_deferred(rpmh_tcs_t* dev, rsc_completion_t* ledge
         goto done;
     if (!(status & TCS_STATUS_IDLE) ||
         (control & (TCS_CONTROL_AMC_MODE_EN | TCS_CONTROL_AMC_TRIGGER)) || (irq & bit)) {
-        /* an IRQ belongs to the current deferred worker; this producer MUST NOT write
+        /* an IRQ belongs to the current deferred worker; this producer must not write
          * TCS_IRQ_CLEAR or race the other consumer. */
 
         dev->last_arm_busy_reason[slot] = AMC_BUSY_HARDWARE_STATE;
@@ -175,8 +175,8 @@ rpmh_tcs_result_t rpmh_tcs_arm_deferred(rpmh_tcs_t* dev, rsc_completion_t* ledge
         result = TCS_NO_OWNERSHIP;
         goto done;
     }
-    /* acquire a final physical eligibility snapshot AFTER the command-image verification but
-     * BEFORE the ledger is published. An unexpected controller/IRQ transition at this point
+    /* acquire a final physical eligibility snapshot after the command-image verification but
+     * before the ledger is published. An unexpected controller/IRQ transition at this point
      * must not result in a trigger for an unserviceable request. */
 
     {
@@ -344,7 +344,7 @@ rpmh_tcs_result_t rpmh_tcs_finish_deferred(rpmh_tcs_t* dev, rsc_completion_t* le
         goto done;
     }
     if (irq_result == RSC_IRQ_IO_ERROR) {
-        /* an uncertain W1C outcome is recoverable only through the SAME worker's sticky
+        /* an uncertain W1C outcome is recoverable only through the same worker's sticky
          * ack_attempted latch and immutable owner epoch. */
 
         result = TCS_IO_FAILURE;
@@ -352,7 +352,7 @@ rpmh_tcs_result_t rpmh_tcs_finish_deferred(rpmh_tcs_t* dev, rsc_completion_t* le
     }
     if (irq_result != RSC_IRQ_COMPLETED)
         goto fault;
-    /* a failed cleanup must NOT publish responses or permit a new transaction. */
+    /* a failed cleanup must not publish responses or permit a new transaction. */
 
     if (!io->read32(io->ctx, TCS_CONTROL(slot), &control))
         goto fault;

@@ -1,9 +1,6 @@
 #ifndef OEM_TCS_BATCH_ASYNC_H
 #define OEM_TCS_BATCH_ASYNC_H
-/* complements single-write provider; neither is boot activated. Caller serializes ALL
- * methods and callbacks under the SAME completion lock used by and ; callbacks must not
- * reenter. neither establishes ownership, maps registers, clears IRQ W1C, polls for
- * completion, nor notifies clients. */
+/* serialize batch and ACK callbacks under the completion lock; callbacks must not re-enter. */
 
 #include <stdint.h>
 #include "rpmh_tcs.h"
@@ -69,14 +66,14 @@ int oem_tcs_batch_submit(void*, uint8_t slot, uint64_t token, uint32_t req_id, u
                          uint8_t is_read);
 
 int oem_tcs_batch_validate_finished(oem_tcs_batch_t*, uint8_t slot, uint64_t token);
-/* called ONLY from complete_inflight after W1C status readback succeeded. */
+/* called only from complete_inflight after W1C status readback succeeded. */
 
 int oem_tcs_batch_commit_ack(oem_tcs_batch_t*, uint8_t slot, uint64_t token);
 /* the caller delivers completions to the client outside this module. */
 
 int oem_tcs_batch_copy_results(oem_tcs_batch_t*, uint8_t slot, uint64_t token,
                                oem_tcs_batch_result_t* out, uint32_t capacity, uint32_t* cnt);
-/* after 's successful client notify. */
+/* retire only after successful client notification. */
 
 int oem_tcs_batch_retire(oem_tcs_batch_t*, uint8_t slot, uint64_t token);
 void oem_tcs_batch_close(oem_tcs_batch_t*);

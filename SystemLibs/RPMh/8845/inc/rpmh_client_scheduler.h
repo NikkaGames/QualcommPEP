@@ -1,6 +1,6 @@
 #ifndef RPMH_CLIENT_SCHEDULER_H
 #define RPMH_CLIENT_SCHEDULER_H
-/* molokai RPMh software client/command-queue boundary. This code does NOT establish HLOS
+/* molokai RPMh software client/command-queue boundary. this code does not establish HLOS
  * ownership, map registers, install ISR/DPC, or grant direct TCS access. */
 
 #include "rpmh_tcs.h"
@@ -66,8 +66,8 @@ typedef rpmh_tcs_result_t (*rpmh_execute_result_t)(void* ctx, uint8_t slot,
                                                    const tcs_command_t* commands, uint32_t cnt,
                                                    uint32_t* responses);
 
-/* split-phase transport: accepting an AMC trigger is NOT physical completion. The callback
- * must arm 's immutable RSC completion ledger BEFORE its hardware trigger. */
+/* arm the immutable completion ticket before triggering hardware.
+ * trigger acceptance does not establish physical completion. */
 
 typedef rpmh_tcs_result_t (*rpmh_arm_deferred_t)(void* ctx, uint64_t owner_epoch, uint32_t req_id,
                                                  uint8_t slot, const tcs_command_t* commands,
@@ -83,7 +83,7 @@ typedef struct rpmh_scheduler {
     uint8_t quarantined_mask;
     uint8_t execution_authorized; /* set only by a separately validated owner. */
     /* the production deferred owner uses the same no-write BUSY FIFO semantics as the OEM
-     * queue. These are SOFTWARE ADMISSION flags, never evidence of hardware ownership or
+     * queue. these are SOFTWARE ADMISSION flags, never evidence of hardware ownership or
      * completed transactions. */
     uint8_t preserve_busy_fifo;
     uint8_t admission_paused;
@@ -113,7 +113,7 @@ int rpmh_scheduler_init_deferred(rpmh_scheduler_t* s, const rpmh_driver_config_t
 int rpmh_scheduler_authorize_deferred(rpmh_scheduler_t* s, uint64_t verified_owner_epoch,
                                       uint8_t granted_active_amcs);
 /* failed, stale and duplicate completions cannot unlock or overwrite a different AMC.
- * Still valid after dispatch revoke for the SAME owner epoch, until hardware rundown
+ * Still valid after dispatch revoke for the same owner epoch, until hardware rundown
  * retires this ticket. */
 
 int rpmh_scheduler_finish_deferred(rpmh_scheduler_t* s, uint64_t owner_epoch, uint8_t slot,
@@ -127,12 +127,12 @@ int rpmh_scheduler_add_client(rpmh_scheduler_t* s, const char* name, uint8_t exp
 int rpmh_scheduler_authorize(rpmh_scheduler_t* s, uint8_t verified, uint8_t owned_amcs);
 int rpmh_scheduler_submit(rpmh_scheduler_t* s, uint8_t client, rpmh_set_t set,
                           const tcs_command_t* commands, uint32_t cnt, uint32_t* out_req);
-/* run bounded active work using an EXISTING synchronous TCS transport. This never issues
+/* run bounded active work using an EXISTING synchronous TCS transport. this never issues
  * sleep/wake hardware writes and never runs without grant. */
 
 uint32_t rpmh_scheduler_pump(rpmh_scheduler_t* s);
 /* owner-lock-required quiescence: pause refuses new ACTIVE submissions and dispatch but
- * does NOT cancel already issued/acknowledging AMC tickets. */
+ * does not cancel already issued/acknowledging AMC tickets. */
 int rpmh_scheduler_pause_deferred(rpmh_scheduler_t* s, uint64_t epoch);
 int rpmh_scheduler_resume_deferred(rpmh_scheduler_t* s, uint64_t epoch);
 

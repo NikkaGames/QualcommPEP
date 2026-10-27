@@ -11,8 +11,7 @@ typedef enum gcc_commit_result {
     GCC_COMMIT_OK = 1 /* hardware register readback verified. */
 } gcc_commit_result_t;
 
-/* stage numbers identify the last attempted operation, and write_started distinguishes a
- * declined preflight from uncertain hardware after a possible mutation. */
+/* record the last attempted operation and whether a write may have started. */
 
 typedef struct gcc_commit_diag {
     uint32_t stage;
@@ -21,7 +20,7 @@ typedef struct gcc_commit_diag {
     gcc_state_t before1, before2, after1, after2;
 } gcc_commit_diag_t;
 
-/* clock_EnableClockEx: subsequent clients share the first physical enable. This read-only
+/* clock_EnableClockEx: subsequent clients share the first physical enable. this read-only
  * operation re-attests the existing client vote without making a redundant GCC write. */
 
 gcc_commit_result_t gcc_verify_retained_vote(const gcc_io_t* io, const gcc_clock_t* clock,

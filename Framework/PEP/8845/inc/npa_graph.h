@@ -16,8 +16,7 @@ typedef struct npa_req_ops {
     int (*supports_pair)(void*, const npa_key_t*, void*, const npa_key_t*, void*,
                          const power_action_t*);
     int (*read_pair)(void*, const npa_key_t*, void*, const npa_key_t*, void*, power_snapshot_t*);
-    /* SC8480 npa_issue_scalar_request at RVA 0x231BA8 returns void. Establish owner, completion and
-     * effective readback independently before reporting success. */
+    /* scalar issue has no return status; verify ownership, completion and effective state. */
 
     int (*issue_pair)(void*, const npa_key_t*, void*, const npa_key_t*, void*,
                       const power_action_t*);

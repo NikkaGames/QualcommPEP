@@ -1,7 +1,6 @@
 #ifndef ICB_BUS_H
 #define ICB_BUS_H
-/* /100: Molokai interconnect (ICB) bandwidth owner - portable core. LATENCY
- * AxiCfgInt_SetLatency: an encoded latency this PEP never requests. */
+/* Molokai interconnect aggregation and BCM encoding; latency requests are unsupported. */
 
 #include <stdint.h>
 #include <stddef.h>
@@ -109,7 +108,7 @@ int icb_set_client_vote(icb_bus_t* bus, const char* dev_path, const char* master
 int icb_get_client_vote(const icb_bus_t* bus, const char* dev_path, const char* master_symbol,
                         const char* slave_symbol, uint64_t* ab, uint64_t* ib);
 
-/* commands for the BCMs of a route, from the aggregate of ALL recorded client votes. */
+/* commands for the BCMs of a route, from the aggregate of all recorded client votes. */
 
 int icb_route_commands(const icb_bus_t* bus, const char* master_symbol, const char* slave_symbol,
                        icb_command_t* out, uint32_t capacity, uint32_t* cnt);

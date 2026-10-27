@@ -363,7 +363,7 @@ NTSTATUS evt_dev_prepare_hardware(_In_ WDFDEVICE dev, _In_ WDFCMRESLIST resource
                  * raw+translated lists. The legacy owner_epoch field contains only this PnP
                  * generation, NEVER TCS rights. */
 
-                rpmh_oem_pnp_req_t oem_req = {RPMH_OEM_8480_DRIVER_ID, RPMH_OEM_8480_INTID,
+                rpmh_oem_pnp_req_t oem_req = {RPMH_HLOS_DRIVER_ID, RPMH_HLOS_INTID,
                                               res_ctx->rpmh_oem_pnp_observation.generation};
                 rpmh_pnp_resources_t matched_resources = {0};
                 NTSTATUS oem_status = rpmh_match_windows_interrupts(
@@ -430,8 +430,8 @@ NTSTATUS evt_dev_prepare_hardware(_In_ WDFDEVICE dev, _In_ WDFCMRESLIST resource
              * exclusive GICD mask control. This check alone grants NO controller/AMC ownership. */
 
             rpmh_has_exclusive_irq37_resource(&matched_resources, generation) &&
-            matched_resources.matches[0].driver_id == RPMH_OEM_8480_DRIVER_ID &&
-            matched_resources.matches[0].gic_intid == RPMH_OEM_8480_INTID &&
+            matched_resources.matches[0].driver_id == RPMH_HLOS_DRIVER_ID &&
+            matched_resources.matches[0].gic_intid == RPMH_HLOS_INTID &&
             matched_resources.matches[0].res_idx < WdfCmResourceListGetCount(resources_raw) &&
             matched_resources.matches[0].res_idx <
                 WdfCmResourceListGetCount(resources_translated)) {
@@ -443,8 +443,8 @@ NTSTATUS evt_dev_prepare_hardware(_In_ WDFDEVICE dev, _In_ WDFCMRESLIST resource
             translated = WdfCmResourceListGetDescriptor(resources_translated,
                                                         matched_resources.matches[0].res_idx);
             if (raw && translated) {
-                req.driver_id = RPMH_OEM_8480_DRIVER_ID;
-                req.gic_intid = RPMH_OEM_8480_INTID;
+                req.driver_id = RPMH_HLOS_DRIVER_ID;
+                req.gic_intid = RPMH_HLOS_INTID;
                 req.interrupt_raw = raw;
                 req.interrupt_translated = translated;
                 /* owner_epoch and amc_work_item intentionally zero: neither an authenticated owner
@@ -533,8 +533,7 @@ NTSTATUS evt_dev_release_hardware(_In_ WDFDEVICE dev, _In_ WDFCMRESLIST resource
      * or mapped controller can still be referenced by a failed teardown. A STATUS_DEVICE_BUSY
      * return must preserve recovery evidence, not zero it preemptively. */
 
-    /* this is the inert PnP child; no hardware callback/AMC can be bound to it in this stage.
-     * An eventual owner must synchronously drain worker/ISR/DPC work before this point. */
+    /* the PnP child remains inert; drain owner work before deleting it. */
 
     if (ctx && ctx->rpmh_observed_wdf_interrupt) {
         /* retain the bridge while an issued AMC ticket can still complete through its accepted
@@ -857,8 +856,8 @@ NTSTATUS evt_dev_d0_entry(_In_ WDFDEVICE dev, _In_ WDF_POWER_DEVICE_STATE previo
                                               ctx->rpmh_observed_pnp_generation,
                                               &matched_resources) &&
                 matched_resources.cnt == 1u &&
-                matched_resources.matches[0].driver_id == RPMH_OEM_8480_DRIVER_ID &&
-                matched_resources.matches[0].gic_intid == RPMH_OEM_8480_INTID &&
+                matched_resources.matches[0].driver_id == RPMH_HLOS_DRIVER_ID &&
+                matched_resources.matches[0].gic_intid == RPMH_HLOS_INTID &&
                 KeGetCurrentIrql() == PASSIVE_LEVEL) {
                 if (rsc_read_only_identify_hlos_win(&ctx->rpmh_rsc_identity)) {
                     ctx->rpmh_identity_pnp_generation = ctx->rpmh_observed_pnp_generation;

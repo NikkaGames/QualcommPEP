@@ -1,6 +1,6 @@
 #ifndef OEM_RSC_READBACK_H
 #define OEM_RSC_READBACK_H
-/* not hardware-ownership detection or a dispatch grant. The host holds the SAME
+/* not hardware-ownership detection or a dispatch grant. the host holds the same
  * PASSIVE_LEVEL nonrecursive lifecycle lock used for map, d0 lease, quiescence, borrow and
  * release operations. */
 

@@ -1,7 +1,7 @@
 #ifndef RPMH_DEFERRED_SCHEDULER_H
 #define RPMH_DEFERRED_SCHEDULER_H
 /* production binding between the software RPMh client scheduler and the
- * TCS/immutable-IRQ-ticket issuer. The owner supplies externally synchronized ISR/DPC and
+ * TCS/immutable-IRQ-ticket issuer. the owner supplies externally synchronized ISR/DPC and
  * PnP lifetime; grants no RSC rights. */
 
 #include "rpmh_client_scheduler.h"
@@ -40,7 +40,7 @@ int rpmh_deferred_scheduler_bind_owner(rpmh_deferred_scheduler_t* binding,
                                        const rpmh_driver_config_t* geometry,
                                        uint64_t independently_established_win_owner_epoch,
                                        uint32_t independently_established_ledger_epoch);
-/* owner-only *post-hardware-rundown* d0 transition. The caller must already stop PoFx
+/* owner-only *post-hardware-rundown* d0 transition. the caller must already stop PoFx
  * requests, synchronize WDF ISR/DPC/worker, retire exact AMC ACKs, and restore physically
  * owned TCS IRQ enable bits. */
 
@@ -49,7 +49,7 @@ int rpmh_deferred_scheduler_retire_owner(rpmh_deferred_scheduler_t* binding,
                                          uint32_t ledger_epoch);
 
 /* read-only admission predicate used by the actual Windows d0 hardware probe. A scheduler
- * promoted in place MUST NOT be reauthorized using the incompatible synchronous
+ * promoted in place must not be reauthorized using the incompatible synchronous
  * authorize/prepare path. */
 
 int rpmh_deferred_probe_ready(const rpmh_deferred_scheduler_t* binding,
@@ -58,7 +58,7 @@ int rpmh_deferred_probe_ready(const rpmh_deferred_scheduler_t* binding,
 int rpmh_deferred_runtime_ready(const rpmh_deferred_scheduler_t* binding,
                                 const rpmh_sync_deferred_t* waiter);
 
-/* one WDF worker must own the exact ISR-latched ticket. The hardware response is published
+/* one WDF worker must own the exact ISR-latched ticket. the hardware response is published
  * only after ACK and AMC cleanup succeed. */
 
 rpmh_tcs_result_t rpmh_deferred_scheduler_finish(rpmh_deferred_scheduler_t* binding,

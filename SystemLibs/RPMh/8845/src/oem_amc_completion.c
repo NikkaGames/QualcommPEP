@@ -57,7 +57,7 @@ int oem_amc_finish_one(void* opaque)
         return 0;
     if (c->ack_state == AMC_ACK_CONFIRMED) {
         bit = (uint8_t)(1u << c->latched_slot);
-        /* even an attempted recovery must NEVER write W1C for this slot again without a fresh
+        /* even an attempted recovery must never write W1C for this slot again without a fresh
          * verified transaction. */
 
         if (!c->latched_token || !(c->active_inflight_mask & bit) ||
@@ -85,7 +85,7 @@ int oem_amc_finish_one(void* opaque)
         }
         c->latched_slot = slot;
         c->latched_token = token;
-        /* set UNKNOWN BEFORE write: a failed write may already have taken effect and the same W1C
+        /* set UNKNOWN before write: a failed write may already have taken effect and the same W1C
          * must not be retried blindly. */
 
         c->ack_state = AMC_ACK_OUTCOME_UNKNOWN;

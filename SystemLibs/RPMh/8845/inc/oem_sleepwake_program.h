@@ -17,8 +17,8 @@ typedef struct oem_sleepwake_program_ops {
     int (*read32)(void*, uint32_t offset, uint32_t* out);
     int (*write32)(void*, uint32_t offset, uint32_t value);
     void (*barrier)(void*);
-    /* this callback MUST come from an independent, trusted firmware/OS integration and MUST
-     * prove the non-AMC image can be released AFTER confirmed resume. Software readbacks
+    /* this callback must come from an independent, trusted firmware/OS integration and must
+     * prove the non-AMC image can be released after confirmed resume. Software readbacks
      * cannot prove that firmware used it. */
 
     int (*firmware_released)(void*, uint32_t epoch, uint64_t token);
@@ -45,7 +45,7 @@ typedef struct oem_sleepwake_program {
 
 int oem_sleep_wake_program_init(oem_sleepwake_program_t*, oem_sleepwake_bridge_t*,
                                 const oem_sleepwake_program_ops_t*);
-/* precheck all nonempty TCSs BEFORE any writes. image must be armed; each slot must be
+/* precheck all nonempty TCSs before any writes. image must be armed; each slot must be
  * independently owned, idle, in NON-AMC mode and unused. */
 
 int oem_sleep_wake_program_attach_dependencies(oem_sleepwake_program_t*,

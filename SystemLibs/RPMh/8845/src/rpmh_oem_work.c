@@ -96,7 +96,7 @@ int rpmh_work_on_worker(rpmh_oem_work_t* w, uint64_t epoch)
             int r = w->ops.finish_one_amc(w->ops.ctx);
             if (r == 2) {
                 /* a latched IRQ may need to repeat W1C readback or wait for individual command
-                 * completion. Only this SAME ticket may retry; the owner keeps its src masked
+                 * completion. only this same ticket may retry; the owner keeps its src masked
                  * throughout. */
 
                 if (w->ack_retry_cnt >= RPMH_WORK_ACK_RETRY_MAX)
@@ -129,7 +129,7 @@ int rpmh_work_on_worker(rpmh_oem_work_t* w, uint64_t epoch)
     } else if (completed) {
         w->ack_retry_cnt = 0;
         if (w->defer_unmask) {
-            /* never unmask a WDF IRQ with its old immutable admission ticket still active. The
+            /* never unmask a WDF IRQ with its old immutable admission ticket still active. the
              * scheduler must retire it first. */
 
             w->state = RPMH_WORK_COMPLETION_READY;

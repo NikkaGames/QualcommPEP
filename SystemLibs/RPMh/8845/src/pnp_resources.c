@@ -25,7 +25,7 @@ int rpmh_match_pnp_resources(const rsc_irq_pair_t* pairs, uint32_t pair_cnt,
             const rsc_irq_pair_t* p = &pairs[j];
             uint32_t k;
             /* a raw INTID alone is not a usable Windows res: its translated desc must be the same
-             * (non-MSI) interrupt with a valid vector, IRQL, trigger and sharing policy. Never
+             * (non-MSI) interrupt with a valid vector, IRQL, trigger and sharing policy. never
              * accept edge-triggered IRQ37. */
 
             if (!p->raw_is_interrupt || p->raw_vector != r->gic_intid)
@@ -36,7 +36,7 @@ int rpmh_match_pnp_resources(const rsc_irq_pair_t* pairs, uint32_t pair_cnt,
                 p->raw_share_disposition != p->translated_share_disposition)
                 return 0;
             /* otherwise two device interrupts could be attributed to one Windows vector in a
-             * supposedly unique sequence. This is diagnostic safety, never permission to bind an
+             * supposedly unique sequence. this is diagnostic safety, never permission to bind an
              * ISR.
              */
 
@@ -74,7 +74,7 @@ int rpmh_match_pnp_resources(const rsc_irq_pair_t* pairs, uint32_t pair_cnt,
     return 1;
 }
 
-/* per-PnP-generation identification observation. The actual owner credential is
+/* per-PnP-generation identification observation. the actual owner credential is
  * intentionally absent from this entire interface. */
 
 void rpmh_oem_pnp_observation_init(rpmh_oem_pnp_observation_t* o)
@@ -103,12 +103,12 @@ int rpmh_oem_pnp_observation_capture(rpmh_oem_pnp_observation_t* o,
     const rpmh_oem_pnp_match_t* m;
     if (!o || !resources || !irq || !generation || o->generation != generation ||
         resources->cnt != 1u || irq->finding != RSC_IRQ_UNIQUE_RAW_CANDIDATE ||
-        irq->matching_raw_pairs != 1u || irq->raw_vector != RPMH_OEM_8480_INTID ||
-        !irq->win_vector || !irq->win_level)
+        irq->matching_raw_pairs != 1u || irq->raw_vector != RPMH_HLOS_INTID || !irq->win_vector ||
+        !irq->win_level)
         return 0;
     m = &resources->matches[0];
-    if (m->driver_id != RPMH_OEM_8480_DRIVER_ID || m->gic_intid != RPMH_OEM_8480_INTID ||
-        m->owner_epoch != generation || /* pnp generation, NOT hardware ownership. */
+    if (m->driver_id != RPMH_HLOS_DRIVER_ID || m->gic_intid != RPMH_HLOS_INTID ||
+        m->owner_epoch != generation || /* pnp generation, not hardware ownership. */
         m->res_idx != irq->candidate_idx || m->win_vector != irq->win_vector ||
         m->win_level != irq->win_level || m->raw_flags != irq->raw_flags ||
         m->translated_flags != irq->translated_flags ||
@@ -131,8 +131,8 @@ int rpmh_oem_pnp_observation_read(const rpmh_oem_pnp_observation_t* o, uint64_t 
     return 1;
 }
 
-/* runtime GICD write ownership requires the device-exclusive share disposition at BOTH
- * desc ends, from the same pinned PnP generation. The distinct DRV2/TCS proof is still
+/* runtime GICD write ownership requires the device-exclusive share disposition at both
+ * desc ends, from the same pinned PnP generation. the distinct DRV2/TCS proof is still
  * required. */
 
 int rpmh_has_exclusive_irq37_resource(const rpmh_pnp_resources_t* resources,
@@ -142,7 +142,7 @@ int rpmh_has_exclusive_irq37_resource(const rpmh_pnp_resources_t* resources,
     if (!resources || !pnp_generation || resources->cnt != 1u)
         return 0;
     m = &resources->matches[0];
-    return m->driver_id == RPMH_OEM_8480_DRIVER_ID && m->gic_intid == RPMH_OEM_8480_INTID &&
+    return m->driver_id == RPMH_HLOS_DRIVER_ID && m->gic_intid == RPMH_HLOS_INTID &&
            m->owner_epoch == pnp_generation && m->win_vector != 0u && m->win_level != 0u &&
            !(m->raw_flags & 1u) && !(m->translated_flags & 1u) && m->raw_share_disposition == 1u &&
            m->translated_share_disposition == 1u;

@@ -46,7 +46,7 @@ int oem_d0_lease_prepare(oem_pnp_d0_lease_t* l, const rpmh_oem_pnp_observation_t
         !rpmh_oem_pnp_observation_read(obs, generation, &p) || p.cnt != 1)
         return 0;
     m = &p.matches[0];
-    if (m->driver_id != RPMH_OEM_8480_DRIVER_ID || m->gic_intid != RPMH_OEM_8480_INTID ||
+    if (m->driver_id != RPMH_HLOS_DRIVER_ID || m->gic_intid != RPMH_HLOS_INTID ||
         m->owner_epoch != generation || !m->win_vector || !m->win_level || (m->raw_flags & 1u) ||
         (m->translated_flags & 1u))
         return 0;

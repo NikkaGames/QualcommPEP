@@ -2,7 +2,7 @@
 #define RPMH_OEM_READ_SEQUENCE_H
 /* boot.MXF Qualcomm RpmhLib rpmh_cmdq_send_read(): one READ per AMC, dependency_bmsk=0. An
  * active read is completed before the next read is issued, matching the OEM in-flight READ
- * limitation. This is a client-side serialization policy, NOT a substitute completion,
+ * limitation. this is a client-side serialization policy, not a substitute completion,
  * owner grant or retry. */
 #include "rpmh_tcs.h"
 
@@ -29,7 +29,7 @@ static inline rpmh_tcs_result_t rpmh_read_sequence(void* ctx, rpmh_read_one_t su
             return TCS_INVALID;
     for (i = 0u; i < cnt; ++i) {
         uint32_t value = 0u;
-        /* count=1 selects the OEM's zero dependency mask. The caller's existing synchronous
+        /* count=1 selects the OEM's zero dependency mask. the caller's existing synchronous
          * transport confirms the exact IRQ/ACK and final IRQ restore before returning TCS_OK. */
         status = submit(ctx, client, &commands[i], 1u, &value);
         if (status != TCS_OK)

@@ -86,8 +86,7 @@ const ppp_res_t* lookup_ppp_name(const char* n)
 const gdsc_res_t gdscs[] = {
     {"gcc_ufs_phy_gdsc", 0x0B76D452u, 0x67004u, GDSC_RAIL_CX | GDSC_RAIL_MX}};
 const unsigned int gdsc_cnt = (unsigned int)(sizeof(gdscs) / sizeof(gdscs[0]));
-/* source: the original 8480 driver's own string table (src/RSC/symbol_tokens.inc), which
- * carries exactly these "/arc/client/rail_*" clients. */
+/* reviewed ARC client resource paths; provenance is recorded in the source map. */
 
 const npa_res_t npa_resources[] = {
     {"/arc/client/rail_cx", 1u},    {"/arc/client/rail_gx", 1u},   {"/arc/client/rail_lpicx", 1u},

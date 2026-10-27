@@ -304,7 +304,7 @@ int rail_program(const rail_owner_t* owner, uint32_t rail_idx, const rail_vote_t
         if (aggregate->microvolts == 0u)
             return 0;
 
-        /* match the native VRM batch: enable, voltage, mode. The complete command set is staged
+        /* match the native VRM batch: enable, voltage, mode. the complete command set is staged
          * before its single AMC trigger. */
         out[n].address = r->address + VRM_ENABLE_OFFSET;
         out[n].data = 1u;

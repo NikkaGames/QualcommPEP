@@ -13,7 +13,7 @@ typedef struct rpmh_sync_wait_io {
     void (*leave_cb)(void*);
     void (*reset)(void*);               /* manual-reset event; lock held. */
     void (*signal)(void*);              /* completion event; lock held. */
-    int (*wait_ms)(void*, uint32_t ms); /* lock NOT held. */
+    int (*wait_ms)(void*, uint32_t ms); /* lock not held. */
     /* optional native WDF producer, invoked once after an issued timeout has been pinned and
      * after leave_cb. Does not own the original request. */
     int (*queue_timeout_review)(void*, uint64_t epoch, uint32_t req);
@@ -43,8 +43,8 @@ int rpmh_sync_deferred_bind(rpmh_sync_deferred_t* b, rpmh_scheduler_t* scheduler
  * worker verified failure. NONE authorizes release or replay. */
 int rpmh_sync_deferred_timeout_inspect(const rpmh_sync_deferred_t* waiter, uint64_t owner_epoch,
                                        uint32_t req_id, rpmh_tcs_result_t* verified_result);
-/* called by the true passive AMC owner only AFTER verified GIC unmask and the final
- * IRQ-gate ticket retirement. Caller holds the waiter mutex. */
+/* called by the true passive AMC owner only after verified GIC unmask and the final
+ * IRQ-gate ticket retirement. caller holds the waiter mutex. */
 int rpmh_sync_deferred_finalized(rpmh_sync_deferred_t* waiter, uint64_t epoch);
 int rpmh_sync_deferred_can_retire(const rpmh_sync_deferred_t* waiter,
                                   const rpmh_scheduler_t* scheduler, uint64_t owner_epoch);

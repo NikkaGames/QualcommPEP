@@ -1,6 +1,6 @@
 #ifndef RPMH_AMC_DRAIN_H
 #define RPMH_AMC_DRAIN_H
-/* these callbacks perform RSC IRQ capture and W1C/cleanup on the EXACT previously
+/* these callbacks perform RSC IRQ capture and W1C/cleanup on the exact previously
  * triggered TCS ticket. They do not attach an IRQ or confer an MMIO/GIC/DRV2 grant. */
 
 #include "rpmh_deferred_scheduler.h"

@@ -13,15 +13,14 @@ extern "C" {
 
 typedef struct molokai_gdsc_location {
     const char* domain;
-    uint32_t legacy8480_clock_id;
+    uint32_t native_clock_id;
     uint64_t controller_physical;
     uint32_t controller_bytes;
     uint32_t gdscr_offset;
     uint64_t gdscr_physical;
 } molokai_gdsc_location_t;
 
-/* only address-verified resources appear here. Other SC8480 BSP entries are NOT assumed to
- * have correct physical address mapping on Molokai. */
+/* map only address-verified domains; reference BSP addresses require Molokai validation. */
 
 int molokai_gdsc_location(const char* domain, molokai_gdsc_location_t* out);
 #ifdef __cplusplus

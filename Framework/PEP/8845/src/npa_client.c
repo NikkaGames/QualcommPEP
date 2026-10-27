@@ -29,7 +29,7 @@ static int key_strings_terminated(const npa_key_t* key)
            terminated(key->res, sizeof(key->res)) && terminated(key->slave, sizeof(key->slave));
 }
 
-/* original SC8280 GetNpaClientHandle (RVA 0x1E448) compares NPA res names with _stricmp. */
+/* compare NPA resource names without case. */
 
 static int same_res(const char* a, const char* b)
 {
@@ -67,9 +67,8 @@ static int is_npa(power_action_kind_t kind)
     return kind == POWER_CLOCK || kind == POWER_ICB || kind == POWER_PMIC_REGULATOR;
 }
 
-/* the original SC8280 GetBusClient passes two 32-bit NUMERIC endpoints, not strings, to
- * npa_create_sync_client_ex. The Windows 8480 RSC driver and client type must still be
- * independently reverse-engineered before calling live Qualcomm NPA. */
+/* bus client references contain two numeric endpoints; driver ID and client type need separate
+ * binding. */
 
 static int resolve_icb_endpoint(const char* symbol, int is_master, uint32_t* id)
 {

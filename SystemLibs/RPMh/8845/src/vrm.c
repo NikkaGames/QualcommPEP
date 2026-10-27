@@ -143,7 +143,7 @@ rpmh_tcs_result_t vrm_submit_known_program(rpmh_tcs_t* transport, uint8_t active
 }
 
 /* the caller must separately prove that this snapshot belongs to the current firmware and
- * that it owns the RSC/TCS and regulator client. Success here is an acknowledgement of
+ * that it owns the RSC/TCS and regulator client. success here is an acknowledgement of
  * only the RPMh commands, not of any PoFx device transition or voltage readback. */
 
 rpmh_tcs_result_t vrm_submit_from_cmd_db(rpmh_tcs_t* transport, uint8_t active_tcs,

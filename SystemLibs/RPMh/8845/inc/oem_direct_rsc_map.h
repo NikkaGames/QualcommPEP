@@ -1,6 +1,6 @@
 #ifndef OEM_DIRECT_RSC_MAP_H
 #define OEM_DIRECT_RSC_MAP_H
-/* a transport/lifetime primitive, NOT hardware ownership. calls must be serialized by a
+/* a transport/lifetime primitive, not hardware ownership. calls must be serialized by a
  * PASSIVE_LEVEL, nonrecursive host lock; the owner callback must be independent of the PnP
  * census, mapping or register readback. */
 
@@ -48,7 +48,7 @@ int oem_direct_rsc_map_acquire(oem_direct_rsc_map_t*, const oem_rsc_map_io_t*,
 void* oem_direct_rsc_map_borrow(oem_direct_rsc_map_t*, uint64_t owner_epoch);
 int oem_direct_rsc_map_return(oem_direct_rsc_map_t*, uint64_t owner_epoch, void* mapped);
 void oem_direct_rsc_map_close(oem_direct_rsc_map_t*);
-/* may unmap after verified drain even if the owner lease was revoked. MUST be called at
+/* may unmap after verified drain even if the owner lease was revoked. must be called at
  * PASSIVE_LEVEL only; failure keeps the map quarantined. */
 
 int oem_direct_rsc_map_release(oem_direct_rsc_map_t*);

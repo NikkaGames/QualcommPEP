@@ -99,7 +99,7 @@ int clock_composite_bind(clock_composite_t* c, scalar_res_t* en, scalar_res_t* h
            hz->aggregate_mode == SCALAR_AGGREGATE_MAX) ||
           (en->aggregate_mode == SCALAR_AGGREGATE_CLOCK_ENABLE &&
            hz->aggregate_mode == SCALAR_AGGREGATE_CLOCK_FREQ)) ||
-        /* the NPA enable+hz pair is one physical clock. Never mix a per-client native writer with
+        /* the NPA enable+hz pair is one physical clock. never mix a per-client native writer with
          * a legacy aggregate writer, nor bind two native clients from different controller
          * generations. */
 
@@ -165,7 +165,7 @@ fail:
 
 static int recover(clock_composite_t* c, const clock_composite_snapshot_t* old)
 {
-    /* failure MUST NOT be silently committed. */
+    /* failure must not be silently committed. */
 
     if (!clock_composite_restore(c, old)) {
         if (c->enable)
@@ -179,11 +179,10 @@ static int recover(clock_composite_t* c, const clock_composite_snapshot_t* old)
 int clock_composite_issue(clock_composite_t* c, const power_action_t* a,
                           clock_composite_snapshot_t* old)
 {
-    clock_action8480_t decoded;
+    clock_opcode_t decoded;
     clock_composite_snapshot_t verify;
-    if (!old || !decode_clock_opcode8480(a, &decoded) ||
-        decoded.kind != CLOCK8480_ENABLE_SET_FREQ || decoded.parameter0 == 0u || !c ||
-        !action_matches_clock(a, c->freq) || !snapshot(c, old))
+    if (!old || !decode_clock_opcode(a, &decoded) || decoded.kind != CLOCK_OP_ENABLE_SET_FREQ ||
+        decoded.parameter0 == 0u || !c || !action_matches_clock(a, c->freq) || !snapshot(c, old))
         return 0;
     /* this is still a mock scalar-core path; no Windows provider or hardware completion is
      * implied. */

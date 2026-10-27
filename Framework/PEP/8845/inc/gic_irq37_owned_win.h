@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 #define GICD_ICENABLER1 0x184u
-/* diagnostic stage; 0 only after verified success. */
+/* failure phase; zero after verified success. */
 #define GIC_WRITE_OK 0u
 #define GIC_WRITE_BAD_INPUT 1u
 #define GIC_WRITE_OWNER_PRE 2u

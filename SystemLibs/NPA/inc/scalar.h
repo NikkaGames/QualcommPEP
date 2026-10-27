@@ -36,12 +36,12 @@ typedef struct scalar_io {
 
     int (*allows_vote)(void*, const char*, uint32_t);
     /* optional independent proof that a nonzero boot-time hardware state belongs to this owner
-     * AND is an intentionally retained baseline vote. This callback must fail when
+     * AND is an intentionally retained baseline vote. this callback must fail when
      * Windows/firmware clients outside this owner may vote. */
 
     int (*attests_boot_baseline)(void*, const char*, uint32_t);
-    /* native NPA ONLY: authoritative stable generation of the Windows res owner, observed
-     * under that provider's synchronization. A nonzero res identity must be pinned BEFORE
+    /* native NPA only: authoritative stable generation of the Windows res owner, observed
+     * under that provider's synchronization. A nonzero res identity must be pinned before
      * client creation. */
 
     int (*read_owner_epoch)(void*, const char*, uint64_t*);
@@ -92,12 +92,12 @@ typedef struct scalar_handle {
 } scalar_handle_t;
 
 /* callers must zero-initialize the res before its first Attach and serialize all
- * operations with a stable nonrecursive external lock. begin ONLY at verified hardware
+ * operations with a stable nonrecursive external lock. begin only at verified hardware
  * state zero with exclusive owner. */
 
 int scalar_attach(scalar_res_t*, const char*, const scalar_io_t*);
 int scalar_create(scalar_res_t*, scalar_handle_t*);
-/* explicit SC8480 client-class creation. */
+/* create an explicitly typed native clock client. */
 
 int scalar_create_typed(scalar_res_t*, uint32_t client_type, scalar_handle_t*);
 /* not a Windows NPA provider. Enables a signed-binary-verified aggregation policy only on
@@ -110,14 +110,11 @@ int scalar_attach_native_clock(scalar_res_t*, const char*, const scalar_io_t*,
 
 int scalar_attach_native_clock_client_transport(scalar_res_t*, const char*, const scalar_io_t*,
                                                 uint32_t aggregate_mode);
-/* a nonzero boot-time baseline must be explicitly attested by the hardware owner:
- * exclusive Windows ownership, legitimate vote provenance, exact state readback, and
- * allowed encoding. This does not invent another owner or grant hardware access. */
+/* retain a nonzero boot baseline only with exclusive ownership and matching physical readback. */
 
 int scalar_attach_with_baseline(scalar_res_t*, const char*, const scalar_io_t*,
                                 uint32_t verified_baseline);
-/* each client's first request is always forwarded even if it requests 0. For subsequent
- * equal-value requests, authoritative readback is mandatory. */
+/* forward the first request; verify repeated requests through provider readback. */
 
 int scalar_issue(scalar_res_t*, scalar_handle_t, uint32_t);
 /* as in Qualcomm NPA, completion releases THIS client's outstanding vote. completion of

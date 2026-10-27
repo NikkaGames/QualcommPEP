@@ -61,7 +61,7 @@ int rpmh_sync_deferred_bind(rpmh_sync_deferred_t* b, rpmh_scheduler_t* s, uint64
         s->on_deferred_finished || !io->enter || !io->leave_cb || !io->reset || !io->signal ||
         !io->wait_ms)
         return 0;
-    /* owner must hold its admission mutex across promotion and this bind. The callbacks remain
+    /* owner must hold its admission mutex across promotion and this bind. the callbacks remain
      * pinned until worker + PnP rundown is proved. */
 
     b->scheduler = s;
@@ -98,7 +98,7 @@ int rpmh_sync_deferred_timeout_inspect(const rpmh_sync_deferred_t* b, uint64_t e
             return 3;
         }
     }
-    /* missing or mismatched ticket is NOT a verified retirement. */
+    /* missing or mismatched ticket is not a verified retirement. */
     return 0;
 }
 
@@ -161,7 +161,7 @@ rpmh_tcs_result_t rpmh_sync_deferred_execute(rpmh_sync_deferred_t* b, uint8_t cl
         b->io.leave_cb(b->io.ctx);
         return result;
     }
-    /* a queued command NEVER may fire after returning BUSY to its caller. */
+    /* a queued command never may fire after returning BUSY to its caller. */
     if (rpmh_scheduler_cancel_queued_active(s, client, req)) {
         b->active_req = 0;
         b->io.leave_cb(b->io.ctx);
@@ -195,7 +195,7 @@ rpmh_tcs_result_t rpmh_sync_deferred_execute(rpmh_sync_deferred_t* b, uint8_t cl
         return result;
     }
     /* a timeout is not proof a physical vote failed: retain any issued AMC reservation and
-     * quarantine admission. Never cancel/replay it. */
+     * quarantine admission. never cancel/replay it. */
 
     (void)rpmh_scheduler_cancel_queued_active(s, client, req);
     b->faulted = 1;
@@ -206,7 +206,7 @@ rpmh_tcs_result_t rpmh_sync_deferred_execute(rpmh_sync_deferred_t* b, uint8_t cl
     rpmh_scheduler_revoke(s);
     b->io.leave_cb(b->io.ctx);
     /* wdf queueing is outside the scheduler mutex. failure leaves this request/epoch/fault
-     * pinned; it is NEVER a reason to retry the vote. */
+     * pinned; it is never a reason to retry the vote. */
     if (b->io.queue_timeout_review)
         (void)b->io.queue_timeout_review(b->io.ctx, b->owner_epoch, req);
     return waited ? TCS_IO_FAILURE : TCS_TIMEOUT;

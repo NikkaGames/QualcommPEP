@@ -64,7 +64,7 @@ rail_result_t rail_adopt(rail_bank_t*, uint32_t rail, rail_state_t baseline);
  * removing a client's vote. */
 
 rail_result_t rail_vote(rail_bank_t*, uint32_t rail, uint64_t client, rail_state_t desired);
-/* inspect a single client's logical vote under the authoritative provider lock. The
+/* inspect a single client's logical vote under the authoritative provider lock. the
  * physical aggregate is checked twice before any result is returned; unlike a cached
  * client-table lookup this cannot conceal an external rail modification. */
 

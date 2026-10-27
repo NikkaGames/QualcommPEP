@@ -63,7 +63,7 @@ int rpmh_amc_drain_has_finished(void* ctx)
         goto done;
     }
     /* a claimed physical IRQ may precede visibility of its RSC status bit. No pending bit is
-     * NOT proof that an issued AMC has been retired. The passive worker will recheck the same
+     * not proof that an issued AMC has been retired. the passive worker will recheck the same
      * pinned ticket without ACK, unmask, or command reissue; a persistent mismatch remains
      * faulted. */
     if (!(pending & b->ledger->granted_mask) &&

@@ -13437,10 +13437,7 @@ static ULONG rsc_sw_lookup_subsystem_mask_for_ppp_res(_In_ ULONG res_id,
     return mask;
 }
 
-/* molokai routes come from the firmware ICB arbiter routing tree rather than the inherited
- * SC8280 mock/diagnostic route table. Bandwidth caps cannot be inferred from topology and
- * remain unknown until the firmware vote path is implemented; do not manufacture a peak
- * bandwidth value. */
+/* firmware ICB routes establish topology, not a bandwidth ceiling. */
 
 static ULONG rsc_sw_lookup_subsystem_mask_for_icb_id(_In_ ULONG id, _In_ BOOLEAN is_master,
                                                      _Out_opt_ ULONG* route_cnt,

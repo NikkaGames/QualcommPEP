@@ -106,7 +106,7 @@ vote_io_t rpmh_bridge_io(rpmh_vote_bridge_t* bridge)
     memset(&io, 0, sizeof(io));
     if (bridge && bridge->transport && bridge->lock && bridge->unlock &&
         /* a bank lock reused for transport would recursively acquire itself during apply and
-         * deadlock in the Windows boot driver. This check catches identical callback/context
+         * deadlock in the Windows boot driver. this check catches identical callback/context
          * pairs; providers still must guarantee distinct lock instances and lock ordering. */
 
         !(bridge->lock == bridge->transport->io.lock &&

@@ -1,8 +1,7 @@
 #ifndef RPMH_IRQ_PIPELINE_H
 #define RPMH_IRQ_PIPELINE_H
-/* ownership-neutral coordination of AMC completion and /183 epoch-based asynchronous
- * lifetime tickets. NO WDF interrupt allocation, IRQ masking implementation, MMIO access,
- * ownership-grant discovery, or d0 publication exists in this module. */
+/* coordinate AMC completion with epoch-bound lifetime tickets; the provider owns IRQ and MMIO
+ * operations. */
 
 #include <stdint.h>
 #include "rpmh_oem_work.h"
@@ -37,7 +36,7 @@ int rpmh_pipeline_dispatch_worker(rpmh_irq_pipeline_t* pipeline, uint64_t owner_
 
 int rpmh_pipeline_close(rpmh_irq_pipeline_t* pipeline, uint64_t owner_epoch);
 /* must also have disabled/synchronized WDF interrupts and flushed DPC and deferred
- * callbacks independently BEFORE entering release. */
+ * callbacks independently before entering release. */
 
 int rpmh_pipeline_release(rpmh_irq_pipeline_t* pipeline, uint64_t owner_epoch);
 #ifdef __cplusplus

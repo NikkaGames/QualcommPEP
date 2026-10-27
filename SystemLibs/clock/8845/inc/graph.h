@@ -21,8 +21,7 @@ typedef struct hybrid_clock_entry {
     clock_composite_t* composite;
 } hybrid_clock_entry_t;
 
-/* signed SC8480 callback at RVA 0x139440 dispatches two DISTINCT NPA queries. 0x1001 is a
- * write-on-first- query path and MUST NOT be called by the observation/admission pipeline. */
+/* query 0x1001 may write on first use; observation and admission use the read-only query. */
 
 #define CLOCK_NATIVE_MATCH_QUERY_ID 0x1000u
 #define CLOCK_NATIVE_MUTATING_QUERY_ID 0x1001u

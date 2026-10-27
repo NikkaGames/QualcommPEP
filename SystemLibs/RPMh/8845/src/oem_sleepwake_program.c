@@ -33,7 +33,7 @@ static int write_checked(oem_sleepwake_program_t* p, uint32_t off, uint32_t valu
 
 /* do not trust the mutable image in isolation. must have produced precisely these
  * addresses and payloads from the sealed CMD_DB and frozen set. Reject tampered counts,
- * slots, masks and payloads BEFORE MMIO. */
+ * slots, masks and payloads before MMIO. */
 
 static int valid_image(const oem_sleepwake_bridge_t* b)
 {
@@ -158,7 +158,7 @@ int oem_sleep_wake_program_commit(oem_sleepwake_program_t* p, uint64_t token)
         !healthy(p, token))
         return 0;
     im = &p->bridge->image;
-    /* approval and immutable snapshot checked BEFORE the first MMIO write. */
+    /* approval and immutable snapshot checked before the first MMIO write. */
     if (p->dependencies)
         for (i = 0; i < OEM_SLEEPWAKE_IMAGE_CNT; ++i)
             if (!oem_sleep_wake_deps_get(p->dependencies, token, i, &wait_masks[i]))
@@ -173,7 +173,7 @@ int oem_sleep_wake_program_commit(oem_sleepwake_program_t* p, uint64_t token)
             return 0;
     }
     /* every slot checked before the first write, never overwrite a foreign configuration and
-     * NEVER infer ownership from an idle register. */
+     * never infer ownership from an idle register. */
 
     for (i = 0; i < OEM_SLEEPWAKE_IMAGE_CNT; ++i) {
         const oem_sleepwake_tcs_image_t* s = image_at(im, i);

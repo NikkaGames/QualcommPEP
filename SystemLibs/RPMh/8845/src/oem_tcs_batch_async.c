@@ -1,7 +1,7 @@
 #include "oem_tcs_batch_async.h"
 #include <string.h>
 
-/* all entry points MUST be externally serialized, including callbacks. */
+/* all entry points must be externally serialized, including callbacks. */
 static int admitted(const oem_tcs_batch_t* b, uint8_t slot)
 {
     return b && !b->closed && !b->faulted && b->completion_handler_bound &&

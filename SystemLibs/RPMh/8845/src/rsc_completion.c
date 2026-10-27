@@ -63,7 +63,7 @@ int rsc_completion_submit_batch_with_dependencies(rsc_completion_t* p, uint32_t 
                                                   uint16_t dependency_mask,
                                                   uint8_t stale_status_cleared)
 {
-    /* dependency bits are command indices, never extra AMC/IRQ bits. The legal zero mask must
+    /* dependency bits are command indices, never extra AMC/IRQ bits. the legal zero mask must
      * not be conflated with absent ownership. */
 
     if (!command_mask || (dependency_mask & (uint16_t)~command_mask))

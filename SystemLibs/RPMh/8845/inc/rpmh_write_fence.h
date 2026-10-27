@@ -17,7 +17,7 @@ typedef struct rpmh_write_fence {
 } rpmh_write_fence_t;
 
 /* called once for a new, distinct native owner lifetime, before any request is issued.
- * NEVER call this to repair a failed d0 revalidation. */
+ * never call this to repair a failed d0 revalidation. */
 
 static inline int rpmh_write_fence_init(rpmh_write_fence_t* f, uint64_t owner_epoch)
 {
@@ -30,7 +30,7 @@ static inline int rpmh_write_fence_init(rpmh_write_fence_t* f, uint64_t owner_ep
 
 /* invalid and NoOwnership are transport preflight refusals which never submit a command;
  * all other failed *post-dispatch* outcomes are treated as ambiguous (including BUSY, IRQ
- * conflict, ACK or timeout). The native caller must not invoke record for errors
+ * conflict, ACK or timeout). the native caller must not invoke record for errors
  * discovered without dispatching. */
 
 static inline int rpmh_write_fence_record(rpmh_write_fence_t* f, uint64_t owner_epoch,

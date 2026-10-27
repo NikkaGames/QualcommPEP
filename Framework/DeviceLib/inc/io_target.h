@@ -18,8 +18,7 @@ NTSTATUS forward_send(_In_ WDFDEVICE dev, _In_ ULONG ioctl, _In_opt_ PVOID in_bu
                       _In_ ULONG in_len, _Out_opt_ PVOID out_buf, _In_ ULONG out_len,
                       _Out_opt_ PULONG bytes_returned);
 
-/* verified 8480 PMIC GPIO class interface (QCOM0F2D / qcpmgpio_8480). Caller must be
- * PASSIVE_LEVEL; recipient must already be started. */
+/* PMIC GPIO requests require PASSIVE_LEVEL and a started recipient. */
 
 NTSTATUS pmic_gpio_send(_In_ WDFDEVICE dev, _In_ ULONG ioctl,
                         _In_reads_bytes_opt_(in_len) PVOID in_buf, _In_ ULONG in_len,

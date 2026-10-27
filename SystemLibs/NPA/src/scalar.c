@@ -153,10 +153,8 @@ static int native_clock_name(const char* name, uint32_t mode)
     const char* base;
     const char* slash;
     size_t length;
-    /* sc8480 registers ordinary clock, enable, memcoreenable, periforceon, and periforceoff as
-     * different native NPA RESOURCE TYPES. A suffix-bearing auxiliary res is NOT an hz scalar
-     * and must never enter the freq client transport. implements only simple hz and /enable
-     * classes. */
+    /* only frequency and /enable resources use this transport; memory and peripheral gates
+     * have separate types. */
 
     if (!valid_scalar_name(name) || strncmp(name, "/clk/", 5) != 0)
         return 0;
@@ -199,7 +197,7 @@ int scalar_attach_native_clock_client_transport(scalar_res_t* r, const char* nam
 {
     uint64_t before = 0u, after = 0u;
     uint32_t state = UINT32_MAX, generation;
-    /* the physical transport owns *individual* NPA clients. Never accept an aggregate fallback
+    /* the physical transport owns *individual* NPA clients. never accept an aggregate fallback
      * in a native-client-only res. */
 
     if (!r || !io || !native_clock_name(name, mode) || !io->owns_exclusive || !io->read_effective ||
@@ -287,7 +285,7 @@ int scalar_create_typed(scalar_res_t* r, uint32_t client_type, scalar_handle_t* 
         return 0;
     }
     /* readback alone is insufficient: the provider might have been revoked during
-     * read_effective. Never publish a live client against an owner that has already
+     * read_effective. never publish a live client against an owner that has already
      * disappeared. */
 
     if (!owns(r) || (r->native_transport && !scalar_verify_owned(r))) {
@@ -340,7 +338,7 @@ int scalar_create_typed(scalar_res_t* r, uint32_t client_type, scalar_handle_t* 
                     !read_native_client(r, c, 0u, 0u) || !native_peers_intact(r, c) || !owns(r)) {
                     /* a created client may have changed the res state despite reporting "no vote".
                      * cannot prove that destroying it would restore other clients' state; retain
-                     * the opaque handle for controlled rundown and quarantine the node. Never
+                     * the opaque handle for controlled rundown and quarantine the node. never
                      * publish it to DPM. */
 
                     r->quarantined = 1u;
@@ -369,7 +367,7 @@ static int transition(scalar_res_t* r, scalar_client_t* c, uint32_t next, int ha
         return 0;
     }
     /* native issue requests must never confuse zero (released) with an explicitly issued
-     * OFF=2. The legacy generic scalar core still accepts a first zero request, as required by
+     * OFF=2. the legacy generic scalar core still accepts a first zero request, as required by
      * its existing ABI. */
 
     if (has && r->aggregate_mode != SCALAR_AGGREGATE_MAX &&
@@ -386,8 +384,7 @@ static int transition(scalar_res_t* r, scalar_client_t* c, uint32_t next, int ha
     if (r->native_transport) {
         int old_has = c->has_req ? 1 : 0;
         uint32_t old_req = c->req;
-        /* native SC8480 NPA requests are PER CLIENT. in particular, OFF=2 and NPA complete are
-         * distinct provider operations. */
+        /* explicit OFF and client completion are distinct native operations. */
 
         if (!native_req(r, c, next, has) || !read_native_client(r, c, has ? 1u : 0u, next) ||
             !native_peers_intact(r, c) || !read_state(r, &actual) || actual != wanted ||
@@ -411,7 +408,7 @@ static int transition(scalar_res_t* r, scalar_client_t* c, uint32_t next, int ha
         return 1;
     }
     /* firmware npa_issue_sync_request_unconditional first-request rule: a request for zero
-     * must NOT vanish just because old state was zero. */
+     * must not vanish just because old state was zero. */
 
     force = !r->first_req_observed || !c->has_req;
     if (force || wanted != previous) {
@@ -425,7 +422,7 @@ static int transition(scalar_res_t* r, scalar_client_t* c, uint32_t next, int ha
             return 0;
         }
     }
-    /* final provider check is required EVEN when the aggregate was unchanged, and EVEN after a
+    /* final provider check is required even when the aggregate was unchanged, and even after a
      * successful hardware readback. If ownership vanished after a write, do not attempt a
      * compensating write against a controller that might belong to someone else. */
 

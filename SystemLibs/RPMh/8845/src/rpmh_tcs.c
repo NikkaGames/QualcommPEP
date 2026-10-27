@@ -19,7 +19,7 @@ int rpmh_tcs_check_hlos_geometry(uint32_t parent_child_config, uint8_t required_
     return 1;
 }
 
-/* every command and address is checked before acquiring the RSC lock. The APSS RSC uses a
+/* every command and address is checked before acquiring the RSC lock. the APSS RSC uses a
  * 0x18-byte stride for CMDn and a 16-bit per-TCS CMD_WAIT_FOR_CMPL / CMD_ENABLE mask (16
  * commands, reads). */
 
@@ -83,7 +83,7 @@ rpmh_tcs_result_t rpmh_tcs_prepare(rpmh_tcs_t* dev, uint8_t tcs)
     if (!io->read32(io->ctx, TCS_IRQ_ENABLE, &irq))
         goto done;
     /* the firmware can leave an AMC IRQ-enabled even while its command and pending-status
-     * registers are empty. Only the d0 native owner may record a stable baseline in
+     * registers are empty. only the d0 native owner may record a stable baseline in
      * pre_enabled_irq_mask, and that record alone grants NOTHING. */
 
     if (dev->pre_enabled_irq_mask & (uint8_t)bit) {
@@ -97,7 +97,7 @@ rpmh_tcs_result_t rpmh_tcs_prepare(rpmh_tcs_t* dev, uint8_t tcs)
             result = TCS_BUSY;
             goto done;
         }
-        /* record cleanup debt BEFORE a potentially partial physical write. */
+        /* record cleanup debt before a potentially partial physical write. */
         attempted_enable = 1;
         dev->irq_enabled_by_us |= (uint8_t)bit;
         if (!io->write32(io->ctx, TCS_IRQ_ENABLE, irq | bit))
@@ -149,7 +149,7 @@ uint8_t rpmh_tcs_restore(rpmh_tcs_t* dev)
         return 0x07u; /* invalid owner: fail closed. */
     io = &dev->io;
     /* a completed lock() acquisition serializes revocation against both prepare and a
-     * synchronous transaction, including the W1C path. Never take a snapshot of
+     * synchronous transaction, including the W1C path. never take a snapshot of
      * irq_enabled_by_us before taking that lock: a pending prepare may still enable an
      * interrupt before restore gets control. */
 
@@ -168,7 +168,7 @@ uint8_t rpmh_tcs_restore(rpmh_tcs_t* dev)
         dev->last_completed_command_mask[2] = 0u;
         dev->last_completed_dependency_mask[2] = 0u;
         /* a lock refusal may mean another thread is actively using this mapping. Even with zero
-         * IRQ-enable debt, owners_destroy MUST retain the mapping until an independently
+         * IRQ-enable debt, owners_destroy must retain the mapping until an independently
          * synchronized teardown. */
 
         return (uint8_t)(dev->irq_enabled_by_us | TCS_CLEANUP_UNSYNCHRONIZED);
@@ -289,7 +289,7 @@ rpmh_tcs_result_t rpmh_tcs_issue_batch_with_dependencies(rpmh_tcs_t* dev, uint8_
         result = TCS_BUSY;
         goto done;
     }
-    /* a foreign, unrecognized or partially programmed slot must never be overwritten. This is
+    /* a foreign, unrecognized or partially programmed slot must never be overwritten. this is
      * not a hardware-ownership grant and does not bypass it. */
 
     {

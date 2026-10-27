@@ -57,7 +57,7 @@ static hybrid_clock_entry_t* lookup(hybrid_clock_ctx_t* c, const char* path,
     return NULL;
 }
 
-/* never make a mutating query as part of discovery or revalidation. The native provider
+/* never make a mutating query as part of discovery or revalidation. the native provider
  * must independently attest that the initialization flag was already set, and return the
  * true NPA VALUE response and owner epoch. */
 

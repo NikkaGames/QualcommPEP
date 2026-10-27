@@ -9,7 +9,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-/* capacity, NOT an assertion about the Molokai firmware's driver count. */
+/* capacity, not an assertion about the Molokai firmware's driver count. */
 #define RPMH_OEM_MAX_DRIVERS 8u
 
 typedef struct rpmh_oem_irq_entry {
@@ -40,7 +40,7 @@ typedef struct rpmh_oem_topology_entry {
 int rpmh_irq_group_init_topology(rpmh_oem_irq_group_t* group,
                                  const rpmh_oem_topology_entry_t* entries, uint32_t cnt);
 
-/* binds a *single, already verified* per-driver hardware grant. The supplied callbacks
+/* binds a *single, already verified* per-driver hardware grant. the supplied callbacks
  * must be specific to exactly that controller. */
 
 int rpmh_irq_group_bind(rpmh_oem_irq_group_t* group, uint32_t driver_id, uint32_t gic_intid,
@@ -54,7 +54,7 @@ int rpmh_irq_group_on_dpc(rpmh_oem_irq_group_t* group, uint32_t driver_id, uint3
 int rpmh_irq_group_on_worker(rpmh_oem_irq_group_t* group, uint32_t driver_id, uint32_t gic_intid,
                              uint64_t epoch);
 /* fail-closed: refuses teardown while an interrupt is masked, active, quarantined or any
- * asynchronous work remains. The caller must first synchronize and drain WDF interrupt/DPC
+ * asynchronous work remains. the caller must first synchronize and drain WDF interrupt/DPC
  * and PEP work item callbacks. */
 
 int rpmh_irq_group_revoke(rpmh_oem_irq_group_t* group, uint32_t driver_id, uint32_t gic_intid,

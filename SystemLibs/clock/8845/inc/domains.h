@@ -1,7 +1,7 @@
 #ifndef OEM_CLOCK_DOMAINS_H
 #define OEM_CLOCK_DOMAINS_H
-/* do not confuse this native HAL ID with a GDSCR offset or random idx. The table is
- * identity EVIDENCE, not native execution/ownership proof. */
+/* native HAL IDs are distinct from register offsets and table indices.
+ * resolving an ID does not establish execution ownership. */
 
 #include <stdint.h>
 #ifdef __cplusplus

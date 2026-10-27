@@ -1,5 +1,5 @@
 /* the owner must verify the register state before publishing its client vote. An uncertain
- * write must NOT be silently undone only in software. */
+ * write must not be silently undone only in software. */
 
 #include "commit.h"
 #include <string.h>
@@ -41,7 +41,7 @@ static int same_vote_observation(const gcc_clock_t* clock, const gcc_state_t* a,
     return same_observation(&x, &y);
 }
 
-/* a second client of a clock already held enabled must not poke the same CBCR again. The
+/* a second client of a clock already held enabled must not poke the same CBCR again. the
  * original Qualcomm HAL increments per-client and per-clock references on 1->n; only the
  * first reference enables HW. */
 
@@ -224,7 +224,7 @@ gcc_commit_result_t gcc_commit_branch_vote_ex(const gcc_io_t* io, const gcc_cloc
     if ((enable ? gcc_enable(io, clock) : gcc_disable(io, clock)) != GCC_OK)
         return GCC_COMMIT_UNCERTAIN;
     /* a posted MMIO write and the clock's own state machine may converge later than the first
-     * immediate read. The HAL polls CLK_OFF up to its timeout; unlike that HAL, this PEP also
+     * immediate read. the HAL polls CLK_OFF up to its timeout; unlike that HAL, this PEP also
      * needs to prove its OWN enable bit survived (a physical ON from another voter is not
      * enough). */
 

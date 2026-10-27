@@ -260,7 +260,7 @@ extern __forceinline ULONG pep_get_current_cpu_num(VOID)
     return (ULONG)pn.Number;
 }
 
-/* keep these ABI layout facts explicit instead of relying on an 8280 pointer cast. */
+/* assert the callback payload layout before interpreting it. */
 
 C_ASSERT(FIELD_OFFSET(pep_dev_reg_v2_t, comp_cnt) == 0x08);
 C_ASSERT(FIELD_OFFSET(pep_dev_reg_v2_t, components) == 0x10);

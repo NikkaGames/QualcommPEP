@@ -452,9 +452,7 @@ static BOOLEAN ppp_vote_query_res(_In_ ULONG res_id, _Out_opt_ PULONGLONG last_v
     return found;
 }
 
-/* the unused SC8480 PDC timer sampler mapped hard-coded physical registers without a
- * Molokai PnP owner. Removed until a verified provider supplies timer observations; no
- * kernel MMIO mapping belongs here. */
+/* timer diagnostics require an owned provider; this path does not map physical PDC registers. */
 
 static NTSTATUS mmrm_build_policy_reply(_In_ WDFREQUEST req, _In_ const mmrm_policy_req_t* in_req,
                                         _In_ ULONG updated, _Out_ size_t* information)
@@ -10535,8 +10533,7 @@ VOID evt_io_dev_control(WDFQUEUE queue, WDFREQUEST req_arg, size_t output_buf_le
         case IOCTL_PEP_GPIO_PMIC_SET_DRIVE:
         case IOCTL_PM_GPIO_GET_GPIO_STATE:
         case IOCTL_PM_GPIO_SET_GPIO_OUTPUT: {
-            /* forward the SC8280 0x8002 GPIO family to the PMIC provider and preserve its result.
-             */
+            /* forward GPIO requests to the PMIC provider and preserve its result. */
 
             ULONG req_in = (io_control_code == IOCTL_PM_GPIO_CONFIG_DIGITAL_INPUT) ? 20u : 12u;
             ULONG req_out = (io_control_code == IOCTL_PM_GPIO_GET_GPIO_STATE) ? 8u : 4u;

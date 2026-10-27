@@ -1,8 +1,7 @@
 #ifndef NPA_SCALAR_CLOCK_BRIDGE_H
 #define NPA_SCALAR_CLOCK_BRIDGE_H
-/* the caller MUST supply independently authenticated, EXCLUSIVELY owned physical
- * resources. This adapter does NOT own MMIO, discover hardware, implement the Qualcomm
- * 8480 proprietary native ABI, or enable PEP DPM. */
+/* the caller supplies owned physical resources; this adapter neither maps MMIO nor grants
+ * ownership. */
 
 #include "scalar.h"
 #include "npa_graph.h"
@@ -35,8 +34,7 @@ typedef struct scalar_clock_bridge {
     uintptr_t next_cookie;
 } scalar_clock_bridge_t;
 
-/* NPA enable opcodes 1/2 differ from physical enable values 1/0. They do not establish the SC8480
- * ABI. */
+/* NPA enable values 1/2 differ from physical enabled/disabled values 1/0. */
 
 typedef struct clock_intent {
     uint32_t legacy_npa_action;

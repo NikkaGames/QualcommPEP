@@ -139,7 +139,7 @@ rail_result_t rail_vote(rail_bank_t* b, uint32_t rail, uint64_t client, rail_sta
     if (desired.enabled && (!aggregate.enabled || desired.microvolts > aggregate.microvolts))
         aggregate = desired;
     if (!equal(aggregate, r->applied)) {
-        /* never claim success from a TCS interrupt alone. The installed provider must make actual
+        /* never claim success from a TCS interrupt alone. the installed provider must make actual
          * rail state readable and stable. */
 
         if (!b->provider.apply(b->provider.ctx, rail, aggregate) ||
@@ -169,7 +169,7 @@ done:
     return result;
 }
 
-/* single-client inspection for graph snapshot/verification. Caller must separately
+/* single-client inspection for graph snapshot/verification. caller must separately
  * serialize the graph transaction with all clients. */
 
 rail_result_t rail_inspect_client(rail_bank_t* b, uint32_t rail, uint64_t client,

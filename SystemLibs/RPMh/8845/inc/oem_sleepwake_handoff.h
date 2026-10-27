@@ -1,6 +1,6 @@
 #ifndef OEM_SLEEPWAKE_HANDOFF_H
 #define OEM_SLEEPWAKE_HANDOFF_H
-/* dormant sleep/wake host Handoff and rundown COORDINATOR. This API does not implement
+/* dormant sleep/wake host Handoff and rundown COORDINATOR. this API does not implement
  * firmware handoff, ACPI/PEP reg, ownership discovery, or an ISR-safe synchronization
  * primitive. */
 
@@ -22,9 +22,8 @@ typedef enum oem_sleepwake_handoff_phase {
 
 typedef struct oem_sleepwake_handoff_ops {
     void* ctx;
-    /* acquire must atomically close all new producers, wait for the existing /199 queues and
-     * interrupt workers, then return a nonzero lease. callbacks may block and MUST NOT execute
-     * holding an IRQ spinlock. */
+    /* close producers and drain queues before returning a lease; blocking callbacks require
+     * PASSIVE_LEVEL. */
 
     int (*fence_and_drain)(void*, uint32_t epoch, uint64_t* lease);
     /* re-attest the same immutable lease, closed producers and empty queues. Software flags
@@ -32,7 +31,7 @@ typedef struct oem_sleepwake_handoff_ops {
 
     int (*fence_still_drained)(void*, uint32_t epoch, uint64_t lease);
     int (*release_fence)(void*, uint32_t epoch, uint64_t lease);
-    /* independent assertion that NO TCS programming or firmware transfer started. */
+    /* independent assertion that no TCS programming or firmware transfer started. */
 
     int (*never_started)(void*, uint32_t epoch, uint64_t ticket, uint64_t lease);
     /* may mutate firmware state. */
@@ -40,7 +39,7 @@ typedef struct oem_sleepwake_handoff_ops {
     int (*transfer_to_firmware)(void*, uint32_t epoch, uint64_t ticket, uint64_t lease,
                                 uint8_t slot_mask);
     /* a verified return from firmware, distinct from resume proof and release attestation.
-     * Never inferred from TCS readback. */
+     * never inferred from TCS readback. */
 
     int (*firmware_returned)(void*, uint32_t epoch, uint64_t ticket, uint64_t lease);
 } oem_sleepwake_handoff_ops_t;
@@ -65,13 +64,13 @@ int oem_handoff_begin(oem_sleepwake_handoff_t*);
 
 int oem_handoff_attach_dependencies(oem_sleepwake_handoff_t*, const oem_sleepwake_dependencies_t*);
 int oem_handoff_program(oem_sleepwake_handoff_t*);
-/* no handoff call until ALL TCS programming has been independently verified. */
+/* no handoff call until all TCS programming has been independently verified. */
 int oem_handoff_transfer(oem_sleepwake_handoff_t*);
-/* independent firmware-return proof, resume proof, firmware-release proof, THEN reopen
+/* independent firmware-return proof, resume proof, firmware-release proof, then reopen
  * producers. */
 
 int oem_handoff_complete_resume(oem_sleepwake_handoff_t*);
-/* allowed only before 's first possible write or firmware handoff. */
+/* abort is allowed only before the first possible write or firmware handoff. */
 int oem_handoff_cancel_unstarted(oem_sleepwake_handoff_t*);
 void oem_handoff_close(oem_sleepwake_handoff_t*);
 int oem_handoff_can_release(const oem_sleepwake_handoff_t*);

@@ -1,7 +1,6 @@
 #ifndef OEM_RPMH_HOST_FENCE_H
 #define OEM_RPMH_HOST_FENCE_H
-/* owner-NEUTRAL, fail-closed producer/IRQ rundown for . NOT a Windows RPMh ownership
- * grant, firmware handoff or live KMDF binding. */
+/* serialize producer and IRQ rundown; the fence does not establish hardware ownership. */
 
 #include "oem_amc_command_queue.h"
 #include "oem_tcs_batch_async.h"
@@ -22,7 +21,7 @@ typedef enum oem_host_fence_phase {
 
 typedef struct oem_host_fence_ops {
     void* ctx;
-    /* must hold the SAME lock as /197 completion. Never reentrant. */
+    /* use the completion lock; callbacks must not re-enter. */
 
     int (*enter_queue_lock)(void*);
     void (*leave_queue_lock)(void*);
@@ -66,8 +65,8 @@ int oem_host_fence_and_drain(void*, uint32_t epoch, uint64_t* lease);
 int oem_host_fence_still_drained(void*, uint32_t epoch, uint64_t lease);
 int oem_host_fence_release(void*, uint32_t epoch, uint64_t lease);
 
-/* stable lifetime: owner retains the binding until fully closes. The firmware callbacks
- * MUST be independently implemented/verified; this adapter only supplies context routing,
+/* stable lifetime: owner retains the binding until fully closes. the firmware callbacks
+ * must be independently implemented/verified; this adapter only supplies context routing,
  * not firmware behavior/authority. */
 
 typedef struct oem_host_fence_handoff_binding {

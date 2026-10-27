@@ -303,7 +303,7 @@
     <ClCompile Include="..\SystemLibs\NPA\src\identity.c">
       <Filter>SystemLibs\NPA\src</Filter>
     </ClCompile>
-    <ClCompile Include="..\SystemLibs\clock\8845\src\opcode8480.c">
+    <ClCompile Include="..\SystemLibs\clock\8845\src\action_opcode.c">
       <Filter>SystemLibs\clock\8845\src</Filter>
     </ClCompile>
     <ClCompile Include="..\SystemLibs\clock\8845\src\compat_ids.c">
@@ -752,7 +752,7 @@
     <ClInclude Include="..\SystemLibs\clock\8845\inc\graph.h">
       <Filter>SystemLibs\clock\8845\inc</Filter>
     </ClInclude>
-    <ClInclude Include="..\SystemLibs\clock\8845\inc\opcode8480.h">
+    <ClInclude Include="..\SystemLibs\clock\8845\inc\action_opcode.h">
       <Filter>SystemLibs\clock\8845\inc</Filter>
     </ClInclude>
     <ClInclude Include="..\Framework\PEP\8845\inc\perf_clock_desc.h">

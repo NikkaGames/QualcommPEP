@@ -1,6 +1,6 @@
 #ifndef OEM_RSC_TCS_SURVEY_H
 #define OEM_RSC_TCS_SURVEY_H
-/* non-destructive, independently authorized RPMh RSC/TCS status census. This does not
+/* non-destructive, independently authorized RPMh RSC/TCS status census. this does not
  * attest ownership, issue commands, clear IRQs or permit TCS writes. */
 
 #include "oem_rsc_readback.h"

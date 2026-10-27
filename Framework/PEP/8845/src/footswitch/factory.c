@@ -232,9 +232,7 @@ fs_result_t fs_factory_open(fs_factory_t* f, const char* domain, const char* cli
     return open_channels(f, domain, client_name, 1, need_hw, p);
 }
 
-/* the original 8480 Aggr_AddFsResource and CreateFsResourceNPAHandles switches choose
- * exactly ONE client family for each action 1/2 or 3/4. A hardware-controlled FOOTSWITCH
- * must not acquire /enable as a side effect. */
+/* select one client family per action; hardware-control actions must not acquire /enable. */
 
 fs_result_t fs_factory_open_for_action(fs_factory_t* f, const char* domain, const char* client_name,
                                        uint32_t action, const fs_factory_provider_t* p)

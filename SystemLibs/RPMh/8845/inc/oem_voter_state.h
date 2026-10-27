@@ -1,7 +1,7 @@
 #ifndef OEM_VOTER_STATE_H
 #define OEM_VOTER_STATE_H
-/* this is a behavioral reconstruction, not an ABI/owner assignment. EVERY method and
- * callback must execute at PASSIVE_LEVEL under the SAME externally provided non-reentrant
+/* this is a behavioral reconstruction, not an ABI/owner assignment. every method and
+ * callback must execute at PASSIVE_LEVEL under the same externally provided non-reentrant
  * passive controller lock; never call blocking provider readback while holding a WDF spin
  * lock / ISR lock. */
 
@@ -24,7 +24,7 @@ typedef struct oem_voter_io {
     uint32_t owner_epoch;
     /* must attest current exclusive owner for the requested res. */
     int (*owns)(void*, uint32_t key);
-    /* must read authoritative current HW/res-provider state, NOT cached last ACK. */
+    /* must read authoritative current HW/res-provider state, not cached last ACK. */
 
     int (*read_current)(void*, uint32_t key, uint64_t* out);
     /* a trusted completion provider proves the exact request ticket completed; a successful
@@ -97,7 +97,7 @@ int oem_voter_cancel_unissued(oem_voter_state_t*, uint64_t ticket);
  * committed readback. */
 
 int oem_voter_ready(void*, uint32_t key, uint32_t req_id, uint8_t is_read);
-/* freeze the active client-vote ledger for an exact resume ticket. These functions never
+/* freeze the active client-vote ledger for an exact resume ticket. these functions never
  * issue hardware commands. */
 
 int oem_voter_enter_sleep(oem_voter_state_t*, uint64_t token);

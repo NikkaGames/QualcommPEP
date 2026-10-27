@@ -1,6 +1,4 @@
-/* footswitch native-NPA action transport. Qualcomm 8280 AdjustAFootswitchResource
- * dispatches actions 1/2 to one enable client and 3/4 to a separate hardware-control
- * enable client. */
+/* actions 1/2 target the enable client; actions 3/4 target the hardware-control client. */
 
 #ifndef FOOTSWITCH_NPA_H
 #define FOOTSWITCH_NPA_H

@@ -1,5 +1,5 @@
 #include "identity.h"
-#include "opcode8480.h"
+#include "action_opcode.h"
 #include <string.h>
 #include <stdint.h>
 
@@ -47,13 +47,11 @@ int npa_describe_clock_client(const npa_key_t* key, const power_action_t* action
     if (!out)
         return 0;
     memset(out, 0, sizeof(*out));
-    clock_action8480_t decoded;
-    if (!is_same_clock(key, action) || !decode_clock_opcode8480(action, &decoded) ||
-        (decoded.kind != CLOCK8480_ENABLE && decoded.kind != CLOCK8480_DISABLE))
+    clock_opcode_t decoded;
+    if (!is_same_clock(key, action) || !decode_clock_opcode(action, &decoded) ||
+        (decoded.kind != CLOCK_OP_ENABLE && decoded.kind != CLOCK_OP_DISABLE))
         return 0;
-    /* en_SETFREQ is NOT a single enable client. The signed SC8480 request path uses two
-     * separate REQUIRED client scalar issues; npa_build_clock_requests describes that
-     * ordered sequence. */
+    /* enable-and-rate uses separate enable and frequency requests. */
 
     n = strlen(key->res);
     if (n + sizeof(prefix) - 1u + sizeof(enable) > sizeof(out->res_name))
@@ -63,7 +61,7 @@ int npa_describe_clock_client(const npa_key_t* key, const power_action_t* action
     memcpy(out->res_name + sizeof(prefix) - 1u + n, enable, sizeof(enable));
     out->class = NATIVE_NPA_CLOCK_ENABLE;
     out->clock_aggregation = NATIVE_CLOCK_ENABLE_MIN_NONZERO;
-    out->client_type = SC8480_CLOCK_NPA_CLIENT_REQUIRED;
+    out->client_type = NPA_CLOCK_CLIENT_REQUIRED;
     return 1;
 }
 
@@ -72,13 +70,13 @@ int npa_describe_composite_clock_clients(const npa_key_t* key, const power_actio
 {
     static const char prefix[] = "/clk/";
     static const char suffix[] = "/enable";
-    clock_action8480_t decoded;
+    clock_opcode_t decoded;
     size_t n, total;
     if (!out)
         return 0;
     memset(out, 0, sizeof(*out));
     if (!is_same_clock(key, action) || key->d_state != 0u ||
-        !decode_clock_opcode8480(action, &decoded) || decoded.kind != CLOCK8480_ENABLE_SET_FREQ ||
+        !decode_clock_opcode(action, &decoded) || decoded.kind != CLOCK_OP_ENABLE_SET_FREQ ||
         decoded.param_cnt != 2u || !decoded.parameter0)
         return 0;
     n = strlen(key->res);
@@ -95,8 +93,8 @@ int npa_describe_composite_clock_clients(const npa_key_t* key, const power_actio
     out->freq.clock_aggregation = NATIVE_CLOCK_FREQ_MAX;
     out->enable.class = NATIVE_NPA_CLOCK_ENABLE;
     out->enable.clock_aggregation = NATIVE_CLOCK_ENABLE_MIN_NONZERO;
-    out->freq.client_type = SC8480_CLOCK_NPA_CLIENT_REQUIRED;
-    out->enable.client_type = SC8480_CLOCK_NPA_CLIENT_REQUIRED;
+    out->freq.client_type = NPA_CLOCK_CLIENT_REQUIRED;
+    out->enable.client_type = NPA_CLOCK_CLIENT_REQUIRED;
     out->requested_hertz = decoded.parameter0;
     /* validate the opaque DSDT match policy through the read-only NPA query. */
 
@@ -107,23 +105,23 @@ int npa_describe_composite_clock_clients(const npa_key_t* key, const power_actio
 int npa_build_clock_requests(const npa_key_t* key, const power_action_t* action,
                              native_npa_clock_requests_t* out)
 {
-    clock_action8480_t decoded;
+    clock_opcode_t decoded;
     native_npa_composite_clock_desc_t composite;
     native_npa_client_desc_t simple;
     native_npa_clock_requests_t sequence;
     if (!out)
         return 0;
     memset(out, 0, sizeof(*out));
-    if (!key || !action || !decode_clock_opcode8480(action, &decoded))
+    if (!key || !action || !decode_clock_opcode(action, &decoded))
         return 0;
     memset(&sequence, 0, sizeof(sequence));
-    if (decoded.kind == CLOCK8480_ENABLE_SET_FREQ) {
+    if (decoded.kind == CLOCK_OP_ENABLE_SET_FREQ) {
         /* the DSDT match-policy operand is not an NPA scalar issue. */
 
         if (!npa_describe_composite_clock_clients(key, action, &composite))
             return 0;
         sequence.steps[0].client = composite.enable;
-        sequence.steps[0].requested_scalar = SC8480_CLOCK_ENABLE_REQ;
+        sequence.steps[0].requested_scalar = NPA_CLOCK_ENABLE;
         sequence.steps[1].client = composite.freq;
         sequence.steps[1].requested_scalar = composite.requested_hertz;
         sequence.opaque_match_policy = composite.opaque_match_policy;
@@ -133,7 +131,7 @@ int npa_build_clock_requests(const npa_key_t* key, const power_action_t* action,
             return 0;
         sequence.steps[0].client = simple;
         sequence.steps[0].requested_scalar =
-            (decoded.kind == CLOCK8480_ENABLE) ? SC8480_CLOCK_ENABLE_REQ : SC8480_CLOCK_DISABLE_REQ;
+            (decoded.kind == CLOCK_OP_ENABLE) ? NPA_CLOCK_ENABLE : NPA_CLOCK_DISABLE;
         sequence.cnt = 1u;
     }
     *out = sequence;
@@ -143,7 +141,7 @@ int npa_build_clock_requests(const npa_key_t* key, const power_action_t* action,
 static int valid_bus_resource_name(const char* name)
 {
     size_t i;
-    /* the mapping MUST be established independently for 8480 before the caller can supply it. */
+    /* require an independently verified native resource mapping. */
 
     if (!has_prefix(name, "/icb/") || !name[5])
         return 0;
@@ -169,8 +167,7 @@ int npa_describe_bus_client(const npa_key_t* key, const char* resolved_native_re
     if (!out)
         return 0;
     memset(out, 0, sizeof(*out));
-    /* the ACPI BUSARB client DWORD is NOT a native driver ID. The enum values from SC8280 must
-     * not be silently applied to SC8480. */
+    /* the ACPI BUSARB selector does not encode a native driver ID. */
 
     if (!key || key->kind != POWER_ICB || (key->d_state != 0u && key->d_state != 3u) ||
         rsc_driver_id == UINT32_MAX || native_client_type == 0u ||
@@ -189,7 +186,7 @@ int npa_describe_bus_client(const npa_key_t* key, const char* resolved_native_re
 }
 
 /* client types 0x40 and 0x800 have distinct stored vote banks at res offsets +0x40/+0x44.
- * The former's final merge at 0x23565C..0x235674 selects the nonzero minimum, while the
+ * the former's final merge at 0x23565C..0x235674 selects the nonzero minimum, while the
  * latter's 0x235804..0x23580C selects the unsigned maximum. */
 
 int npa_aggregate_native_clock_votes(native_clock_aggregation_t aggregation,
@@ -208,9 +205,9 @@ int npa_aggregate_native_clock_votes(native_clock_aggregation_t aggregation,
     for (i = 0u; i < vote_cnt; ++i) {
         uint32_t v = votes[i].scalar;
         uint32_t* bank;
-        if (votes[i].client_type == SC8480_CLOCK_NPA_CLIENT_REQUIRED)
+        if (votes[i].client_type == NPA_CLOCK_CLIENT_REQUIRED)
             bank = &required;
-        else if (votes[i].client_type == SC8480_CLOCK_NPA_CLIENT_SUPPRESSIBLE)
+        else if (votes[i].client_type == NPA_CLOCK_CLIENT_SUPPRESSIBLE)
             bank = &suppressible;
         else
             return 0;
@@ -221,8 +218,8 @@ int npa_aggregate_native_clock_votes(native_clock_aggregation_t aggregation,
                 return 0; /* a completed client cannot hold a vote. */
             continue;
         }
-        if (v == 0u || (aggregation == NATIVE_CLOCK_ENABLE_MIN_NONZERO &&
-                        v != SC8480_CLOCK_ENABLE_REQ && v != SC8480_CLOCK_DISABLE_REQ))
+        if (v == 0u || (aggregation == NATIVE_CLOCK_ENABLE_MIN_NONZERO && v != NPA_CLOCK_ENABLE &&
+                        v != NPA_CLOCK_DISABLE))
             return 0;
         if (*bank == 0u || (aggregation == NATIVE_CLOCK_FREQ_MAX && v > *bank) ||
             (aggregation == NATIVE_CLOCK_ENABLE_MIN_NONZERO && v < *bank))

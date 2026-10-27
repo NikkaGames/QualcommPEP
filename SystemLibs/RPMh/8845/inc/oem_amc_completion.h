@@ -1,6 +1,6 @@
 #ifndef OEM_AMC_COMPLETION_H
 #define OEM_AMC_COMPLETION_H
-/* not an owner, an MMIO mapper, or a production callback reg. Every call is serialized
+/* not an owner, an MMIO mapper, or a production callback reg. every call is serialized
  * under the externally validated RPMh completion lock (as for ). */
 
 #include <stdint.h>

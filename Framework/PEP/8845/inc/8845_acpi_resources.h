@@ -18,7 +18,7 @@ typedef struct {
     const char* dts_regulator;
     ppp_kind_t kind;
     unsigned char dts_identity_unique;
-    unsigned char original_8480_string;
+    unsigned char reference_name;
 } ppp_res_t;
 
 extern const ppp_res_t ppp_catalog[];
@@ -46,13 +46,11 @@ typedef enum {
     ACPI_RES_UNVERIFIED_ALIAS = 4
 } acpi_res_type_t;
 
-/* nparesource action: the NPA client res paths the original 8480 driver names. A desc's
- * path must be one of these; the level argument's units are NOT established, so the action
- * is validated and recorded, never executed. */
+/* allowlisted NPA resource paths are recorded only; level units remain unverified. */
 
 typedef struct {
     const char* path;
-    unsigned char original_8480_string;
+    unsigned char reference_name;
 } npa_res_t;
 
 extern const npa_res_t npa_resources[];

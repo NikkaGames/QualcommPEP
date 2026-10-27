@@ -77,7 +77,7 @@ rsc_irq_result_t rsc_irq_process_with_dependencies(rsc_completion_t* ledger, con
 }
 
 /* source-compatible legacy all-WAIT entrypoint; new hardware clients that program
- * per-command dependencies MUST use WithDependencies. */
+ * per-command dependencies must use WithDependencies. */
 
 rsc_irq_result_t rsc_irq_process(rsc_completion_t* ledger, const rsc_irq_io_t* io,
                                  uint32_t owner_epoch, uint8_t slot, uint32_t req_id,

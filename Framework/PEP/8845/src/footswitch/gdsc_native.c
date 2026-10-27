@@ -175,7 +175,7 @@ int fs_gdsc_init_window_with_rails(fs_gdsc_driver_t* d, const gcc_io_t* io, cons
          rails->rail_mask != (!strcmp(domain, "gcc_ufs_phy_gdsc") ? (RAIL_VDD_CX | RAIL_VDD_MX)
                                                                   : (RAIL_VDD_MM | RAIL_VDD_MX)) ||
          !rails->verify_votes(rails->ctx, domain, epoch, 0u)) ||
-        location.legacy8480_clock_id != id || location.controller_physical != window_phys ||
+        location.native_clock_id != id || location.controller_physical != window_phys ||
         location.controller_bytes != window_bytes ||
         location.gdscr_physical != window_phys + (uint64_t)location.gdscr_offset)
         return 0;

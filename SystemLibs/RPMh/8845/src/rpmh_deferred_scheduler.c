@@ -11,7 +11,7 @@ static rpmh_tcs_result_t arm_from_scheduler(void* ctx, uint64_t epoch, uint32_t 
 
     if (!cnt || cnt > TCS_BATCH_MAX)
         return TCS_INVALID;
-    /* an active command set carries no dependency metadata. The OEM VRM batch uses WAIT=0; a
+    /* an active command set carries no dependency metadata. the OEM VRM batch uses WAIT=0; a
      * command-enable bit is not a dependency bit. */
     return rpmh_tcs_arm_deferred(b->tcs, b->ledger, b->ledger_epoch, req, slot, commands, cnt, 0u);
 }
@@ -108,8 +108,8 @@ int rpmh_deferred_scheduler_bind_owner(rpmh_deferred_scheduler_t* b, rpmh_schedu
     s->execute_ctx = b;
     s->owner_epoch = owner_epoch;
     s->execution_authorized = mask;
-    /* the canonical, LIVE Windows scheduler is the physical FIFO owner; the standalone OEM
-     * queue fixture must not dispatch competing TCSs. */
+    /* the live Windows scheduler is the FIFO owner; other queues must not dispatch competing
+     * TCSs. */
     s->preserve_busy_fifo = 1u;
     s->admission_paused = 0u;
     *b = staged;
@@ -128,7 +128,7 @@ int rpmh_deferred_scheduler_bind(rpmh_deferred_scheduler_t* b, rpmh_scheduler_t*
 
 /* d0 shutdown must retire the transport epoch rather than recreating the client scheduler
  * (which loses BUSARB/rail/READBACK clients) or carrying stale WDF/TCS pointers into
- * resume. This is the LAST software step after the owner has physically drained and
+ * resume. this is the LAST software step after the owner has physically drained and
  * restored all AMC IRQs. */
 
 int rpmh_deferred_scheduler_retire_owner(rpmh_deferred_scheduler_t* b, rpmh_sync_deferred_t* w,

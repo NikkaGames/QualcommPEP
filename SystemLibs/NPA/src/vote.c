@@ -121,7 +121,7 @@ vote_result_t vote_change(vote_bank_t* b, uint64_t client, uint32_t id, uint64_t
         result = VOTE_UNSUPPORTED;
         goto done;
     }
-    /* before EVERY client operation, including no-op votes, require exclusive ownership and
+    /* before every client operation, including no-op votes, require exclusive ownership and
      * two matching authoritative provider readbacks of the last applied aggregate. */
 
     if (r->requires_readback) {
@@ -159,7 +159,7 @@ vote_result_t vote_change(vote_bank_t* b, uint64_t client, uint32_t id, uint64_t
         goto done;
     }
 
-    /* preserve the initial owner's confirmed vote as an implicit client. This prevents the
+    /* preserve the initial owner's confirmed vote as an implicit client. this prevents the
      * first/newest explicit client from accidentally canceling a boot-time baseline vote. */
 
     aggregate = r->base_vote;
@@ -203,7 +203,7 @@ vote_result_t vote_change(vote_bank_t* b, uint64_t client, uint32_t id, uint64_t
                       b->io.read_current(b->io.ctx, id, &c) && a == c && a == aggregate;
         }
         if (!success) {
-            /* a provider losing ownership during apply must NOT try to restore the rail, even when
+            /* a provider losing ownership during apply must not try to restore the rail, even when
              * the TCS response was successful. */
 
             if (r->requires_readback && !b->io.owns(b->io.ctx, id)) {
@@ -212,7 +212,7 @@ vote_result_t vote_change(vote_bank_t* b, uint64_t client, uint32_t id, uint64_t
                 goto done;
             }
             /* apply might have partially succeeded: only a verified restore can leave this res
-             * usable. Otherwise quarantine it. */
+             * usable. otherwise quarantine it. */
 
             success =
                 b->io.apply(b->io.ctx, id, r->applied) && b->io.verify(b->io.ctx, id, r->applied);

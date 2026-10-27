@@ -21,7 +21,7 @@ typedef struct oem_voteset_io {
     uint32_t owner_epoch;
     int (*owns)(void*, uint32_t key);
     int (*read_current)(void*, uint32_t key, uint64_t* value);
-    /* attests actual hardware/firmware transition completion for EXACT token; not simply the
+    /* attests actual hardware/firmware transition completion for exact token; not simply the
      * presence of a status bit or cached ACK. */
 
     int (*resume_proof)(void*, uint64_t token);
@@ -64,7 +64,7 @@ int oem_vote_sets_init(oem_voteset_state_t*, const oem_voteset_io_t*);
 /* add a res only after independent owner/readback verification. */
 int oem_vote_sets_add(oem_voteset_state_t*, uint32_t key, uint64_t verified_active);
 int oem_vote_sets_seal(oem_voteset_state_t*);
-/* updates software local vote; does NOT submit hardware or claim completion. */
+/* updates software local vote; does not submit hardware or claim completion. */
 
 int oem_vote_sets_set(oem_voteset_state_t*, uint32_t key, uint8_t set, uint8_t valid,
                       uint64_t value, uint8_t completion, uint8_t explicit_vote);
@@ -82,7 +82,7 @@ int oem_vote_sets_commit_active(oem_voteset_state_t*, uint32_t key, uint64_t tok
 
 int oem_vote_sets_arm_resume(oem_voteset_state_t*, uint64_t* token);
 int oem_vote_sets_commit_resume(oem_voteset_state_t*, uint64_t token);
-/* cancellation allowed ONLY before firmware/driver may have entered resume. Host must
+/* cancellation allowed only before firmware/driver may have entered resume. Host must
  * ensure no side-effect could have started. */
 
 int oem_vote_sets_cancel_unstarted(oem_voteset_state_t*, uint64_t token);

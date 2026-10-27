@@ -36,8 +36,8 @@ typedef struct rpmh_pnp_resources {
 
 /* generation identifies the PrepareHardware snapshot, not a hardware owner epoch. */
 
-#define RPMH_OEM_8480_DRIVER_ID 2u
-#define RPMH_OEM_8480_INTID 37u
+#define RPMH_HLOS_DRIVER_ID 2u
+#define RPMH_HLOS_INTID 37u
 
 typedef struct rpmh_oem_pnp_observation {
     uint64_t generation;

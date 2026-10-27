@@ -20,7 +20,7 @@ extern "C" {
 
 typedef struct oem_d0_proof {
     uint64_t pnp_generation;
-    uint64_t owner_epoch; /* independent HW owner epoch; NOT PnP generation. */
+    uint64_t owner_epoch; /* independent HW owner epoch; not PnP generation. */
     uint64_t nonce;       /* owner-only, changes across rights handoffs. */
     void* wdf_interrupt;
     uint32_t driver_id, gic_intid, win_vector, win_level;
@@ -33,7 +33,7 @@ typedef struct oem_d0_proof {
 typedef struct oem_d0_probe {
     void* ctx;
     /* dirql-safe if used as exclusive_owner hook; nonpageable, nonblocking, fixed-size, and
-     * MUST consult authoritative OWNER state. Returning a cached PnP observation as HW proof
+     * must consult authoritative OWNER state. returning a cached PnP observation as HW proof
      * is invalid. */
 
     int (*read)(void*, oem_d0_proof_t*);
@@ -47,19 +47,19 @@ typedef struct oem_pnp_d0_lease {
     oem_d0_proof_t proof;
 } oem_pnp_d0_lease_t;
 
-/* preparehardware only: a PnP correlation observation, NOT exclusive rights. The
+/* preparehardware only: a PnP correlation observation, not exclusive rights. the
  * provider/IRQ handle must not be accepted until d0 is independently attested. */
 
 int oem_d0_lease_prepare(oem_pnp_d0_lease_t*, const rpmh_oem_pnp_observation_t*,
                          uint64_t generation);
 int oem_d0_lease_enter(oem_pnp_d0_lease_t*, const oem_d0_probe_t*, void* wdf_interrupt,
                        uint64_t owner_epoch);
-/* canuse rereads OWNER-PROVIDED attestation twice; stale/revoked rights quarantine. Caller
+/* canuse rereads OWNER-PROVIDED attestation twice; stale/revoked rights quarantine. caller
  * holds serialization covering probe, WDF callback and PnP teardown. */
 
 int oem_d0_lease_can_use(oem_pnp_d0_lease_t*, void* wdf_interrupt, uint64_t owner_epoch,
                          uint32_t rights);
-/* compatible with exclusive_owner(ctx,epoch,interrupt). The mask owner's
+/* compatible with exclusive_owner(ctx,epoch,interrupt). the mask owner's
  * read_masked/write_masked callbacks remain independently required. */
 
 int oem_d0_lease_irq_owner(void* ctx, uint64_t epoch, void* interrupt);

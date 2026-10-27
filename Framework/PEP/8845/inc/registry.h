@@ -1,6 +1,4 @@
-/* state-scoped FOOTSWITCH native NPA client registry. The original 8280 GetNpaClientHandle
- * searches the current state-set client list by res name and native client type before
- * constructing. */
+/* state-scoped footswitch clients are matched by resource name and native client type. */
 
 #ifndef FOOTSWITCH_REGISTRY_H
 #define FOOTSWITCH_REGISTRY_H

@@ -92,7 +92,7 @@ void rpmh_scheduler_revoke(rpmh_scheduler_t* s)
             job->result = TCS_NO_OWNERSHIP;
         }
     }
-    /* never zero busy_mask while the transport is executing. The caller must drain and join
+    /* never zero busy_mask while the transport is executing. the caller must drain and join
      * the synchronous operation before destroying its owner. */
 }
 
@@ -107,7 +107,7 @@ int rpmh_scheduler_authorize(rpmh_scheduler_t* s, uint8_t verified, uint8_t owne
     if (!owned_amcs || (owned_amcs & (uint8_t)~active_mask(&s->driver)) ||
         (owned_amcs & s->quarantined_mask))
         return 0;
-    /* nothing here infers ownership from idle or firmware ExitBootServices. The caller must
+    /* nothing here infers ownership from idle or firmware ExitBootServices. the caller must
      * already have independently validated its exclusive grant. */
 
     s->execution_authorized = owned_amcs;
@@ -446,7 +446,7 @@ rpmh_tcs_result_t rpmh_scheduler_execute_sync(rpmh_scheduler_t* s, uint8_t clien
     if (!rpmh_scheduler_take(s, id, &result, responses, cnt)) {
         uint32_t i;
         /* otherwise a later unrelated DPM request could pump it after its owner has already
-         * handled this call as a failure. Never erase an executing ticket: it may already have
+         * handled this call as a failure. never erase an executing ticket: it may already have
          * touched the RSC and requires completion/rundown by its owner. */
 
         (void)i;

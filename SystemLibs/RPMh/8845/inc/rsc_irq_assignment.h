@@ -18,10 +18,10 @@ typedef struct rsc_irq_pair {
     uint8_t raw_is_message;
     uint8_t translated_is_message;
     uint32_t raw_vector;
-    uint32_t raw_level; /* bus-specific IRQL; NOT expected to equal INTID 37. */
+    uint32_t raw_level; /* bus-specific IRQL; not expected to equal INTID 37. */
     uint32_t translated_vector;
     uint32_t translated_level;
-    /* reflect the ACTUAL PnP desc trigger and sharing semantics. Molokai DRV2 GIC_SPI 5 uses a
+    /* reflect the actual PnP desc trigger and sharing semantics. Molokai DRV2 GIC_SPI 5 uses a
      * high-level trigger (DTS flags 4), never a message or edge-triggered interrupt. */
 
     uint16_t raw_flags;
@@ -46,7 +46,7 @@ typedef struct rsc_irq_report {
     uint32_t candidate_idx;
     uint32_t win_vector;
     uint32_t win_level;
-    /* immutable identity of the selected PnP desc pair. Diagnostic snapshot ONLY, never proof
+    /* immutable identity of the selected PnP desc pair. Diagnostic snapshot only, never proof
      * of interrupt or TCS ownership. */
 
     uint32_t raw_vector;
@@ -57,7 +57,7 @@ typedef struct rsc_irq_report {
     uint8_t translated_share_disposition;
 } rsc_irq_report_t;
 
-/* source arrays must preserve actual WDFCMRESLIST indices. Caller MUST reject list-count
+/* source arrays must preserve actual WDFCMRESLIST indices. caller must reject list-count
  * mismatches before calling. */
 
 rsc_irq_report_t rsc_analyze_irq_pairs(const rsc_irq_pair_t* pairs, size_t cnt);

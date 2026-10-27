@@ -102,7 +102,7 @@ int oem_handoff_transfer(oem_sleepwake_handoff_t* h)
         return 0;
     if (!fenced(h) || !oem_sleep_wake_program_verify(&h->program, h->ticket))
         return quarantine(h);
-    /* mark ambiguous BEFORE crossing into an external firmware provider. No software replay or
+    /* mark ambiguous before crossing into an external firmware provider. No software replay or
      * rollback follows a failed handoff. */
 
     h->phase = HANDOFF_QUARANTINED;
@@ -122,8 +122,8 @@ int oem_handoff_complete_resume(oem_sleepwake_handoff_t* h)
 
     if (!fenced(h) || h->ops.firmware_returned(h->ops.ctx, h->epoch, h->ticket, h->lease) != 1)
         return quarantine(h);
-    /* only resumes with 's separate exact firmware/voltage proof. retirement has a THIRD
-     * independent release proof. */
+    /* resume requires separate firmware and voltage proof; retirement also requires release proof.
+     */
 
     if (!oem_sleep_wake_commit_resume(h->bridge, h->ticket))
         return quarantine(h);

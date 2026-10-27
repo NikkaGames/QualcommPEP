@@ -1,6 +1,6 @@
 #ifndef RPMH_VRM_H
 #define RPMH_VRM_H
-/* does NOT own RSC/TCS, does NOT dispatch votes, and is NOT a PPP private-ABI adapter. */
+/* does not own RSC/TCS, does not dispatch votes, and is not a PPP private-ABI adapter. */
 
 #include <stdint.h>
 #include <stddef.h>
@@ -35,7 +35,7 @@ typedef struct vrm_program {
     vrm_command_t commands[VRM_MAX_CMDS];
 } vrm_program_t;
 
-/* d3 sends an enable=0 vote; it must NOT overwrite the regulator voltage with zero. */
+/* d3 sends an enable=0 vote; it must not overwrite the regulator voltage with zero. */
 
 int vrm_prepare_known_dstate(const char* dev_path, const power_action_t* action,
                              uint32_t target_d_state, vrm_program_t* program);
@@ -44,7 +44,7 @@ int vrm_prepare_tsc1_ldo4_b(const power_action_t* action, uint32_t target_d_stat
                             vrm_program_t* program);
 
 /* convert a SHARED-CLIENT AGGREGATE, not a raw d3 device request, to verified VRM
- * voltage/enable commands. The caller MUST have established res ownership and obtained a
+ * voltage/enable commands. the caller must have established res ownership and obtained a
  * successful, verified aggregate vote. */
 
 int vrm_prepare_aggregate(uint32_t rail, rail_state_t state, vrm_program_t* program);

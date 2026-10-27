@@ -44,7 +44,7 @@ rsc_irq_report_t rsc_analyze_irq_pairs(const rsc_irq_pair_t* pairs, size_t cnt)
         if (!p->raw_is_interrupt)
             continue;
         /* cm_PARTIAL_RESOURCE_DESCRIPTOR.u.interrupt.level is a bus-specific IRQL in the raw list,
-         * NOT the GIC INTID. in particular, a raw vector of 37 with level 0 or another IRQL can be
+         * not the GIC INTID. in particular, a raw vector of 37 with level 0 or another IRQL can be
          * valid. */
 
         mentions37 = !p->raw_is_message && p->raw_vector == RSC_IRQ_EXPECTED_GIC_INTID;

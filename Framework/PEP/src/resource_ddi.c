@@ -676,8 +676,7 @@ static NTSTATUS execute_tlmm_gpio_impl(_Inout_ tlmm_gpio_resource_ptr_t tlmm_gpi
     return STATUS_NOT_SUPPORTED;
 }
 
-/* the SC8280 BCM interface returns the commands for one route bandwidth level.
- * The ICB owner derives them from the command database for the requesting peer. */
+/* the ICB owner resolves command data for one route and bandwidth level. */
 
 typedef struct bcm_bw_req {
     ULONGLONG ib;

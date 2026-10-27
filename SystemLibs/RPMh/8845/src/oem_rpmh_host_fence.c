@@ -116,7 +116,7 @@ int oem_host_fence_enqueue(oem_host_fence_t* f, uint32_t req_id, uint32_t res_ke
         !rpmh_irq_gate_try_pin(&f->admission, (uint64_t)atomic_epoch(&f->gate_epoch), &pin))
         return 0;
     /* close may race with this pin, but its ticket prevents drain from succeeding until
-     * finish. The completion lock prevents data races on 's non-atomic queue. */
+     * finish. the completion lock prevents data races on 's non-atomic queue. */
 
     if (f->ops.enter_queue_lock(f->ops.ctx) == 1) {
         accepted = oem_amc_queue_enqueue(f->queue, req_id, res_key, is_read, token);
@@ -168,7 +168,7 @@ int oem_host_fence_and_drain(void* ctx, uint32_t epoch, uint64_t* lease)
         fault(f);
         return 0; /* never reopen automatically after uncertainty. */
     }
-    /* interrupt disable only AFTER completions have reached terminal idle; otherwise a
+    /* interrupt disable only after completions have reached terminal idle; otherwise a
      * queue/AMC completion can be stranded indefinitely. */
 
     if (f->ops.disable_owned_interrupt(f->ops.ctx) != 1) {

@@ -1,8 +1,6 @@
 #ifndef NPA_CLIENT_LIFECYCLE_H
 #define NPA_CLIENT_LIFECYCLE_H
-/* source-derived Qualcomm NPA state-res client lifecycle. SC8280
- * PepCreateDeviceResourceNpaHandles/ProcessState creates state-owned res clients and
- * GetBusClient keys the interconnect client by master/slave/driver/res type. */
+/* state-owned NPA clients are keyed by resource identity and client type. */
 
 #include "res_graph.h"
 #ifdef __cplusplus
@@ -21,14 +19,11 @@ typedef struct npa_key {
 
     char slave[NPA_NAME_BYTES];
     uint32_t client;
-    /* molokai firmware icbid.h numeric endpoints for BUSARB. These IDs are NOT a validated
-     * 8480 RSC driver ID or NPA client type. */
+    /* firmware ICB endpoint IDs are distinct from the RSC driver ID and NPA client type. */
 
     uint32_t icb_master_id;
     uint32_t icb_slave_id;
-    /* this mask preserves EVERY raw ACPI action selector (bit n = selector n) required of the
-     * eventual multi-handle Windows clock provider. Not an interpretation of the 8480 opcode
-     * or NPA client type; in particular extended selector 8 needs separate 8480 proof. */
+    /* bit n records raw ACPI selector n; extended selectors need a matching provider. */
 
     uint32_t clock_mode_bits;
 } npa_key_t;
@@ -75,14 +70,10 @@ typedef struct npa_registry {
 /* the src graph MUST already be sealed. Caller synchronizes publication/lifetime of
  * graph/registry externally. */
 
-/* qualcomm legacy NPA identity comparison: ASCII res names are case-insensitive, ACPI
- * instance paths, numeric ICB endpoints and the raw ACPI BUSARB client selector remain
- * exact. The unknown 8480 RSC driver and NPA res type are NOT inferred from that selector. */
+/* resource names are case-insensitive; device paths, endpoints and BUSARB selectors are exact. */
 
 int npa_same_res_identity(const npa_key_t*, const npa_key_t*);
-/* original 8280 GetBusClient passes a pointer to two 32-bit endpoints with client_value=8
- * to npa_create_sync_client_ex. Return this exact 8-byte [Master,Slave] reference only for
- * verified Molokai firmware routes; invalid/unowned res identities leave output zero. */
+/* return the 8-byte [master, slave] reference only for verified firmware routes. */
 
 int npa_build_bus_client_reference(const npa_key_t*, uint32_t out[2]);
 int npa_inventory(npa_registry_t*, const res_graph_t*);

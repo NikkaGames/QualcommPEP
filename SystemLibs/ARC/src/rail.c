@@ -14,7 +14,7 @@ static int physical(arc_rail_t* r, uint32_t* corner)
         !r->io.read(r->io.ctx, r->address, &b) || a >= r->level_cnt || b >= r->level_cnt ||
         !live(r))
         return 0;
-    /* other ARC consumers can change the aggregate between completed reads. Both samples must
+    /* other ARC consumers can change the aggregate between completed reads. both samples must
      * support a requested floor; equality is not a controller protocol requirement. */
     *corner = a < b ? a : b;
     return 1;

@@ -633,8 +633,8 @@ int oem_wdf_publish_native_owner_win(void* handle, uint64_t owner_epoch,
     if (!c || c->passive_irq_configured != 1 || !c->completion_work_item || !c->timeout_work_item ||
         InterlockedCompareExchange(&c->timeout_queued, 0, 0) != 0 ||
         InterlockedCompareExchange(&c->timeout_faulted, 0, 0) != 0 ||
-        c->gic_intid != RPMH_OEM_8480_INTID || c->driver_id != RPMH_OEM_8480_DRIVER_ID ||
-        c->owner_epoch || c->bridge || c->dpc_tracker || c->irq_mask_owner ||
+        c->gic_intid != RPMH_HLOS_INTID || c->driver_id != RPMH_HLOS_DRIVER_ID || c->owner_epoch ||
+        c->bridge || c->dpc_tracker || c->irq_mask_owner ||
         InterlockedCompareExchange(&c->bridge_enabled, 0, 0) != 0 ||
         InterlockedCompareExchange(&c->framework_enabled, 0, 0) != 0 ||
         InterlockedCompareExchange(&c->completion_closing, 0, 0) != 0 ||

@@ -109,7 +109,7 @@ oem_amc_queue_result_t oem_amc_queue_dispatch_head(oem_amc_command_queue_t* q, u
             return CMD_BLOCKED;
         }
         if (submission != 1) {
-            /* ambiguous failure MAY have issued a command. The res owner and queue slot remain
+            /* ambiguous failure MAY have issued a command. the res owner and queue slot remain
              * quarantined until independent reconciliation. */
             q->faulted = 1;
             return CMD_FAULT;

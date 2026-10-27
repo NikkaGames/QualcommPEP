@@ -85,7 +85,7 @@
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
     </DriverSign>
     <Inf>
-      <TimeStamp>700.32000.0.412</TimeStamp>
+      <TimeStamp>700.32000.0.413</TimeStamp>
     </Inf>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
@@ -105,7 +105,7 @@
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
     </DriverSign>
     <Inf>
-      <TimeStamp>700.32000.0.412</TimeStamp>
+      <TimeStamp>700.32000.0.413</TimeStamp>
     </Inf>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -219,8 +219,8 @@
     <ClCompile Include="..\SystemLibs\NPA\src\identity.c">
       <ObjectFileName>$(IntDir)identity_28d69fbe.obj</ObjectFileName>
     </ClCompile>
-    <ClCompile Include="..\SystemLibs\clock\8845\src\opcode8480.c">
-      <ObjectFileName>$(IntDir)opcode8480_4751a5a0.obj</ObjectFileName>
+    <ClCompile Include="..\SystemLibs\clock\8845\src\action_opcode.c">
+      <ObjectFileName>$(IntDir)action_opcode_4751a5a0.obj</ObjectFileName>
     </ClCompile>
     <ClCompile Include="..\SystemLibs\clock\8845\src\compat_ids.c">
       <ObjectFileName>$(IntDir)compat_ids_dd816839.obj</ObjectFileName>
@@ -638,7 +638,7 @@
     <ClInclude Include="..\SystemLibs\DAL\inc\chipinfo.h" />
     <ClInclude Include="..\SystemLibs\clock\8845\inc\composite.h" />
     <ClInclude Include="..\SystemLibs\clock\8845\inc\graph.h" />
-    <ClInclude Include="..\SystemLibs\clock\8845\inc\opcode8480.h" />
+    <ClInclude Include="..\SystemLibs\clock\8845\inc\action_opcode.h" />
     <ClInclude Include="..\Framework\PEP\8845\inc\perf_clock_desc.h" />
     <ClInclude Include="..\Framework\PEP\8845\inc\perf_clock_win.h" />
     <ClInclude Include="..\SystemLibs\CmdDb\inc\cmddb.h" />

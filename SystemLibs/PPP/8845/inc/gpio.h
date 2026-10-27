@@ -21,9 +21,7 @@ typedef struct pm_gpio_digital_output {
     uint32_t i_src_pulls;
 } pm_gpio_digital_output_t;
 
-/* windows 8480 interface IOCTL 0x80024FB4 returns eight opaque bytes. Its payload is NOT
- * documented by the avail PDB as a complete seven-field digital-output configuration and
- * cannot authorize d0/d3. */
+/* GPIO state IOCTL 0x80024FB4 returns eight opaque bytes, not a digital-output configuration. */
 
 #define PM_GPIO_GET_GPIO_STATE_IOCTL 0x80024FB4u
 #define PM_GPIO_GET_GPIO_STATE_INPUT_BYTES 12u
@@ -35,8 +33,7 @@ typedef struct pm_gpio_state_query {
     uint32_t write_configured_pins;
 } pm_gpio_state_query_t;
 
-/* intentionally opaque. Do not claim field meaning until 8480 provider semantics are
- * independently reversed. */
+/* preserve opaque bytes until the provider defines their fields. */
 
 typedef struct pm_gpio_state_raw {
     uint8_t bytes[PM_GPIO_GET_GPIO_STATE_OUTPUT_BYTES];

@@ -135,9 +135,7 @@ static int rpmh_execution_ready(const win_backend_t* b)
     return b && (!b->io.rpmh_execution_ready || b->io.rpmh_execution_ready(b->io.ctx) == 1);
 }
 
-/* callback presence alone is not hardware readiness on Windows. The portable fixture
- * contract intentionally accepts NULL checkers; production ALWAYS supplies the execution
- * gates (and checks again inside every hardware operation under the owner mutex). */
+/* production supplies live readiness checks and repeats them under the owner mutex. */
 
 static int pmic_gpio_execution_ready(const win_backend_t* b)
 {

@@ -113,8 +113,7 @@ typedef struct power_scratch {
 typedef struct power_dev {
     uint32_t current_d_state;
     uint8_t state_known;
-    /* sticky until authoritative device/provider reinitialization. A failed rollback must not
-     * be mistaken for a legitimate unknown initial d0. */
+    /* failed rollback stays quarantined until device/provider reinitialization. */
 
     uint8_t quarantined;
 } power_dev_t;

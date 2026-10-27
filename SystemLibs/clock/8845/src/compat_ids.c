@@ -5,8 +5,8 @@ int validate_original_clock_id(uint32_t clock_id, uint32_t owned_table_cnt, uint
     uint32_t idx;
     if (table_idx)
         *table_idx = 0u;
-    if (!table_idx || !owned_table_cnt || owned_table_cnt > SC8480_CLOCK_MAX_IDX_CNT ||
-        (clock_id >> 16) != SC8480_CLOCK_ID_TYPE)
+    if (!table_idx || !owned_table_cnt || owned_table_cnt > CLOCK_ID_MAX_INDICES ||
+        (clock_id >> 16) != CLOCK_ID_TYPE)
         return 0;
     idx = clock_id & 0xffffu;
     if (idx >= owned_table_cnt)
@@ -24,11 +24,11 @@ int preflight_original_clock_runtime(uint32_t clock_id, uint32_t owned_table_cnt
         *table_idx = 0u;
     if (!snapshot || !table_idx || !snapshot->owner_epoch || snapshot->owner_synchronized != 1u ||
         snapshot->clock_entry_present != 1u || snapshot->dev_present != 1u ||
-        (snapshot->runtime_flags & SC8480_CLOCK_RUNTIME_INHIBIT) ||
-        (snapshot->clock_object_flags & SC8480_CLOCK_RESTRICTED &&
-         !(snapshot->dev_flags & SC8480_CLOCK_RESTRICTED)) ||
-        (operation != SC8480_CLOCK_ENABLE && operation != SC8480_CLOCK_DISABLE &&
-         operation != SC8480_CLOCK_FREQ) ||
+        (snapshot->runtime_flags & CLOCK_RUNTIME_INHIBIT) ||
+        (snapshot->clock_object_flags & CLOCK_CLIENT_RESTRICTED &&
+         !(snapshot->dev_flags & CLOCK_CLIENT_RESTRICTED)) ||
+        (operation != CLOCK_ID_OP_ENABLE && operation != CLOCK_ID_OP_DISABLE &&
+         operation != CLOCK_ID_OP_FREQ) ||
         !validate_original_clock_id(clock_id, owned_table_cnt, &idx))
         return 0;
     *table_idx = idx;

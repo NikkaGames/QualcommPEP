@@ -18,11 +18,11 @@ int molokai_gdsc_location(const char* domain, molokai_gdsc_location_t* out)
         const molokai_gdsc_location_t* p = &verified[i];
         if (strcmp(domain, p->domain))
             continue;
-        if (!oem_get_power_domain(domain, &oem) || oem.id != p->legacy8480_clock_id ||
+        if (!oem_get_power_domain(domain, &oem) || oem.id != p->native_clock_id ||
             !p->controller_bytes || p->gdscr_offset > p->controller_bytes - 4u ||
             p->gdscr_physical != p->controller_physical + (uint64_t)p->gdscr_offset)
             return 0;
-        /* signed SC8480 HAL addresses are not a Molokai physical map. */
+        /* reference HAL addresses require independent validation against the Molokai map. */
 
         *out = *p;
         return 1;

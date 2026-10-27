@@ -20,17 +20,15 @@ extern "C" {
 #define TCS_CMD_STRIDE 0x18u
 /* boot.MXF Molokai UEFI RPMh DRV configuration (RpmhTargetLib): HLOS hardware DRV 2, 6
  * configured TCSs, AMC slots 0..2, sleep slots 3..4, wake slot 5, and 16 commands per TCS.
- * The hardware reports 8 avail TCSs. */
+ * the hardware reports 8 avail TCSs. */
 
 #define MOLOKAI_UEFI_HW_DRV 2u
 #define MOLOKAI_UEFI_TCS_TOTAL 6u
 #define MOLOKAI_UEFI_AMC_CNT 3u
 #define MOLOKAI_UEFI_SLEEP_START 3u
 #define MOLOKAI_UEFI_WAKE_START 5u
-/* molokai device-specific topology from the supplied macan.dts,
- * /soc/rsc@18900000/drv@2/channel@0 (not the imperfectly ported 8480 SYS): qcom,tcs-config
- * = <ACTIVE_TCS 3 SLEEP_TCS 2 WAKE_TCS 2 CONTROL_TCS 0 VENDOR_TYPE_4 1>. Firmware's UEFI
- * table configures only the first SIX slots and agrees on. */
+/* firmware configures three active, two sleep, two wake and one vendor TCS; the UEFI table
+ * programs the first six slots. */
 
 #define MOLOKAI_WIN_HW_DRV 2u
 #define MOLOKAI_WIN_TCS_TOTAL 8u
@@ -98,13 +96,13 @@ typedef struct rpmh_tcs_io {
     void (*unlock)(void*);
     /* deferred Windows issuer runs under the native RPMh passive KMUTEX.
      * enter_irq_lock/leave_irq_lock are retained ABI names: binds these to read-only
-     * owner/epoch checks, NOT WdfInterruptTryToAcquireLock. The WDF passive ISR obtains that
+     * owner/epoch checks, not WdfInterruptTryToAcquireLock. the WDF passive ISR obtains that
      * native RPMh mutex independently. */
 
     int (*enter_irq_lock)(void*);
     void (*leave_irq_lock)(void*);
     void* irq_lock_ctx;
-    /* optional, read-only classification for an enter_irq_lock refusal. Never substitutes for
+    /* optional, read-only classification for an enter_irq_lock refusal. never substitutes for
      * the physical interrupt lock or an owner grant. */
     uint32_t (*get_irq_lock_refusal)(void*);
 } rpmh_tcs_io_t;
@@ -141,12 +139,12 @@ typedef struct rpmh_tcs {
      * therefore disable again, so a failed probe does not leave the shared RSC altered. */
 
     uint8_t irq_enabled_by_us;
-    /* this is an observation bound to the authenticated d0 lease, NEVER an ownership grant:
+    /* this is an observation bound to the authenticated d0 lease, never an ownership grant:
      * prepare still requires external_grant_mask/ISR completion binding. restore must preserve
      * these bits rather than disabling them as ours. */
 
     uint8_t pre_enabled_irq_mask;
-    /* separate completion consumers MUST NOT W1C the same AMC status bit. Only change this
+    /* separate completion consumers must not W1C the same AMC status bit. only change this
      * under io.lock while quiescent and with no in-flight transaction, as part of a verified
      * owner handoff. */
 
@@ -174,7 +172,7 @@ typedef struct rpmh_tcs {
     uint32_t poll_limit;
 } rpmh_tcs_t;
 
-/* there is NO GIC access, ACK or TCS control write here. The installer supplies a stable
+/* there is no GIC access, ACK or TCS control write here. the installer supplies a stable
  * native owner epoch and the 32-bit ledger epoch used when issuing the deferred TCS
  * transaction. */
 
@@ -191,7 +189,7 @@ typedef struct rpmh_irq_src {
 } rpmh_irq_src_t;
 
 int rpmh_tcs_read_owned_irq_status(void* src, uint64_t owner_epoch);
-/* caller holds dev->io.lock and the independently authenticated RSC lease. Only owned AMC
+/* caller holds dev->io.lock and the independently authenticated RSC lease. only owned AMC
  * src enables change; HAL owns the GIC line. restore also requires exact ledger
  * retirement, physical ACK and idle TCS readback. */
 int rpmh_tcs_mask_owned_irq(rpmh_irq_src_t*, uint64_t owner_epoch);
@@ -222,14 +220,14 @@ typedef struct tcs_command {
  * (the status bit is what the writer polls) and remember that did. */
 
 rpmh_tcs_result_t rpmh_tcs_prepare(rpmh_tcs_t* dev, uint8_t tcs);
-/* an unsuccessful attempt to acquire the owner lock is NOT a clean teardown, even if no
+/* an unsuccessful attempt to acquire the owner lock is not a clean teardown, even if no
  * IRQ-enable bit is currently recorded: another thread may still be using mapped RSC
  * registers under that lock. */
 
 #define TCS_CLEANUP_UNSYNCHRONIZED 0x80u
 
 /* undo rpmh_tcs_prepare: revoke software access under io.lock and clear only completion
- * interrupt bits this writer enabled. This is a quiescent teardown operation: the owner
+ * interrupt bits this writer enabled. this is a quiescent teardown operation: the owner
  * must first stop new submissions, drain ISR/DPC activity and prevent new prepare calls. */
 
 uint8_t rpmh_tcs_restore(rpmh_tcs_t* dev);
@@ -241,7 +239,7 @@ uint8_t rpmh_tcs_restore(rpmh_tcs_t* dev);
 rpmh_tcs_result_t rpmh_tcs_issue_batch(rpmh_tcs_t* dev, uint8_t tcs, const tcs_command_t* commands,
                                        uint32_t cnt);
 /* dependency bits outside the submitted command range are rejected before owner checks or
- * MMIO. This is not an ownership grant or an asynchronous ISR/DPC implementation. */
+ * MMIO. this is not an ownership grant or an asynchronous ISR/DPC implementation. */
 
 rpmh_tcs_result_t rpmh_tcs_issue_batch_with_dependencies(rpmh_tcs_t* dev, uint8_t tcs,
                                                          const tcs_command_t* commands,

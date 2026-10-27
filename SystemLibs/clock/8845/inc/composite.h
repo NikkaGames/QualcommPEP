@@ -1,10 +1,9 @@
 #ifndef CLOCK_COMPOSITE_H
 #define CLOCK_COMPOSITE_H
-/* sc8480 EN_SETFREQ: an enable-client request followed by an independent freq-client
- * request. */
+/* enable-and-rate uses separate enable and frequency requests in that order. */
 
 #include "scalar.h"
-#include "opcode8480.h"
+#include "action_opcode.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -35,13 +34,12 @@ typedef struct clock_composite_snapshot {
  * graph/D-state owner only. */
 
 int clock_composite_bind(clock_composite_t*, scalar_res_t* enable, scalar_res_t* freq);
-/* the 8480 DSDT's second DWORD remains opaque; no fabricated clock matching algorithm. */
+/* the second DSDT operand is an opaque match policy. */
 
 int clock_composite_issue(clock_composite_t*, const power_action_t*,
                           clock_composite_snapshot_t* prior);
-/* for native SC8480 resources d3 issues an EXPLICIT enable=OFF(2), retaining the freq
- * client vote, matching the signed CLOCK DISABLE request. Never conflate OFF with
- * npa_complete_request or client destruction. */
+/* D3 issues enable=2 while retaining the frequency vote; OFF is distinct from completion and
+ * destruction. */
 
 int clock_composite_release(clock_composite_t*, clock_composite_snapshot_t* prior);
 /* restore only this client's two votes, compensating a partially completed hardware

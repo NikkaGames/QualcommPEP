@@ -73,7 +73,7 @@ tlmm_result_t tlmm_apply(const tlmm_io_t* io, const tlmm_gpio_t* config)
         ctl |= TLMM_CFG_EGPIO_ENABLE;
     output = (prev_io & ~2u) | (config->state << 1);
 
-    /* a pin can be removed independently of the current MMIO lock. Never commence a write
+    /* a pin can be removed independently of the current MMIO lock. never commence a write
      * after detecting that Windows revoked it. */
 
     if (!io->owns_pin(io->ctx, config->pin)) {

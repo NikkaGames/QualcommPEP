@@ -34,7 +34,7 @@ int rpmh_wdf_lifecycle_observe(rpmh_wdf_lifecycle_t* life,
         sequence.cnt != 1u)
         return 0;
     m = &sequence.matches[0];
-    if (m->driver_id != RPMH_OEM_8480_DRIVER_ID || m->gic_intid != RPMH_OEM_8480_INTID ||
+    if (m->driver_id != RPMH_HLOS_DRIVER_ID || m->gic_intid != RPMH_HLOS_INTID ||
         m->owner_epoch != life->pnp_generation || !m->win_vector || !m->win_level)
         return 0;
     life->win_vector = m->win_vector;

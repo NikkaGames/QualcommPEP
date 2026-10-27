@@ -1,8 +1,6 @@
 #ifndef RPMH_BUSY_ARBITRATION_H
 #define RPMH_BUSY_ARBITRATION_H
-/* parity: only a physically UNISSUED TCS/AMC BUSY admission can be retried on another
- * independently owned slot. TCS_BUSY is emitted by the deferred transport only after a
- * ticket is cancelled while QUEUED or its TCS issuer refuses before touched=1. */
+/* retry BUSY only after proving no dispatch occurred or cancelling the queued ticket. */
 
 #include "rpmh_tcs.h"
 #include <stdint.h>

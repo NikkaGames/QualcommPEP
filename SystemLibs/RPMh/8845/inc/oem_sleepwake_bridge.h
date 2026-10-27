@@ -1,8 +1,6 @@
 #ifndef OEM_SLEEPWAKE_BRIDGE_H
 #define OEM_SLEEPWAKE_BRIDGE_H
-/* fail-closed integration of /201/202 into a DRY-RUN Molokai sleep/wake TCS image. NO
- * hardware writes, firmware handoff, ownership discovery, ACPI callback or PEP0 reg occurs
- * here. */
+/* construct sleep/wake TCS images without programming hardware or handing off to firmware. */
 
 #include "oem_voter_state.h"
 #include "oem_voter_sets.h"
@@ -39,7 +37,7 @@ typedef struct oem_sleepwake_bridge {
     uint64_t ticket;
     uint8_t faulted;
     uint8_t closed;
-    /* set BEFORE first possible MMIO write; forbids an unstarted rollback after a partial or
+    /* set before first possible MMIO write; forbids an unstarted rollback after a partial or
      * completed non-AMC TCS program. */
 
     uint8_t hardware_started;
@@ -50,9 +48,9 @@ int oem_sleep_wake_init(oem_sleepwake_bridge_t*, oem_voter_state_t*, oem_voteset
 /* only constructs images, never arms or writes hardware. */
 
 int oem_sleep_wake_build(oem_sleepwake_bridge_t*, oem_sleepwake_image_t*);
-/* arm an exact resume token and freeze /202 under the shared lock. */
+/* freeze the image under the shared lock and bind its resume token. */
 int oem_sleep_wake_arm(oem_sleepwake_bridge_t*, uint64_t*);
-/* commit ONLY after provider resume_proof and double HW readbacks. */
+/* commit only after provider resume_proof and double HW readbacks. */
 
 int oem_sleep_wake_commit_resume(oem_sleepwake_bridge_t*, uint64_t);
 /* only safe with external attestation no firmware side effect could start. */

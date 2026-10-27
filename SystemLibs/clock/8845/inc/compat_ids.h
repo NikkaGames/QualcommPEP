@@ -1,6 +1,6 @@
-#ifndef SC8480_CLOCK_ID_H
-#define SC8480_CLOCK_ID_H
-/* not a DAL client API, handle allocator or MMIO authorization. The owner must
+#ifndef CLOCK_COMPAT_IDS_H
+#define CLOCK_COMPAT_IDS_H
+/* not a DAL client API, handle allocator or MMIO authorization. the owner must
  * independently supply an authoritative table count, and remain valid throughout the
  * physical transaction. */
 
@@ -8,20 +8,19 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define SC8480_CLOCK_ID_TYPE 3u
-#define SC8480_CLOCK_MAX_IDX_CNT 65536u
+#define CLOCK_ID_TYPE 3u
+#define CLOCK_ID_MAX_INDICES 65536u
 /* reject other handle types, absent/oversized live table and indices outside the
  * owner-supplied table. */
 
 int validate_original_clock_id(uint32_t clock_id, uint32_t owned_table_cnt, uint32_t* table_idx);
-/* verified native SC8480 CLOCK type-3 path. A zero status alone is therefore NOT a
- * hardware completion attestation. */
+/* a successful type-3 clock query does not establish hardware completion. */
 
-#define SC8480_CLOCK_RUNTIME_INHIBIT (1u << 11)
-#define SC8480_CLOCK_RESTRICTED (1u << 14)
-#define SC8480_CLOCK_ENABLE 1u
-#define SC8480_CLOCK_DISABLE 2u
-#define SC8480_CLOCK_FREQ 3u
+#define CLOCK_RUNTIME_INHIBIT (1u << 11)
+#define CLOCK_CLIENT_RESTRICTED (1u << 14)
+#define CLOCK_ID_OP_ENABLE 1u
+#define CLOCK_ID_OP_DISABLE 2u
+#define CLOCK_ID_OP_FREQ 3u
 
 typedef struct clock_owner_snapshot {
     uint64_t owner_epoch;
@@ -34,7 +33,7 @@ typedef struct clock_owner_snapshot {
 } clock_owner_snapshot_t;
 
 /* clears idx on failure; does not execute hardware or return success for a stopped
- * runtime. Both the owner and clock table must be live, owned and locked by a future
+ * runtime. both the owner and clock table must be live, owned and locked by a future
  * provider. */
 
 int preflight_original_clock_runtime(uint32_t clock_id, uint32_t owned_table_cnt,

@@ -1,7 +1,6 @@
 #ifndef OEM_CMDDB_RESOLVER_H
 #define OEM_CMDDB_RESOLVER_H
-/* immutable, CMD_DB-addressed request allowlist and fail-closed external voter adapter for
- * /199. Source-only, NOT voting ABI. */
+/* bounded CMD_DB requests with an externally owned voter adapter. */
 
 #include <stdint.h>
 #include <stddef.h>
@@ -40,7 +39,7 @@ typedef struct oem_cmddb_req {
 } oem_cmddb_req_t;
 
 typedef struct oem_cmddb_resolver {
-    /* must validate actual voter ownership and dependency state; a null callback is NOT ready. */
+    /* must validate actual voter ownership and dependency state; a null callback is not ready. */
 
     int (*voter_ready)(void*, uint32_t key, uint32_t req_id, uint8_t is_read);
     void* voter_ctx;

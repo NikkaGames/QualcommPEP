@@ -1,7 +1,7 @@
 #ifndef RSC_IRQ_PROC_H
 #define RSC_IRQ_PROC_H
 /* read-status -> verify all TCS commands -> acknowledge exact AMC bit -> verify clear ->
- * retire exact request. It does NOT discover an IRQ, acquire DRV2, map MMIO, or configure
+ * retire exact request. It does not discover an IRQ, acquire DRV2, map MMIO, or configure
  * a WDF ISR. */
 
 #include "rsc_completion.h"
@@ -35,7 +35,7 @@ rsc_irq_result_t rsc_irq_process(rsc_completion_t* ledger, const rsc_irq_io_t* i
                                  uint32_t owner_epoch, uint8_t slot, uint32_t req_id,
                                  uint16_t expected_command_mask);
 
-/* both masks must match the immutable ticket and committed hardware sequence. The owner serializes
+/* both masks must match the immutable ticket and committed hardware sequence. the owner serializes
  * ISR/worker access. */
 
 rsc_irq_result_t rsc_irq_process_with_dependencies(rsc_completion_t* ledger, const rsc_irq_io_t* io,

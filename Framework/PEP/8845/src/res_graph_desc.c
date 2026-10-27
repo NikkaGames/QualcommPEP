@@ -15,8 +15,7 @@ static int inspect_fstate_action(const aeob_action_t* action, void* ctx)
 {
     fstate_kind_audit_t* audit = (fstate_kind_audit_t*)ctx;
     ++audit->seen;
-    /* their opaque numeric payloads are NOT yet executable by a verified 8480-compatible
-     * provider. */
+    /* opaque payloads stay non-executable until a matching provider is verified. */
 
     if (strcmp(action->kind, "PSTATE_ADJUST"))
         audit->unexpected = 1;

@@ -136,8 +136,7 @@ static NTSTATUS acpi_eval_with_auto_buf(_In_ WDFDEVICE dev, _In_reads_bytes_(in_
 
         ULONG_PTR br = 0;
         status = send_acpi_ioctl(dev, in_buf, in_len, out, out_len, &br);
-        /* the signed 8480 helper was located by the exact EX signature/IOCTL literals, but its
-         * hardware result is not known. Never substitute a fabricated empty package. */
+        /* an unsuccessful ACPI evaluation must not return an empty success package. */
 
         if (!NT_SUCCESS(status)) {
             CHAR method[5] = {0};

@@ -84,13 +84,12 @@ int rail_get_client_vote(const rail_owner_t* owner, const char* dev_path, const 
                          rail_vote_t* vote);
 
 int rail_aggregate(const rail_owner_t* owner, uint32_t rail_idx, rail_vote_t* aggregate);
-/* one native VRM batch: enable, voltage, mode for an enabled regulator; enable=0 alone
- * when disabled. stage all commands before triggering. */
+/* prepare the full VRM batch before triggering: enable/voltage/mode, or enable=0. */
 
 int rail_program(const rail_owner_t* owner, uint32_t rail_idx, const rail_vote_t* aggregate,
                  tcs_command_t out[3], uint32_t* cnt);
 /* clock buffers read enable only (one response); regulators read voltage, enable, mode
- * (three responses). Never issue reads of absent clock fields. */
+ * (three responses). never issue reads of absent clock fields. */
 int rail_read_program(const rail_owner_t* owner, uint32_t rail_idx, tcs_command_t out[3],
                       uint32_t* cnt);
 uint64_t rail_pack_state(uint32_t millivolts, uint32_t enable, uint32_t mode);

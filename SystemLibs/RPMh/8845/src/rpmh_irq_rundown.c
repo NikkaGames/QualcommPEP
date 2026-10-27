@@ -118,7 +118,7 @@ int rpmh_irq_gate_open(rpmh_irq_gate_t* g, uint64_t epoch)
     if (!g || !epoch || epoch == UINT64_MAX)
         return 0;
     /* without this mutual exclusion, an old Close could read the old epoch, pause, then CAS a
-     * new epoch's re-opened packed=1 back to zero. The ISR never takes this lock. */
+     * new epoch's re-opened packed=1 back to zero. the ISR never takes this lock. */
 
     if (!gate_control_enter(g))
         return 0;
@@ -160,7 +160,7 @@ int rpmh_irq_gate_try_pin(rpmh_irq_gate_t* g, uint64_t epoch, rpmh_irq_ticket_t*
                 t->active = 1;
                 return 1;
             }
-            /* won an ABA race against a later epoch. The new gate's count includes our unpublished
+            /* won an ABA race against a later epoch. the new gate's count includes our unpublished
              * ticket, so Close/Open cannot recycle this generation until remove exactly that count.
              */
 
@@ -182,7 +182,7 @@ int rpmh_irq_gate_retain_ticket(rpmh_irq_gate_t* g, const rpmh_irq_ticket_t* src
     if (!g || !src || !retained || src == retained || !src->active || !src->epoch ||
         retained->active || retained->epoch || load_epoch(&g->last_epoch) != src->epoch)
         return 0;
-    /* never change the bit or reopen admissions. The owner serializes this with retirement of
+    /* never change the bit or reopen admissions. the owner serializes this with retirement of
      * 'src'. */
 
     for (;;) {

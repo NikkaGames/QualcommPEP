@@ -12,10 +12,8 @@ int decode_simple_clock_intent(const power_action_t* a, clock_intent_t* out)
     memset(out, 0, sizeof(*out));
     if (!a || a->kind != POWER_CLOCK || a->u.clock.extra_cnt != 0u)
         return 0;
-    /* reference SC8280 uses the literal enum as the /clk/.../enable NPA scalar request (1
-     * enable, 2 disable); the scalar core's owned physical aggregate instead uses 1 enabled
-     * and 0 disabled. Never pass the raw 2 into the physical writer or raw 0 to a legacy NPA
-     * client. */
+    /* translate NPA enable/disable values 1/2 to physical values 1/0 at the transport
+     * boundary. */
 
     if (a->u.clock.vote == 1u || a->u.clock.vote == 2u) {
         out->legacy_npa_action = a->u.clock.vote;
@@ -147,7 +145,7 @@ static int owns(void* ctx, const npa_key_t* key)
 /* client slots can be recycled across graph activations, but an address cannot serve as an
  * opaque handle: a stale pointer to the recycled slot would be accepted for a new client
  * with the same state/key (ABA). Use a strictly increasing, nonzero pointer-sized cookie
- * and NEVER dereference incoming. */
+ * and never dereference incoming. */
 
 static scalar_clock_client_t* client_for(scalar_clock_bridge_t* b, void* handle)
 {

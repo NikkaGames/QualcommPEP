@@ -1,8 +1,7 @@
 #include "domains.h"
 #include <string.h>
 
-/* GDSCR values are physical addresses from the SC8480 domain table.
- * Validate the UFS address against the GCC sequence before deriving a mapped offset. */
+/* reference GDSCR addresses require validation against the mapped controller before use. */
 
 const oem_power_domain_t oem_power_domains[OEM_POWER_DOMAIN_CNT] = {
     {"av1e_cc_core_gdsc", 0x20000u, UINT64_C(0x15224004)},

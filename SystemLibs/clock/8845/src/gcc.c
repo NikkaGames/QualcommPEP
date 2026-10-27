@@ -193,7 +193,7 @@ static gcc_result_t wait_branch(const gcc_io_t* io, uint32_t cbcr_off, int want_
     for (i = 0; i < GCC_POLL_LIMIT; ++i) {
         if (!rd(io, cbcr_off, &v))
             return GCC_IO_FAILED;
-        /* molokai ClockDriver.c: HW_CTL delegates gating to hardware. The client vote must be
+        /* molokai ClockDriver.c: HW_CTL delegates gating to hardware. the client vote must be
          * verified separately by the caller; do not require a CLK_OFF transition controlled by
          * another owner. */
 
@@ -280,7 +280,7 @@ gcc_result_t gcc_disable(const gcc_io_t* io, const gcc_clock_t* clock)
             r = enable_bits(io, clock->cbcr_offset, CBCR_CLK_ENABLE, 0);
             if (r != GCC_OK)
                 return r;
-            /* another voter can retain CLK_ON. The caller proves this owner's request bit was
+            /* another voter can retain CLK_ON. the caller proves this owner's request bit was
              * withdrawn; polling CLK_OFF adds no such proof. */
             return GCC_OK;
         case GCC_KIND_GDSC:
@@ -293,7 +293,7 @@ gcc_result_t gcc_disable(const gcc_io_t* io, const gcc_clock_t* clock)
             if (r != GCC_OK)
                 return r;
             /* a second firmware/hardware voter may hold PWR_ON even after our SW_COLLAPSE request.
-             * Nevertheless the requested bit MUST survive a fresh MMIO read; a dropped write cannot
+             * Nevertheless the requested bit must survive a fresh MMIO read; a dropped write cannot
              * succeed. */
 
             if (!rd(io, clock->gdscr_offset, &v))
@@ -415,7 +415,7 @@ static int dfs_snapshot(const gcc_io_t* io, const gcc_domain_t* domain, dfs_snap
     if (!rd(io, domain->cmd_rcgr_offset + 0x14u, &control))
         return 0;
     /* curr_PERF_STATE follows the GENI consumer and is not part of the immutable slot table.
-     * Never mask software-override/control changes. */
+     * never mask software-override/control changes. */
     snapshot->control = control & ~0x1eu;
     if (!(control & 1u))
         return 1;

@@ -21,7 +21,7 @@ int rpmh_pipeline_bind_owner(rpmh_irq_pipeline_t* p, const rpmh_work_ops_t* ops,
         (void)rpmh_work_revoke(&p->work, epoch);
         return 0;
     }
-    /* retire the previous pinned ticket BEFORE issuing that physical unmask. */
+    /* retire the previous pinned ticket before issuing that physical unmask. */
 
     p->work.defer_unmask = 1;
     p->epoch = epoch;
@@ -85,12 +85,12 @@ int rpmh_pipeline_dispatch_worker(rpmh_irq_pipeline_t* p, uint64_t epoch)
         return 0;
     result = rpmh_work_on_worker(&p->work, epoch);
     if (result == 2)
-        return 2; /* requeued: SAME lifetime ticket. */
+        return 2; /* requeued: same lifetime ticket. */
     if (result == 3 && p->work.state == RPMH_WORK_COMPLETION_READY && p->work.irq_masked &&
         rpmh_irq_gate_retain_ticket(&p->gate, &p->pending, &p->unmask_finalizing) &&
         rpmh_irq_gate_retire_ticket(&p->gate, &p->pending)) {
         /* do not let owner Close/release mistake an empty pending for a fully drained callback.
-         * The second gate reference survives until the physical unmask write/readback has
+         * the second gate reference survives until the physical unmask write/readback has
          * returned. */
 
         int unmasked;

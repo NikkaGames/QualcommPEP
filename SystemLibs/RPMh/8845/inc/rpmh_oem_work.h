@@ -1,6 +1,6 @@
 #ifndef RPMH_OEM_WORK_H
 #define RPMH_OEM_WORK_H
-/* no Windows binding or hardware grant is provided. Caller serializes callbacks with
+/* no Windows binding or hardware grant is provided. caller serializes callbacks with
  * teardown and must externally verify exclusive controller and IRQ ownership. */
 
 #include <stdint.h>

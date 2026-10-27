@@ -8,11 +8,9 @@
 extern "C" {
 #endif
 #define NATIVE_NPA_NAME_SIZE 192u
-/* the signed SC8480 CLOCK setup passes w2=0x40 to its internal client resolver at RVA
- * 0x070D08, which forwards it to the NPA client factory (0x2319F8 -> 0x2313A0). 0x40 is
- * NPA_CLIENT_REQUIRED in Qualcomm NPA. */
+/* native clock clients use NPA_CLIENT_REQUIRED (0x40). */
 
-#define SC8480_CLOCK_NPA_CLIENT_REQUIRED 0x40u
+#define NPA_CLOCK_CLIENT_REQUIRED 0x40u
 
 typedef enum native_npa_class {
     NATIVE_NPA_UNRESOLVED = 0,
@@ -21,10 +19,8 @@ typedef enum native_npa_class {
     NATIVE_NPA_BUS = 3
 } native_npa_class_t;
 
-/* original SC8480 signed res-definition links: /clk/<name>/enable -> aggregation RVA
- * 0x2354D0: nonzero MIN (1 ON beats 2 OFF) /clk/<name> -> aggregation RVA 0x235690:
- * unsigned MAX (freq hz). These are NPA vote aggregation functions, not hardware request
- * callbacks. */
+/* enable resources aggregate the minimum nonzero vote; frequency resources aggregate the
+ * maximum. */
 
 typedef enum native_clock_aggregation {
     NATIVE_CLOCK_AGGREGATION_UNKNOWN = 0,
@@ -32,7 +28,7 @@ typedef enum native_clock_aggregation {
     NATIVE_CLOCK_FREQ_MAX = 2
 } native_clock_aggregation_t;
 
-#define SC8480_CLOCK_NPA_CLIENT_SUPPRESSIBLE 0x800u
+#define NPA_CLOCK_CLIENT_SUPPRESSIBLE 0x800u
 #define NATIVE_CLOCK_MAX_AGGREGATE_VOTES 16u
 
 typedef struct native_clock_vote {
@@ -58,8 +54,7 @@ typedef struct native_npa_client_desc {
     native_clock_aggregation_t clock_aggregation;
 } native_npa_client_desc_t;
 
-/* sc8480's signed native descriptors distinguish freq (hz) from enable (1 ON / 2 OFF) NPA
- * clock resources. d0 EN_SETFREQ requires two *distinct* client identities. */
+/* enable and frequency require separate NPA client identities. */
 
 typedef struct native_npa_composite_clock_desc {
     native_npa_client_desc_t enable;
@@ -68,24 +63,23 @@ typedef struct native_npa_composite_clock_desc {
     uint32_t opaque_match_policy;
 } native_npa_composite_clock_desc_t;
 
-/* higher layers MUST independently verify the preexisting NPA clock policy (read-only
+/* higher layers must independently verify the preexisting NPA clock policy (read-only
  * 0x1000) and native res ownership before any client creation or physical request. */
 
 int npa_describe_composite_clock_clients(const npa_key_t*, const power_action_t*,
                                          native_npa_composite_clock_desc_t*);
 
-/* opcode 8 (EN_SETFREQ) requires a separate dual-client sequence; it MUST never be
+/* opcode 8 (EN_SETFREQ) requires a separate dual-client sequence; it must never be
  * misrepresented by this single-res function. */
 
 int npa_describe_clock_client(const npa_key_t* key, const power_action_t* action,
                               native_npa_client_desc_t* out);
 
-/* SC8480 RVA 0x231BA8 orders EN_SETFREQ as enable=1, then frequency in Hz;
- * DISABLE explicitly votes 2. This immutable sequence does not execute or prove completion. */
+/* enable-and-rate issues enable=1 before frequency; disable issues enable=2. */
 
 #define NATIVE_CLOCK_MAX_SCALAR_ISSUES 2u
-#define SC8480_CLOCK_ENABLE_REQ 1u
-#define SC8480_CLOCK_DISABLE_REQ 2u
+#define NPA_CLOCK_ENABLE 1u
+#define NPA_CLOCK_DISABLE 2u
 
 typedef struct native_npa_scalar_issue {
     native_npa_client_desc_t client;
@@ -99,13 +93,13 @@ typedef struct native_npa_clock_requests {
 } native_npa_clock_requests_t;
 
 /* no client creation, physical write, returned hardware result or permission to register a
- * DPM owner occurs. invalid actions MUST NOT leave a partially usable output sequence. */
+ * DPM owner occurs. invalid actions must not leave a partially usable output sequence. */
 
 int npa_build_clock_requests(const npa_key_t* key, const power_action_t* action,
                              native_npa_clock_requests_t* out);
 
-/* explicit verified native driver/TYPE mapping supplied by the eventual legitimate NPA
- * backend. It must not be inferred from DSDT client, nor from the Linux RSC MMIO base. */
+/* bind driver and client types explicitly; neither BUSARB selectors nor MMIO addresses supply
+ * them. */
 
 int npa_describe_bus_client(const npa_key_t* key, const char* resolved_native_res_name,
                             uint32_t rsc_driver_id, uint32_t native_client_type,

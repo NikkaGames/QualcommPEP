@@ -45,7 +45,7 @@ typedef struct rsc_evidence_report {
 } rsc_evidence_report_t;
 
 /* arrays must be captured from the same device, same PrepareHardware, with each
- * raw/translated desc at the SAME res-list idx. Never call with a made-up list from
+ * raw/translated desc at the same res-list idx. never call with a made-up list from
  * firmware or a different device. */
 
 rsc_evidence_finding_t rsc_audit_pnp_evidence(const rsc_evidence_desc_t* raw,

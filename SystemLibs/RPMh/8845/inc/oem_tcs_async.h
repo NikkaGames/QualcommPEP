@@ -1,6 +1,6 @@
 #ifndef OEM_TCS_ASYNC_H
 #define OEM_TCS_ASYNC_H
-/* this src DOES NOT grant ownership, map MMIO, or install a WDF callback. The same
+/* this src DOES not grant ownership, map MMIO, or install a WDF callback. the same
  * validated controller-completion lock must serialize queue dispatch, this adapter, ACK
  * processing, and slot retirement. */
 
@@ -16,7 +16,7 @@ typedef struct oem_tcs_async_ops {
     int (*read32)(void*, uint32_t offset, uint32_t* value);
     int (*write32)(void*, uint32_t offset, uint32_t value);
     void (*barrier)(void*);
-    /* return 1 only for a verified single WRITE request with trusted address and value. Never
+    /* return 1 only for a verified single WRITE request with trusted address and value. never
      * infer address from the opaque res key. */
 
     int (*resolve_write)(void*, uint64_t token, uint32_t req_id, uint32_t res_key, uint32_t* addr,
@@ -43,12 +43,11 @@ typedef struct oem_tcs_async {
 } oem_tcs_async_t;
 
 int oem_tcs_async_init(oem_tcs_async_t*, const oem_tcs_async_ops_t*);
-/* all other results are potentially ambiguous to , so its queue must quarantine the
- * reserved slot on failure. */
+/* an ambiguous result quarantines the reserved slot. */
 
 int oem_tcs_async_submit(void* ctx, uint8_t slot, uint64_t token, uint32_t req_id, uint32_t res_key,
                          uint8_t is_read);
-/* the caller must also resolve the same token from. */
+/* resolve the same request token in the completion ledger. */
 
 int oem_tcs_async_validate_finished(oem_tcs_async_t*, uint8_t slot, uint64_t token);
 /* after successful W1C and client completion, retire this exact token and clean the TCS

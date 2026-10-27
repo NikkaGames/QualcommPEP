@@ -1,8 +1,6 @@
 #ifndef OEM_AMC_COMMAND_QUEUE_H
 #define OEM_AMC_COMMAND_QUEUE_H
-/* not a binary-identical reconstruction of the signed 8480 command queue or an MMIO owner.
- * All methods require the SAME externally owned completion lock as the ACK provider,
- * including callback implementations. */
+/* all queue and ACK callbacks share the externally owned completion lock. */
 
 #include <stdint.h>
 #ifdef __cplusplus
@@ -70,7 +68,7 @@ int oem_amc_queue_init(oem_amc_command_queue_t*, const oem_amc_cmd_ops_t*);
 int oem_amc_queue_enqueue(oem_amc_command_queue_t*, uint32_t req_id, uint32_t res_key,
                           uint8_t is_read, uint64_t* token);
 /* dispatch the FIFO head only with a verified grant; proven no-touch BUSY retains the FIFO
- * head, ambiguous failure quarantines the reserved slot. This queue is not yet the active
+ * head, ambiguous failure quarantines the reserved slot. this queue is not yet the active
  * physical Windows transport. */
 
 oem_amc_queue_result_t oem_amc_queue_dispatch_head(oem_amc_command_queue_t*, uint8_t slot);
@@ -79,7 +77,7 @@ int oem_amc_queue_resolve_inflight(void*, uint8_t slot, uint64_t* token);
 int oem_amc_queue_complete_inflight(void*, uint8_t slot, uint64_t token);
 /* read-only snapshot; under the same completion lock as the ACK provider. */
 uint8_t oem_amc_queue_inflight_mask(const oem_amc_command_queue_t*);
-/* all operations require the existing shared completion lock. Only the verified,
+/* all operations require the existing shared completion lock. only the verified,
  * externally serialized owner may resume after has confirmed firmware return/TCS release. */
 
 int oem_amc_queue_pause(oem_amc_command_queue_t*);

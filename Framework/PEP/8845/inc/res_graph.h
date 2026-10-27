@@ -149,9 +149,7 @@ int graph_audit_dstate_scopes_held(res_graph_t*, void*, scope_client_ready_t,
 /* recheck an already PREPARED device at REGISTER, under the graph lock. It does not attest
  * hardware ownership, keep the graph alive, or perform a provider transaction. */
 
-/* a Windows system-transition Dx notify may be consumed by firmware without an OS-issued
- * d3 res script (8280/8480 behavior). Invalidate ONLY the graph's cached state, under its
- * transaction lock. */
+/* firmware-owned system transitions invalidate cached graph state under the transaction lock. */
 
 int graph_forget_firmware_state(res_graph_t*, const char*);
 int graph_is_prepared(res_graph_t*, const char*);

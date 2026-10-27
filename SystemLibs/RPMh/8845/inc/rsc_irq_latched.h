@@ -1,6 +1,6 @@
 #ifndef RSC_IRQ_LATCHED_H
 #define RSC_IRQ_LATCHED_H
-/* exact RSC AMC capture and ACK. The caller supplies physical ownership and serialization;
+/* exact RSC AMC capture and ACK. the caller supplies physical ownership and serialization;
  * a latch cannot be replayed against a later request. */
 
 #include "rsc_irq_processor.h"
@@ -35,9 +35,9 @@ rsc_irq_result_t rsc_irq_capture_ack(rsc_completion_t* ledger, const rsc_irq_io_
                                      uint32_t epoch, uint8_t slot, uint32_t req_id,
                                      uint16_t command_mask, rsc_irq_latch_t* latched);
 
-/* deferred worker: validate the captured, NOT YET acknowledged request; check every
+/* deferred worker: validate the captured, not YET acknowledged request; check every
  * enabled command completion, W1C only the exact owned TCS bit, verify ACK by readback and
- * retire the immutable request. Never W1C an incomplete command. */
+ * retire the immutable request. never W1C an incomplete command. */
 
 rsc_irq_result_t rsc_irq_finish_latched(rsc_completion_t* ledger, const rsc_irq_io_t* io,
                                         rsc_irq_latch_t* latched);

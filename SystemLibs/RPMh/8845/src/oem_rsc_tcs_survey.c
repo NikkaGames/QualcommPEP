@@ -1,7 +1,7 @@
 #include "oem_rsc_tcs_survey.h"
 #include <string.h>
 
-/* read only documented firmware RSC registers. Caller serializes map life, controller
+/* read only documented firmware RSC registers. caller serializes map life, controller
  * access, PnP, interrupt callbacks and proof under one lock. */
 
 static int capture(const oem_rsc_read_io_t* io, volatile void* base, oem_rsc_tcs_survey_t* s)
