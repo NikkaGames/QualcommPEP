@@ -1,0 +1,11 @@
+/* Auto-generated from driverA/qcpep8280.sys.h */
+    { 0x0u, "CX" },
+    { 0x1u, "MX" },
+    { 0x2u, "MXA" },
+    { 0x3u, "MXC" },
+    { 0x4u, "XO" },
+    { 0x5u, "MMCX" },
+    { 0x6u, "LPICX" },
+    { 0x7u, "LPIMX" },
+    { 0x8u, "NSP" },
+    { 0x9u, "MSS" },

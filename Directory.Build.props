@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <TestCertificate Condition="'$(TestCertificate)' == '' and Exists('D:\WOA\sign\OEM_Test_Cert_2017.pfx')">D:\WOA\sign\OEM_Test_Cert_2017.pfx</TestCertificate>
+    <SignMode Condition="'$(SignMode)' == '' and '$(TestCertificate)' != ''">TestSign</SignMode>
+    <SignMode Condition="'$(SignMode)' == ''">Off</SignMode>
+  </PropertyGroup>
+</Project>

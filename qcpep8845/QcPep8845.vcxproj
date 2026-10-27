@@ -1,0 +1,889 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build" ToolsVersion="12.0">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|ARM64">
+      <Configuration>Debug</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|ARM64">
+      <Configuration>Release</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_sync_deferred.c">
+      <ObjectFileName>$(IntDir)rpmh_sync_deferred_6eadcc23.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\Tsens\src\tsens.c">
+      <ObjectFileName>$(IntDir)tsens_49830336.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\DAL\src\chipinfo.c">
+      <ObjectFileName>$(IntDir)chipinfo_2167e1f5.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\diag\peplog.c">
+      <ObjectFileName>$(IntDir)peplog_db59fa23.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\diag\diag.c">
+      <ObjectFileName>$(IntDir)diag_20c47d57.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\diag\xo_diag.c">
+      <ObjectFileName>$(IntDir)xo_diag_246f9cfc.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\crash_dump.c">
+      <ObjectFileName>$(IntDir)crash_dump_100fdf4e.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\DeviceLib\src\io_target.c">
+      <ObjectFileName>$(IntDir)io_target_165a9c36.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\idle\deep_standby.c">
+      <ObjectFileName>$(IntDir)deep_standby_19fe81c5.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\diag\ppm_diag.c">
+      <ObjectFileName>$(IntDir)ppm_diag_83742ae7.obj</ObjectFileName>
+    </ClCompile>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <TargetName>qcpep</TargetName>
+    <ProjectGuid>{D2F81A45-C46C-429F-BF98-EC53BCA6616A}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>QcPep8845</RootNamespace>
+    <VcpkgEnabled>false</VcpkgEnabled>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'" Label="Configuration">
+    <TargetVersion>Windows10</TargetVersion>
+    <UseDebugLibraries>True</UseDebugLibraries>
+    <DriverTargetPlatform>Desktop</DriverTargetPlatform>
+    <DriverType>KMDF</DriverType>
+    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
+    <ConfigurationType>Driver</ConfigurationType>
+    <KMDF_VERSION_MAJOR>1</KMDF_VERSION_MAJOR>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'" Label="Configuration">
+    <TargetVersion>Windows10</TargetVersion>
+    <UseDebugLibraries>False</UseDebugLibraries>
+    <DriverTargetPlatform>Desktop</DriverTargetPlatform>
+    <DriverType>KMDF</DriverType>
+    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
+    <ConfigurationType>Driver</ConfigurationType>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <KMDF_VERSION_MAJOR>1</KMDF_VERSION_MAJOR>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>QCPEP_BUILD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(IntDir);..\Framework\DeviceLib\inc;..\Framework\PEP\8845\inc;..\Framework\PEP\inc;..\SystemLibs\ARC\inc;..\SystemLibs\CmdDb\inc;..\SystemLibs\DAL\inc;..\SystemLibs\ICB\8845\inc;..\SystemLibs\NPA\inc;..\SystemLibs\PPP\8845\inc;..\SystemLibs\RPMh\8845\inc;..\SystemLibs\TLMM\8845\inc;..\SystemLibs\Tsens\inc;..\SystemLibs\clock\8845\inc;..\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <WppEnabled>false</WppEnabled>
+      <WppKernelMode>true</WppKernelMode>
+      <WppRecorderEnabled>true</WppRecorderEnabled>
+      <WppScanConfigurationData>$(MSBuildProjectDirectory)\..\Framework\PEP\inc\trace.h</WppScanConfigurationData>
+      <WppOutputDirectory>$(IntDir)</WppOutputDirectory>
+      <WppModuleName>qcpep</WppModuleName>
+    </ClCompile>
+    <DriverSign>
+      <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
+    </DriverSign>
+    <Inf>
+      <TimeStamp>700.32000.0.410</TimeStamp>
+    </Inf>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <Optimization>MaxSpeed</Optimization>
+      <PreprocessorDefinitions>QCPEP_BUILD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(IntDir);..\Framework\DeviceLib\inc;..\Framework\PEP\8845\inc;..\Framework\PEP\inc;..\SystemLibs\ARC\inc;..\SystemLibs\CmdDb\inc;..\SystemLibs\DAL\inc;..\SystemLibs\ICB\8845\inc;..\SystemLibs\NPA\inc;..\SystemLibs\PPP\8845\inc;..\SystemLibs\RPMh\8845\inc;..\SystemLibs\TLMM\8845\inc;..\SystemLibs\Tsens\inc;..\SystemLibs\clock\8845\inc;..\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <WppEnabled>false</WppEnabled>
+      <WppKernelMode>true</WppKernelMode>
+      <WppRecorderEnabled>true</WppRecorderEnabled>
+      <WppScanConfigurationData>$(MSBuildProjectDirectory)\..\Framework\PEP\inc\trace.h</WppScanConfigurationData>
+      <WppOutputDirectory>$(IntDir)</WppOutputDirectory>
+      <WppModuleName>qcpep</WppModuleName>
+    </ClCompile>
+    <DriverSign>
+      <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
+    </DriverSign>
+    <Inf>
+      <TimeStamp>700.32000.0.410</TimeStamp>
+    </Inf>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Framework\PEP\8845\src\pstate_payload.c">
+      <ObjectFileName>$(IntDir)pstate_payload_da8054cd.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\ufs\ufs_footswitch_component.c">
+      <ObjectFileName>$(IntDir)ufs_footswitch_component_02f5e81c.obj</ObjectFileName>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Framework\PEP\src\driver.c">
+      <ObjectFileName>$(IntDir)driver_cddce7a9.obj</ObjectFileName>
+      <WppEnabled>true</WppEnabled>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\device.c">
+      <ObjectFileName>$(IntDir)device_09148866.obj</ObjectFileName>
+      <WppEnabled>true</WppEnabled>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\ioctl.c">
+      <ObjectFileName>$(IntDir)ioctl_74941f27.obj</ObjectFileName>
+      <WppEnabled>true</WppEnabled>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\main.c">
+      <ObjectFileName>$(IntDir)main_a5f76296.obj</ObjectFileName>
+      <WppEnabled>true</WppEnabled>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\power_control.c">
+      <ObjectFileName>$(IntDir)power_control_e0614c63.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\dcvs.c">
+      <ObjectFileName>$(IntDir)dcvs_2403cd1f.obj</ObjectFileName>
+      <WppEnabled>true</WppEnabled>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\soc_model.c">
+      <ObjectFileName>$(IntDir)soc_model_1567f2f5.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\soc_transport.c">
+      <ObjectFileName>$(IntDir)soc_transport_12b211a7.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\resource_catalog.c">
+      <ObjectFileName>$(IntDir)resource_catalog_4e6f2e49.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\CmdDb\src\cmddb.c">
+      <ObjectFileName>$(IntDir)cmddb_ca2394c9.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\ARC\src\rail.c">
+      <ObjectFileName>$(IntDir)rail_76f6b0a3.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\TLMM\8845\src\tlmm.c">
+      <ObjectFileName>$(IntDir)tlmm_33b03ef9.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_vote_bridge.c">
+      <ObjectFileName>$(IntDir)rpmh_vote_bridge_27a866f2.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\PPP\8845\src\rail_bank.c">
+      <ObjectFileName>$(IntDir)rail_bank_7962620a.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\providers\vrm_graph.c">
+      <ObjectFileName>$(IntDir)vrm_graph_ac9bf08a.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\res_graph.c">
+      <ObjectFileName>$(IntDir)res_graph_d8b5c270.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\hw_backend.c">
+      <ObjectFileName>$(IntDir)hw_backend_7a9abc3c.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\init_hw.c">
+      <ObjectFileName>$(IntDir)init_hw_6c147be0.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\hw_backend_core.c">
+      <ObjectFileName>$(IntDir)hw_backend_core_04e67602.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\hw_win.c">
+      <ObjectFileName>$(IntDir)hw_win_1e825c22.obj</ObjectFileName>
+      <WppEnabled>true</WppEnabled>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\clock\8845\src\gcc.c">
+      <ObjectFileName>$(IntDir)gcc_c1b9943d.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\clock\8845\src\config.c">
+      <ObjectFileName>$(IntDir)config_a78fd91f.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\clock\8845\src\commit.c">
+      <ObjectFileName>$(IntDir)commit_32434925.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\clock\8845\src\plan_gen.c">
+      <ObjectFileName>$(IntDir)plan_gen_47e4e54f.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\ICB\8845\src\bus.c">
+      <ObjectFileName>$(IntDir)bus_543e2b42.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\ICB\8845\src\bcm_nodes_gen.c">
+      <ObjectFileName>$(IntDir)bcm_nodes_gen_fc53b2ae.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\PPP\8845\src\rail.c">
+      <ObjectFileName>$(IntDir)rail_3c066d55.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\mmio_win.c">
+      <ObjectFileName>$(IntDir)mmio_win_efa3ce2a.obj</ObjectFileName>
+      <WppEnabled>true</WppEnabled>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\platform_resources_gen.c">
+      <ObjectFileName>$(IntDir)platform_resources_gen_3585600c.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\npa_client.c">
+      <ObjectFileName>$(IntDir)npa_client_7e4c0bc8.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\NPA\src\identity.c">
+      <ObjectFileName>$(IntDir)identity_28d69fbe.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\clock\8845\src\opcode8480.c">
+      <ObjectFileName>$(IntDir)opcode8480_4751a5a0.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\clock\8845\src\compat_ids.c">
+      <ObjectFileName>$(IntDir)compat_ids_dd816839.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\clock\8845\src\composite.c">
+      <ObjectFileName>$(IntDir)composite_819b7b94.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\clock\8845\src\graph.c">
+      <ObjectFileName>$(IntDir)graph_d324048e.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\NPA\src\scalar.c">
+      <ObjectFileName>$(IntDir)scalar_72f2949f.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\footswitch\npa_client.c">
+      <ObjectFileName>$(IntDir)npa_client_dd6228b4.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\ufs\ufs_footswitch_graph.c">
+      <ObjectFileName>$(IntDir)ufs_footswitch_graph_e15fe07a.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\ufs\ufs_native_provision.c">
+      <ObjectFileName>$(IntDir)ufs_native_provision_2843b84d.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\ufs\ufs_cxmx_owner.c">
+      <ObjectFileName>$(IntDir)ufs_cxmx_owner_b7369256.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\footswitch\factory.c">
+      <ObjectFileName>$(IntDir)factory_a4cc7988.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\footswitch\gdsc_native.c">
+      <ObjectFileName>$(IntDir)gdsc_native_7243485b.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\footswitch\nodes.c">
+      <ObjectFileName>$(IntDir)nodes_e6228259.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\footswitch\required.c">
+      <ObjectFileName>$(IntDir)required_8b3e5013.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\footswitch\scalar_required.c">
+      <ObjectFileName>$(IntDir)scalar_required_dba548eb.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\footswitch\group_vote.c">
+      <ObjectFileName>$(IntDir)group_vote_9d0bf0f4.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\clock\8845\src\domains.c">
+      <ObjectFileName>$(IntDir)domains_83e87610.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\gdsc_phys.c">
+      <ObjectFileName>$(IntDir)gdsc_phys_d67f3725.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\footswitch\registry.c">
+      <ObjectFileName>$(IntDir)registry_877eb7a3.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\clock\8845\src\npa_bridge.c">
+      <ObjectFileName>$(IntDir)npa_bridge_a50f5e5a.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\providers\npa_graph.c">
+      <ObjectFileName>$(IntDir)npa_graph_873dd17f.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\providers\tlmm_graph.c">
+      <ObjectFileName>$(IntDir)tlmm_graph_954a4ab4.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\dpm_identity.c">
+      <ObjectFileName>$(IntDir)dpm_identity_7513a85a.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\res_graph_desc.c">
+      <ObjectFileName>$(IntDir)res_graph_desc_0692d9c5.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\ufs\ufs_catalog.c">
+      <ObjectFileName>$(IntDir)ufs_catalog_756b7d1a.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\ufs\ufs_native_program.c">
+      <ObjectFileName>$(IntDir)ufs_native_program_b6ff54bd.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\ufs\ufs_pofx_provenance.c">
+      <ObjectFileName>$(IntDir)ufs_pofx_provenance_53601cfa.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\ufs\ufs_pstate_graph_bridge.c">
+      <ObjectFileName>$(IntDir)ufs_pstate_graph_bridge_1f8592c7.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\delay_provider.c">
+      <ObjectFileName>$(IntDir)delay_provider_cb1579fa.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\win_delay.c">
+      <ObjectFileName>$(IntDir)win_delay_d1a4e37a.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\providers\vrm_acpi.c">
+      <ObjectFileName>$(IntDir)vrm_acpi_2e0eb285.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\vrm.c">
+      <ObjectFileName>$(IntDir)vrm_4d2d845a.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\NPA\src\vote.c">
+      <ObjectFileName>$(IntDir)vote_d8cb7cf2.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_tcs.c">
+      <ObjectFileName>$(IntDir)rpmh_tcs_810bd810.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_deferred.c">
+      <ObjectFileName>$(IntDir)rpmh_deferred_5cf0bfb2.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_deferred_scheduler.c">
+      <ObjectFileName>$(IntDir)rpmh_deferred_scheduler_b53ab9dd.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_amc_drain.c">
+      <ObjectFileName>$(IntDir)rpmh_amc_drain_9cc3825a.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_client_scheduler.c">
+      <ObjectFileName>$(IntDir)rpmh_client_scheduler_95902bd8.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rsc_completion.c">
+      <ObjectFileName>$(IntDir)rsc_completion_e76d2299.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rsc_irq_processor.c">
+      <ObjectFileName>$(IntDir)rsc_irq_processor_13ef56d8.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rsc_irq_assignment.c">
+      <ObjectFileName>$(IntDir)rsc_irq_assignment_d30b61a5.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rsc_irq_snapshot.c">
+      <ObjectFileName>$(IntDir)rsc_irq_snapshot_8a52ec77.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\rsc_irq_pnp_win.c">
+      <ObjectFileName>$(IntDir)rsc_irq_pnp_win_735663f5.obj</ObjectFileName>
+      <WppEnabled>true</WppEnabled>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rsc_irq_latched.c">
+      <ObjectFileName>$(IntDir)rsc_irq_latched_574360a8.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_gic_dispatch.c">
+      <ObjectFileName>$(IntDir)oem_gic_dispatch_7ad2d93e.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\oem_wdf_irq_create.c">
+      <ObjectFileName>$(IntDir)oem_wdf_irq_create_63737d5b.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\oem_wdf_irq_bridge.c">
+      <ObjectFileName>$(IntDir)oem_wdf_irq_bridge_ba3efbe5.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_rpmh_workitems.c">
+      <ObjectFileName>$(IntDir)oem_rpmh_workitems_30a4723f.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\oem_wdf_work_provider.c">
+      <ObjectFileName>$(IntDir)oem_wdf_work_provider_850a1feb.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_amc_completion.c">
+      <ObjectFileName>$(IntDir)oem_amc_completion_1baccc2e.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_amc_command_queue.c">
+      <ObjectFileName>$(IntDir)oem_amc_command_queue_2c796822.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_tcs_async.c">
+      <ObjectFileName>$(IntDir)oem_tcs_async_de742331.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_tcs_batch_async.c">
+      <ObjectFileName>$(IntDir)oem_tcs_batch_async_3311151f.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\CmdDb\src\resolve.c">
+      <ObjectFileName>$(IntDir)resolve_c3635737.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_voter_state.c">
+      <ObjectFileName>$(IntDir)oem_voter_state_bf7392ef.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_voter_sets.c">
+      <ObjectFileName>$(IntDir)oem_voter_sets_1bf1397e.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_sleepwake_bridge.c">
+      <ObjectFileName>$(IntDir)oem_sleepwake_bridge_29d34503.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_sleepwake_program.c">
+      <ObjectFileName>$(IntDir)oem_sleepwake_program_bcc54e9a.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_sleepwake_dependencies.c">
+      <ObjectFileName>$(IntDir)oem_sleepwake_dependencies_a2f2e2b7.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_sleepwake_handoff.c">
+      <ObjectFileName>$(IntDir)oem_sleepwake_handoff_91c063f0.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_rpmh_host_fence.c">
+      <ObjectFileName>$(IntDir)oem_rpmh_host_fence_ee7584c3.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\oem_wdf_rundown_win.c">
+      <ObjectFileName>$(IntDir)oem_wdf_rundown_win_a037e0b1.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\oem_wdf_dpc_tracker_win.c">
+      <ObjectFileName>$(IntDir)oem_wdf_dpc_tracker_win_fc174b77.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_rsc_readback.c">
+      <ObjectFileName>$(IntDir)oem_rsc_readback_e769c69b.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\oem_rsc_readback_win.c">
+      <ObjectFileName>$(IntDir)oem_rsc_readback_win_619d7490.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_rsc_tcs_survey.c">
+      <ObjectFileName>$(IntDir)oem_rsc_tcs_survey_813dbb75.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\oem_rsc_tcs_survey_win.c">
+      <ObjectFileName>$(IntDir)oem_rsc_tcs_survey_win_a4a55d24.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\gic_d0_map_win.c">
+      <ObjectFileName>$(IntDir)gic_d0_map_win_cd3b5014.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\gic_irq37_owned_win.c">
+      <ObjectFileName>$(IntDir)gic_irq37_owned_win_a57cb518.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\rsc_d0_map_win.c">
+      <ObjectFileName>$(IntDir)rsc_d0_map_win_73153f8f.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\oem_rsc_identity_win.c">
+      <ObjectFileName>$(IntDir)oem_rsc_identity_win_1ddf1718.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_direct_rsc_map.c">
+      <ObjectFileName>$(IntDir)oem_direct_rsc_map_a62242fa.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\oem_direct_rsc_map_win.c">
+      <ObjectFileName>$(IntDir)oem_direct_rsc_map_win_07a3efca.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_pnp_d0_lease.c">
+      <ObjectFileName>$(IntDir)oem_pnp_d0_lease_d8fa50b8.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_rsc_pnp_evidence.c">
+      <ObjectFileName>$(IntDir)oem_rsc_pnp_evidence_10c841ab.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\oem_rsc_pnp_evidence_win.c">
+      <ObjectFileName>$(IntDir)oem_rsc_pnp_evidence_win_b67b0ff0.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\oem_wdf_irq_mask_owner.c">
+      <ObjectFileName>$(IntDir)oem_wdf_irq_mask_owner_7374014a.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\oem_wdf_irq_win.c">
+      <ObjectFileName>$(IntDir)oem_wdf_irq_win_c4738df4.obj</ObjectFileName>
+      <WppEnabled>true</WppEnabled>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_oem_work.c">
+      <ObjectFileName>$(IntDir)rpmh_oem_work_1ac1f737.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_oem_irq_group.c">
+      <ObjectFileName>$(IntDir)rpmh_oem_irq_group_f718b67e.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_oem_pnp_plan.c">
+      <ObjectFileName>$(IntDir)rpmh_oem_pnp_plan_630815ef.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\rpmh_wdf_lifecycle.c">
+      <ObjectFileName>$(IntDir)rpmh_wdf_lifecycle_cfa7f300.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_irq_rundown.c">
+      <ObjectFileName>$(IntDir)rpmh_irq_rundown_d21b37b5.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_irq_pipeline.c">
+      <ObjectFileName>$(IntDir)rpmh_irq_pipeline_86010f1c.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\rpmh_wdf_quiesce.c">
+      <ObjectFileName>$(IntDir)rpmh_wdf_quiesce_e3a7ab6e.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\rpmh_oem_pnp_win.c">
+      <ObjectFileName>$(IntDir)rpmh_oem_pnp_win_93cb8066.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rsc_pnp_ownership.c">
+      <ObjectFileName>$(IntDir)rsc_pnp_ownership_7b25276a.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\rsc_pnp_win.c">
+      <ObjectFileName>$(IntDir)rsc_pnp_win_2e4b14fc.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\PPP\8845\src\gpio.c">
+      <ObjectFileName>$(IntDir)gpio_6c1408d5.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\provider_select.c">
+      <ObjectFileName>$(IntDir)provider_select_ee4fdc7c.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\ICB\8845\src\bcm.c">
+      <ObjectFileName>$(IntDir)bcm_07ed0a0c.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\acpi_resources.c">
+      <ObjectFileName>$(IntDir)acpi_resources_221d10b0.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\component_perf.c">
+      <ObjectFileName>$(IntDir)component_perf_1b9a8bca.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\perf_clock_desc.c">
+      <ObjectFileName>$(IntDir)perf_clock_desc_3d8d9d67.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\perf_clock_win.c">
+      <ObjectFileName>$(IntDir)perf_clock_win_80e2a6d3.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\soc_subsystem.c">
+      <ObjectFileName>$(IntDir)soc_subsystem_7f271b66.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\registry.c">
+      <ObjectFileName>$(IntDir)registry_f744c2af.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\acpi.c">
+      <ObjectFileName>$(IntDir)acpi_e10475f9.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\etw.c">
+      <ObjectFileName>$(IntDir)etw_641870fe.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\acpi\acpi_eval.c">
+      <ObjectFileName>$(IntDir)acpi_eval_45b813f1.obj</ObjectFileName>
+      <WppEnabled>true</WppEnabled>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\acpi\aeob.c">
+      <ObjectFileName>$(IntDir)aeob_1a2d68b6.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\acpi\aeob_device.c">
+      <ObjectFileName>$(IntDir)aeob_device_8a3c6aec.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\aeob_validate.c">
+      <ObjectFileName>$(IntDir)aeob_validate_910b4eb9.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\runtime_res.c">
+      <ObjectFileName>$(IntDir)runtime_res_23610687.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\state_txn.c">
+      <ObjectFileName>$(IntDir)state_txn_3aaec547.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\aeob_idx.c">
+      <ObjectFileName>$(IntDir)aeob_idx_57c3aad8.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\perf_desc.c">
+      <ObjectFileName>$(IntDir)perf_desc_23891cc0.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\pofx_perf.c">
+      <ObjectFileName>$(IntDir)pofx_perf_b1018da4.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\perf_clients.c">
+      <ObjectFileName>$(IntDir)perf_clients_e2361ac3.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\state_owner.c">
+      <ObjectFileName>$(IntDir)state_owner_05b86f8d.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\runtime_component.c">
+      <ObjectFileName>$(IntDir)runtime_component_8aacd9a0.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\runtime_component_win.c">
+      <ObjectFileName>$(IntDir)runtime_component_win_89fd2190.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\runtime_dstate.c">
+      <ObjectFileName>$(IntDir)runtime_dstate_cac60aa3.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\peer_component.c">
+      <ObjectFileName>$(IntDir)peer_component_207be2d1.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\component_txn.c">
+      <ObjectFileName>$(IntDir)component_txn_e453d07f.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\power_desc.c">
+      <ObjectFileName>$(IntDir)power_desc_7e9d8169.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\power_delay.c">
+      <ObjectFileName>$(IntDir)power_delay_50344a44.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\bcl.c">
+      <ObjectFileName>$(IntDir)bcl_a181a53e.obj</ObjectFileName>
+      <WppEnabled>true</WppEnabled>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\guids.c">
+      <ObjectFileName>$(IntDir)guids_326f3c34.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\resource_ddi.c">
+      <ObjectFileName>$(IntDir)resource_ddi_ff1763fd.obj</ObjectFileName>
+      <WppEnabled>true</WppEnabled>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\idle\interrupt.c">
+      <ObjectFileName>$(IntDir)interrupt_e495cd3c.obj</ObjectFileName>
+      <WppEnabled>true</WppEnabled>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\ioctl_contract.c">
+      <ObjectFileName>$(IntDir)ioctl_contract_8d7a8614.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\po_fx.c">
+      <ObjectFileName>$(IntDir)po_fx_67de2a0d.obj</ObjectFileName>
+      <WppEnabled>true</WppEnabled>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\resource_cache.c">
+      <ObjectFileName>$(IntDir)resource_cache_347a4b87.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\diag\stats.c">
+      <ObjectFileName>$(IntDir)stats_52f23057.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\idle\timer.c">
+      <ObjectFileName>$(IntDir)timer_065f4bb7.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\diag\vendor_payloads.c">
+      <ObjectFileName>$(IntDir)vendor_payloads_dc8d70f1.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\diag\wmi.c">
+      <ObjectFileName>$(IntDir)wmi_ea4e8bfe.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\mmrm.c">
+      <ObjectFileName>$(IntDir)mmrm_14adf427.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\ex_soc_mgmt.c">
+      <ObjectFileName>$(IntDir)ex_soc_mgmt_2c1bd983.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\diag\resource_diag.c">
+      <ObjectFileName>$(IntDir)resource_diag_e6d350b8.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\thermal_request.c">
+      <ObjectFileName>$(IntDir)thermal_request_e9731509.obj</ObjectFileName>
+    </ClCompile>
+  </ItemGroup>
+  <PropertyGroup Condition="'$(Platform)' == 'ARM64'">
+    <OutDir>$(MSBuildProjectDirectory)\..\ARM64\$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup>
+    <IntDir Condition="'$(IntDir)' == '' or '$(IntDir)' == '$(Platform)\$(Configuration)\'">$(MSBuildProjectDirectory)\..\build\obj\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ItemGroup>
+    <ClInclude Include="..\Framework\PEP\8845\inc\8845_acpi_resources.h" />
+    <ClInclude Include="..\Framework\PEP\inc\acpi.h" />
+    <ClInclude Include="..\Framework\PEP\inc\aeob.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\aeob_validate.h" />
+    <ClInclude Include="..\SystemLibs\ARC\inc\arc_rail.h" />
+    <ClInclude Include="..\Framework\PEP\inc\bcl.h" />
+    <ClInclude Include="..\SystemLibs\ICB\8845\inc\bcm.h" />
+    <ClInclude Include="..\SystemLibs\DAL\inc\chipinfo.h" />
+    <ClInclude Include="..\SystemLibs\clock\8845\inc\composite.h" />
+    <ClInclude Include="..\SystemLibs\clock\8845\inc\graph.h" />
+    <ClInclude Include="..\SystemLibs\clock\8845\inc\opcode8480.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\perf_clock_desc.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\perf_clock_win.h" />
+    <ClInclude Include="..\SystemLibs\CmdDb\inc\cmddb.h" />
+    <ClInclude Include="..\Framework\PEP\inc\component_perf.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\state_owner.h" />
+    <ClInclude Include="..\Framework\PEP\inc\crash_dump.h" />
+    <ClInclude Include="..\Framework\PEP\inc\dcvs.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\dcvs_rundown.h" />
+    <ClInclude Include="..\api\resource_ddi.h" />
+    <ClInclude Include="..\Framework\PEP\inc\deep_standby.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\delay_provider.h" />
+    <ClInclude Include="..\Framework\PEP\inc\diag.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\dpm_identity.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\dpm_verified.h" />
+    <ClInclude Include="..\Framework\PEP\inc\driver.h" />
+    <ClInclude Include="..\Framework\PEP\inc\etw.h" />
+    <ClInclude Include="..\Framework\PEP\inc\ex_soc_mgmt.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\factory.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\gdsc_native.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\nodes.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\fs_npa_client.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\registry.h" />
+    <ClInclude Include="..\Framework\DeviceLib\inc\io_target.h" />
+    <ClInclude Include="..\SystemLibs\clock\8845\inc\gcc.h" />
+    <ClInclude Include="..\SystemLibs\clock\8845\inc\commit.h" />
+    <ClInclude Include="..\SystemLibs\clock\8845\inc\config.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\gic_d0_map_win.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\gic_irq37_owned_win.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\hw_backend.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\hw_win.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\hw_backend_windows_wdf.h" />
+    <ClInclude Include="..\SystemLibs\ICB\8845\inc\bus.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\init_gate.h" />
+    <ClInclude Include="..\Framework\PEP\inc\interrupt.h" />
+    <ClInclude Include="..\api\ioctl_contract.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\mmio_win.h" />
+    <ClInclude Include="..\Framework\PEP\inc\mmrm.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\molokai_catalog.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\gdsc_phys.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\soc_model.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\soc_transport.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\npa_client.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\npa_graph.h" />
+    <ClInclude Include="..\SystemLibs\NPA\inc\identity.h" />
+    <ClInclude Include="..\SystemLibs\clock\8845\inc\npa_bridge.h" />
+    <ClInclude Include="..\SystemLibs\NPA\inc\scalar.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_amc_command_queue.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_amc_completion.h" />
+    <ClInclude Include="..\SystemLibs\clock\8845\inc\domains.h" />
+    <ClInclude Include="..\SystemLibs\CmdDb\inc\resolve.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_direct_rsc_map.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\oem_direct_rsc_map_win.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_gic_dispatch.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_pnp_d0_lease.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_rpmh_host_fence.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_rpmh_workitems.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\oem_rsc_identity_win.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_rsc_pnp_evidence.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\oem_rsc_pnp_evidence_win.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_rsc_readback.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\oem_rsc_readback_win.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_rsc_tcs_survey.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\oem_rsc_tcs_survey_win.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_sleepwake_bridge.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_sleepwake_dependencies.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_sleepwake_handoff.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_sleepwake_program.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_tcs_async.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_tcs_batch_async.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_voter_sets.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_voter_state.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\oem_wdf_dpc_tracker_win.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\oem_wdf_irq_bridge.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\oem_wdf_irq_create.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\oem_wdf_irq_mask_owner.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\oem_wdf_rundown_win.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\oem_wdf_work_provider.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\owner_attach_policy.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\peer_component.h" />
+    <ClInclude Include="..\Framework\PEP\inc\peplog.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\platform_resources.h" />
+    <ClInclude Include="..\SystemLibs\PPP\8845\inc\gpio.h" />
+    <ClInclude Include="..\SystemLibs\PPP\8845\inc\pmic_rail.h" />
+    <ClInclude Include="..\Framework\PEP\inc\po_fx.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\required.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\group_vote.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\perf_desc.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\pofx_perf.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\pstate_payload.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\perf_clients.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\scalar_required.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\power_delay.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\power_desc.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\state_txn.h" />
+    <ClInclude Include="..\Framework\PEP\inc\power_control.h" />
+    <ClInclude Include="..\Framework\PEP\inc\ppm_diag.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\provider_select.h" />
+    <ClInclude Include="..\api\public.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\res_graph.h" />
+    <ClInclude Include="..\Framework\PEP\inc\resource_cache.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_amc_drain.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_busy_arbitration.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_client_scheduler.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_deferred_scheduler.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_irq_pipeline.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_irq_rundown.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_oem_irq_group.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_oem_pnp_plan.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\rpmh_oem_pnp_win.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_oem_read_sequence.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_oem_work.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_sync_deferred.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_tcs.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_vote_bridge.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\vrm.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\rpmh_wdf_lifecycle.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\rpmh_wdf_quiesce.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_write_fence.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rsc_completion.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\rsc_d0_map_win.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rsc_irq_assignment.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rsc_irq_latched.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\rsc_irq_pnp_win.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rsc_irq_processor.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rsc_irq_snapshot.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rsc_pnp_ownership.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\rsc_pnp_win.h" />
+    <ClInclude Include="..\Framework\PEP\inc\resource_diag.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\runtime_component.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\runtime_component_win.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\runtime_dstate.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\aeob_idx.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\runtime_res.h" />
+    <ClInclude Include="..\SystemLibs\clock\8845\inc\compat_ids.h" />
+    <ClInclude Include="..\Framework\PEP\inc\soc_subsystem.h" />
+    <ClInclude Include="..\Framework\PEP\inc\stats.h" />
+    <ClInclude Include="..\Framework\PEP\inc\thermal_request.h" />
+    <ClInclude Include="..\Framework\PEP\inc\timer.h" />
+    <ClInclude Include="..\SystemLibs\TLMM\8845\inc\tlmm.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\tlmm_graph.h" />
+    <ClInclude Include="..\SystemLibs\Tsens\inc\tsens.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\ufs_catalog.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\ufs_cxmx_owner.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\ufs_footswitch_component.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\ufs_footswitch_graph.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\ufs_native_program.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\ufs_native_provision.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\ufs_pstate_graph_bridge.h" />
+    <ClInclude Include="..\api\vendor.h" />
+    <ClInclude Include="..\Framework\PEP\inc\vendor_payloads.h" />
+    <ClInclude Include="..\SystemLibs\NPA\inc\vote.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\vrm_acpi.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\vrm_graph.h" />
+    <ClInclude Include="..\SystemLibs\PPP\8845\inc\rail_bank.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\win_delay.h" />
+    <ClInclude Include="..\Framework\PEP\inc\wmi.h" />
+    <ClInclude Include="..\Framework\PEP\inc\xo_diag.h" />
+    <ClInclude Include="..\api\thermalioct.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\SystemLibs\ICB\8845\data\icb_policy.json" />
+    <None Include="..\Framework\PEP\data\aop_subsystem_aliases.inc" />
+    <None Include="..\Framework\PEP\data\arc_resource_aliases.inc" />
+    <None Include="..\Framework\PEP\data\cmddb_slv_aliases.inc" />
+    <None Include="..\Framework\PEP\data\glink_event_aliases.inc" />
+    <None Include="..\Framework\PEP\data\icb_master_aliases.inc" />
+    <None Include="..\Framework\PEP\data\icb_master_names.inc" />
+    <None Include="..\Framework\PEP\data\icb_slave_aliases.inc" />
+    <None Include="..\Framework\PEP\data\icb_slave_names.inc" />
+    <None Include="..\Framework\PEP\data\npa_client_aliases.inc" />
+    <None Include="..\Framework\PEP\data\pcu_resource_state_aliases.inc" />
+    <None Include="..\Framework\PEP\data\pcu_resource_type_aliases.inc" />
+    <None Include="..\Framework\PEP\data\ppp_resource_aliases.inc" />
+    <None Include="..\Framework\PEP\data\ppp_resource_names.inc" />
+    <None Include="..\Framework\PEP\data\rpmh_set_aliases.inc" />
+    <None Include="..\Framework\PEP\data\kind_enum_kind_list.inc" />
+    <None Include="..\Framework\PEP\data\kind_enum_tables.inc" />
+    <None Include="..\Framework\PEP\data\rsc_request_aliases.inc" />
+    <None Include="..\Framework\PEP\data\subsystem_symbol_aliases.inc" />
+    <None Include="..\Framework\PEP\data\symbol_tokens.inc" />
+    <None Include="..\Framework\PEP\data\tlmm_drive_aliases.inc" />
+    <None Include="..\Framework\PEP\data\tsens_threshold_aliases.inc" />
+    <None Include="..\Framework\PEP\data\clock_driver_aliases.inc" />
+    <None Include="..\Framework\PEP\data\pdc_drv_aliases.inc" />
+  </ItemGroup>
+  <PropertyGroup>
+    <EnableInf2cat>true</EnableInf2cat>
+    <Inf2CatWindowsVersionList>10_NI_ARM64</Inf2CatWindowsVersionList>
+    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
+    <TimeStampServer />
+  </PropertyGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\limits.h" />
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\dispatch_types.h" />
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\dstate_types.h" />
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\dump_types.h" />
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\fstate_types.h" />
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\idle_types.h" />
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\node_types.h" />
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\park_types.h" />
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\ppm_types.h" />
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\pstate_types.h" />
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\work_types.h" />
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\dstate_priv.h" />
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\dump_priv.h" />
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\fstate_priv.h" />
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\idle_priv.h" />
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\main_priv.h" />
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\park_priv.h" />
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\ppm_priv.h" />
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\pstate_priv.h" />
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\work_priv.h" />
+    <ClCompile Include="..\Framework\PEP\src\dstate.c">
+      <ObjectFileName>$(IntDir)dstate_59c5bc93.obj</ObjectFileName>
+      <WppEnabled>true</WppEnabled>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\dump.c">
+      <ObjectFileName>$(IntDir)dump_1bec71bb.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\fstate.c">
+      <ObjectFileName>$(IntDir)fstate_f66aff47.obj</ObjectFileName>
+      <WppEnabled>true</WppEnabled>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\idle.c">
+      <ObjectFileName>$(IntDir)idle_81e1fe6e.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\park.c">
+      <ObjectFileName>$(IntDir)park_9d43075a.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\ppm.c">
+      <ObjectFileName>$(IntDir)ppm_59166783.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\pstate.c">
+      <ObjectFileName>$(IntDir)pstate_cc2ffde9.obj</ObjectFileName>
+      <WppEnabled>true</WppEnabled>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\work.c">
+      <ObjectFileName>$(IntDir)work_79d9214d.obj</ObjectFileName>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Framework\PEP\inc\trace.h" />
+    <Inf Include="..\inf\qcpep.inx" />
+    <FilesToPackage Include="$(TargetPath)" />
+  </ItemGroup>
+</Project>

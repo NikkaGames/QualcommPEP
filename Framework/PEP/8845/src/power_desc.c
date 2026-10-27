@@ -1,0 +1,86 @@
+#include "power_desc.h"
+#include <string.h>
+
+static const char* const read_only_methods[] = {
+
+    "BSMD", "BPMD", "LPMX", "OPMD", "SPKX"};
+
+int method_is_read_only_res(const char method[5])
+{
+    unsigned i;
+    if (!method || strlen(method) != 4u)
+        return 0;
+    for (i = 0; i < sizeof(read_only_methods) / sizeof(read_only_methods[0]); ++i)
+        if (memcmp(method, read_only_methods[i], 5u) == 0)
+            return 1;
+    return 0;
+}
+
+power_result_t power_discover_dev_d_state(const char* const* methods, uint32_t cnt,
+                                          method_evaluate_t evaluate, method_release_t release,
+                                          void* ctx, const char* path, uint32_t state,
+                                          power_plan_t* plan, char selected_method[5])
+{
+    uint32_t i, found = 0;
+    char winning_method[5] = {0};
+    power_result_t result = POWER_INVALID_PROGRAM;
+    if (!methods || !evaluate || !release || !path || !plan || !selected_method || cnt == 0 ||
+        cnt > DISCOVERY_MAX_METHODS || (state != 0u && state != 3u))
+        return POWER_BAD_INPUT;
+    memset(plan, 0, sizeof(*plan));
+    memset(selected_method, 0, 5u);
+    for (i = 0; i < cnt; ++i) {
+        const void* bytes = NULL;
+        size_t length = 0;
+        uint32_t action_cnt = 0;
+        aeob_status_t ast;
+        method_eval_result_t er;
+        uint32_t j;
+        int repeated = 0;
+        if (!methods[i] || strlen(methods[i]) != 4u) {
+            result = POWER_BAD_INPUT;
+            goto error;
+        }
+
+        if (!method_is_read_only_res(methods[i]))
+            continue;
+        for (j = 0; j < i; ++j)
+            if (methods[j] && strcmp(methods[i], methods[j]) == 0) {
+                repeated = 1;
+                break;
+            }
+        if (repeated)
+            continue;
+        er = evaluate(ctx, methods[i], &bytes, &length);
+        if (er == METHOD_NOT_PRESENT)
+            continue;
+        if (er != METHOD_EVALUATED || !bytes || !length) {
+            if (bytes)
+                release(ctx, bytes);
+            goto error;
+        }
+        ast = aeo_b_visit_dev_d_state(bytes, length, path, state, NULL, NULL, &action_cnt);
+        if (ast == AEO_B_NOT_FOUND) {
+            release(ctx, bytes);
+            continue;
+        }
+        if (ast != AEO_B_OK || action_cnt == 0u || found) {
+            release(ctx, bytes);
+            goto error;
+        }
+        result = power_compile_aeo_b(bytes, length, path, state, plan);
+        release(ctx, bytes);
+        if (result != POWER_OK)
+            goto error;
+        memcpy(winning_method, methods[i], 5u);
+        found = 1;
+    }
+    if (!found)
+        return POWER_UNSUPPORTED;
+    memcpy(selected_method, winning_method, 5u);
+    return POWER_OK;
+error:
+    memset(plan, 0, sizeof(*plan));
+    memset(selected_method, 0, 5u);
+    return result == POWER_BAD_INPUT ? POWER_BAD_INPUT : POWER_INVALID_PROGRAM;
+}

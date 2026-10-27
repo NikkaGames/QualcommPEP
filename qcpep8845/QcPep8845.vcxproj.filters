@@ -1,0 +1,1373 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <ItemGroup>
+    <Filter Include="Framework">
+      <UniqueIdentifier>{FC4E6B58-3ECF-5413-B08D-E7C679D3C656}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\DeviceLib">
+      <UniqueIdentifier>{FF6550BD-ACD2-58EF-9416-2E2D13C5614F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\DeviceLib\inc">
+      <UniqueIdentifier>{906A0A6E-DBED-53C3-8281-F4ACB97A8150}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\DeviceLib\src">
+      <UniqueIdentifier>{100894AD-8C96-5FD4-97C1-706521AD2B4C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\PEP">
+      <UniqueIdentifier>{89B92DAD-4443-582C-B174-0DC40F43ADC4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\PEP\8845">
+      <UniqueIdentifier>{740EC9EF-47C0-5E50-993C-429A03B964C6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\PEP\8845\inc">
+      <UniqueIdentifier>{2BFAB7C9-6876-5559-B76E-E910864E7382}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\PEP\8845\src">
+      <UniqueIdentifier>{30E17F57-3DF5-59C0-9111-F5DF8D42D665}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\PEP\8845\src\footswitch">
+      <UniqueIdentifier>{AC60E82F-8562-5B0D-ACC4-FE2525379E04}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\PEP\8845\src\irq">
+      <UniqueIdentifier>{64521560-D475-5D48-81C4-6BCEA377D4E8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\PEP\8845\src\providers">
+      <UniqueIdentifier>{1C4D95D7-4274-531E-B671-98943860C728}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\PEP\8845\src\ufs">
+      <UniqueIdentifier>{039CC764-C801-5052-8D0E-18FF288F6154}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\PEP\data">
+      <UniqueIdentifier>{C6A2C6A4-8F2A-5852-9A4B-844DCA64A852}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\PEP\inc">
+      <UniqueIdentifier>{75510586-F804-5741-BAA3-6B025C6FB100}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\PEP\inc\dispatch">
+      <UniqueIdentifier>{F0427714-4259-5EBE-836D-F1A8030A335E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\PEP\src">
+      <UniqueIdentifier>{795A30B0-4A06-5300-84AD-29A2DFD61E98}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\PEP\src\acpi">
+      <UniqueIdentifier>{33F8C2D8-9A1E-5164-B86E-4A190A2472E1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\PEP\src\diag">
+      <UniqueIdentifier>{6356D7A2-2529-543C-BAD5-59B30BA5FAA6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\PEP\src\idle">
+      <UniqueIdentifier>{EDC36FFC-907E-5F12-A8E8-B7C404E9B175}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs">
+      <UniqueIdentifier>{4A32B7FA-0774-5DCE-8F44-31138C53DAEE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\ARC">
+      <UniqueIdentifier>{9E133038-E579-5B86-BD9A-F84106A8D9A9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\ARC\inc">
+      <UniqueIdentifier>{BF85A5C3-A912-515D-AAAF-EC6812B90303}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\ARC\src">
+      <UniqueIdentifier>{54DB701A-A43B-5EF2-98D6-653D851E83ED}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\CmdDb">
+      <UniqueIdentifier>{C8848B1C-6B05-5670-95E6-A95475252D6A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\CmdDb\inc">
+      <UniqueIdentifier>{1CEB56CE-3DB9-5F1C-9910-8D0A8B860EF0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\CmdDb\src">
+      <UniqueIdentifier>{9F398ACF-58D9-5F4B-81EB-E2347DA57F0A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\DAL">
+      <UniqueIdentifier>{AA2160E9-2E19-55BE-B116-71BA192EBF8E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\DAL\inc">
+      <UniqueIdentifier>{85ADCF55-ABC2-59AE-B7C6-B538A970CD4D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\DAL\src">
+      <UniqueIdentifier>{BB8FA805-DE49-56DE-AD3E-E7CA4715FAB4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\ICB">
+      <UniqueIdentifier>{D934A055-3C94-5326-AA53-C8F1FC1DD6AE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\ICB\8845">
+      <UniqueIdentifier>{9EA46F68-67C9-5ED1-8046-9F6C6AA2B06C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\ICB\8845\data">
+      <UniqueIdentifier>{260F569F-3903-5124-8D4B-52F7348B1086}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\ICB\8845\inc">
+      <UniqueIdentifier>{AE9350CD-E6B4-5E62-9F2A-1FE72888617D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\ICB\8845\src">
+      <UniqueIdentifier>{6F3F5029-3FAA-59C8-8615-DE24A773E001}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\NPA">
+      <UniqueIdentifier>{681FAC99-1B82-55E8-966D-5AB6454BADAF}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\NPA\inc">
+      <UniqueIdentifier>{8E8EF3EF-75E2-5066-962E-4339AB65737D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\NPA\src">
+      <UniqueIdentifier>{3560EAF1-5ADC-5D5F-8CCF-1502BA5E38FF}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\PPP">
+      <UniqueIdentifier>{82A0ACDA-DC61-55DE-BDD1-47FCF7DC1060}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\PPP\8845">
+      <UniqueIdentifier>{317CA045-E74D-5E8D-A7C8-93F945EFBEEE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\PPP\8845\inc">
+      <UniqueIdentifier>{0213FEAB-00DC-5086-854D-E6B947C83A5E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\PPP\8845\src">
+      <UniqueIdentifier>{EEEC49AD-29A7-54E0-9645-4186382A2538}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\RPMh">
+      <UniqueIdentifier>{14E23456-E4B1-5F63-81B5-37A707F54DEE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\RPMh\8845">
+      <UniqueIdentifier>{AA5FDB80-8B07-50A0-B684-4543F4251C2F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\RPMh\8845\inc">
+      <UniqueIdentifier>{A10F805F-3C73-5BC1-B245-21F30D7A0677}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\RPMh\8845\src">
+      <UniqueIdentifier>{0CD7EC37-26F9-59EF-9874-07EF573F3DA3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\TLMM">
+      <UniqueIdentifier>{AA1124B5-54CF-554A-906C-30BD80E9DD23}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\TLMM\8845">
+      <UniqueIdentifier>{466A8B13-0466-590A-8EED-D07FABB29F9A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\TLMM\8845\inc">
+      <UniqueIdentifier>{57622B95-A6E7-58D5-A75D-9100F97482AA}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\TLMM\8845\src">
+      <UniqueIdentifier>{F76D7F04-0E64-5EB7-A3CA-F3762F6F39C9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\Tsens">
+      <UniqueIdentifier>{A5196B07-911E-54AC-8264-9C29AA90655F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\Tsens\inc">
+      <UniqueIdentifier>{49BB682B-ABD6-5FC2-B039-C0899B445E6B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\Tsens\src">
+      <UniqueIdentifier>{6E67992D-3202-5A1E-ADF3-B0768B0FF09A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\clock">
+      <UniqueIdentifier>{EBB308BD-3763-5568-B291-9441DDB918C5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\clock\8845">
+      <UniqueIdentifier>{79E981E3-E45C-5481-ADC8-89A089EBC14E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\clock\8845\inc">
+      <UniqueIdentifier>{09B219CC-F76B-5B10-AF2A-69F4B9E33363}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\clock\8845\src">
+      <UniqueIdentifier>{86477298-865D-5A21-A403-5D01540C2867}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="api">
+      <UniqueIdentifier>{AB08002D-A932-50E8-91B0-989AD3CC811A}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_sync_deferred.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\Tsens\src\tsens.c">
+      <Filter>SystemLibs\Tsens\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\DAL\src\chipinfo.c">
+      <Filter>SystemLibs\DAL\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\diag\peplog.c">
+      <Filter>Framework\PEP\src\diag</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\diag\diag.c">
+      <Filter>Framework\PEP\src\diag</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\diag\xo_diag.c">
+      <Filter>Framework\PEP\src\diag</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\crash_dump.c">
+      <Filter>Framework\PEP\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\DeviceLib\src\io_target.c">
+      <Filter>Framework\DeviceLib\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\idle\deep_standby.c">
+      <Filter>Framework\PEP\src\idle</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\diag\ppm_diag.c">
+      <Filter>Framework\PEP\src\diag</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\pstate_payload.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\ufs\ufs_footswitch_component.c">
+      <Filter>Framework\PEP\8845\src\ufs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\driver.c">
+      <Filter>Framework\PEP\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\device.c">
+      <Filter>Framework\PEP\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\ioctl.c">
+      <Filter>Framework\PEP\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\main.c">
+      <Filter>Framework\PEP\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\power_control.c">
+      <Filter>Framework\PEP\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\dcvs.c">
+      <Filter>Framework\PEP\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\soc_model.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\soc_transport.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\resource_catalog.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\CmdDb\src\cmddb.c">
+      <Filter>SystemLibs\CmdDb\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\ARC\src\rail.c">
+      <Filter>SystemLibs\ARC\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\TLMM\8845\src\tlmm.c">
+      <Filter>SystemLibs\TLMM\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_vote_bridge.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\PPP\8845\src\rail_bank.c">
+      <Filter>SystemLibs\PPP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\providers\vrm_graph.c">
+      <Filter>Framework\PEP\8845\src\providers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\res_graph.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\hw_backend.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\init_hw.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\hw_backend_core.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\hw_win.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\clock\8845\src\gcc.c">
+      <Filter>SystemLibs\clock\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\clock\8845\src\config.c">
+      <Filter>SystemLibs\clock\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\clock\8845\src\commit.c">
+      <Filter>SystemLibs\clock\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\clock\8845\src\plan_gen.c">
+      <Filter>SystemLibs\clock\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\ICB\8845\src\bus.c">
+      <Filter>SystemLibs\ICB\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\ICB\8845\src\bcm_nodes_gen.c">
+      <Filter>SystemLibs\ICB\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\PPP\8845\src\rail.c">
+      <Filter>SystemLibs\PPP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\mmio_win.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\platform_resources_gen.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\npa_client.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\NPA\src\identity.c">
+      <Filter>SystemLibs\NPA\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\clock\8845\src\opcode8480.c">
+      <Filter>SystemLibs\clock\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\clock\8845\src\compat_ids.c">
+      <Filter>SystemLibs\clock\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\clock\8845\src\composite.c">
+      <Filter>SystemLibs\clock\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\clock\8845\src\graph.c">
+      <Filter>SystemLibs\clock\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\NPA\src\scalar.c">
+      <Filter>SystemLibs\NPA\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\footswitch\npa_client.c">
+      <Filter>Framework\PEP\8845\src\footswitch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\ufs\ufs_footswitch_graph.c">
+      <Filter>Framework\PEP\8845\src\ufs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\ufs\ufs_native_provision.c">
+      <Filter>Framework\PEP\8845\src\ufs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\ufs\ufs_cxmx_owner.c">
+      <Filter>Framework\PEP\8845\src\ufs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\footswitch\factory.c">
+      <Filter>Framework\PEP\8845\src\footswitch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\footswitch\gdsc_native.c">
+      <Filter>Framework\PEP\8845\src\footswitch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\footswitch\nodes.c">
+      <Filter>Framework\PEP\8845\src\footswitch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\footswitch\required.c">
+      <Filter>Framework\PEP\8845\src\footswitch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\footswitch\scalar_required.c">
+      <Filter>Framework\PEP\8845\src\footswitch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\footswitch\group_vote.c">
+      <Filter>Framework\PEP\8845\src\footswitch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\clock\8845\src\domains.c">
+      <Filter>SystemLibs\clock\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\gdsc_phys.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\footswitch\registry.c">
+      <Filter>Framework\PEP\8845\src\footswitch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\clock\8845\src\npa_bridge.c">
+      <Filter>SystemLibs\clock\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\providers\npa_graph.c">
+      <Filter>Framework\PEP\8845\src\providers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\providers\tlmm_graph.c">
+      <Filter>Framework\PEP\8845\src\providers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\dpm_identity.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\res_graph_desc.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\ufs\ufs_catalog.c">
+      <Filter>Framework\PEP\8845\src\ufs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\ufs\ufs_native_program.c">
+      <Filter>Framework\PEP\8845\src\ufs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\ufs\ufs_pofx_provenance.c">
+      <Filter>Framework\PEP\8845\src\ufs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\ufs\ufs_pstate_graph_bridge.c">
+      <Filter>Framework\PEP\8845\src\ufs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\delay_provider.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\win_delay.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\providers\vrm_acpi.c">
+      <Filter>Framework\PEP\8845\src\providers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\vrm.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\NPA\src\vote.c">
+      <Filter>SystemLibs\NPA\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_tcs.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_deferred.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_deferred_scheduler.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_amc_drain.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_client_scheduler.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rsc_completion.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rsc_irq_processor.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rsc_irq_assignment.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rsc_irq_snapshot.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\rsc_irq_pnp_win.c">
+      <Filter>Framework\PEP\8845\src\irq</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rsc_irq_latched.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_gic_dispatch.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\oem_wdf_irq_create.c">
+      <Filter>Framework\PEP\8845\src\irq</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\oem_wdf_irq_bridge.c">
+      <Filter>Framework\PEP\8845\src\irq</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_rpmh_workitems.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\oem_wdf_work_provider.c">
+      <Filter>Framework\PEP\8845\src\irq</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_amc_completion.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_amc_command_queue.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_tcs_async.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_tcs_batch_async.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\CmdDb\src\resolve.c">
+      <Filter>SystemLibs\CmdDb\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_voter_state.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_voter_sets.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_sleepwake_bridge.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_sleepwake_program.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_sleepwake_dependencies.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_sleepwake_handoff.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_rpmh_host_fence.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\oem_wdf_rundown_win.c">
+      <Filter>Framework\PEP\8845\src\irq</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\oem_wdf_dpc_tracker_win.c">
+      <Filter>Framework\PEP\8845\src\irq</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_rsc_readback.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\oem_rsc_readback_win.c">
+      <Filter>Framework\PEP\8845\src\irq</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_rsc_tcs_survey.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\oem_rsc_tcs_survey_win.c">
+      <Filter>Framework\PEP\8845\src\irq</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\gic_d0_map_win.c">
+      <Filter>Framework\PEP\8845\src\irq</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\gic_irq37_owned_win.c">
+      <Filter>Framework\PEP\8845\src\irq</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\rsc_d0_map_win.c">
+      <Filter>Framework\PEP\8845\src\irq</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\oem_rsc_identity_win.c">
+      <Filter>Framework\PEP\8845\src\irq</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_direct_rsc_map.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\oem_direct_rsc_map_win.c">
+      <Filter>Framework\PEP\8845\src\irq</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_pnp_d0_lease.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\oem_rsc_pnp_evidence.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\oem_rsc_pnp_evidence_win.c">
+      <Filter>Framework\PEP\8845\src\irq</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\oem_wdf_irq_mask_owner.c">
+      <Filter>Framework\PEP\8845\src\irq</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\oem_wdf_irq_win.c">
+      <Filter>Framework\PEP\8845\src\irq</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_oem_work.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_oem_irq_group.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_oem_pnp_plan.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\rpmh_wdf_lifecycle.c">
+      <Filter>Framework\PEP\8845\src\irq</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_irq_rundown.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_irq_pipeline.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\rpmh_wdf_quiesce.c">
+      <Filter>Framework\PEP\8845\src\irq</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\rpmh_oem_pnp_win.c">
+      <Filter>Framework\PEP\8845\src\irq</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\rsc_pnp_ownership.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\irq\rsc_pnp_win.c">
+      <Filter>Framework\PEP\8845\src\irq</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\PPP\8845\src\gpio.c">
+      <Filter>SystemLibs\PPP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\provider_select.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\ICB\8845\src\bcm.c">
+      <Filter>SystemLibs\ICB\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\acpi_resources.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\component_perf.c">
+      <Filter>Framework\PEP\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\perf_clock_desc.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\perf_clock_win.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\soc_subsystem.c">
+      <Filter>Framework\PEP\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\registry.c">
+      <Filter>Framework\PEP\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\acpi.c">
+      <Filter>Framework\PEP\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\etw.c">
+      <Filter>Framework\PEP\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\acpi\acpi_eval.c">
+      <Filter>Framework\PEP\src\acpi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\acpi\aeob.c">
+      <Filter>Framework\PEP\src\acpi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\acpi\aeob_device.c">
+      <Filter>Framework\PEP\src\acpi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\aeob_validate.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\runtime_res.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\state_txn.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\aeob_idx.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\perf_desc.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\pofx_perf.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\perf_clients.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\state_owner.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\runtime_component.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\runtime_component_win.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\runtime_dstate.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\peer_component.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\component_txn.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\power_desc.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\power_delay.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\bcl.c">
+      <Filter>Framework\PEP\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\guids.c">
+      <Filter>Framework\PEP\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\resource_ddi.c">
+      <Filter>Framework\PEP\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\idle\interrupt.c">
+      <Filter>Framework\PEP\src\idle</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\ioctl_contract.c">
+      <Filter>Framework\PEP\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\po_fx.c">
+      <Filter>Framework\PEP\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\resource_cache.c">
+      <Filter>Framework\PEP\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\diag\stats.c">
+      <Filter>Framework\PEP\src\diag</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\idle\timer.c">
+      <Filter>Framework\PEP\src\idle</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\diag\vendor_payloads.c">
+      <Filter>Framework\PEP\src\diag</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\diag\wmi.c">
+      <Filter>Framework\PEP\src\diag</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\mmrm.c">
+      <Filter>Framework\PEP\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\ex_soc_mgmt.c">
+      <Filter>Framework\PEP\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\diag\resource_diag.c">
+      <Filter>Framework\PEP\src\diag</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\thermal_request.c">
+      <Filter>Framework\PEP\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\dstate.c">
+      <Filter>Framework\PEP\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\dump.c">
+      <Filter>Framework\PEP\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\fstate.c">
+      <Filter>Framework\PEP\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\idle.c">
+      <Filter>Framework\PEP\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\park.c">
+      <Filter>Framework\PEP\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\ppm.c">
+      <Filter>Framework\PEP\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\pstate.c">
+      <Filter>Framework\PEP\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\work.c">
+      <Filter>Framework\PEP\src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Framework\PEP\8845\inc\8845_acpi_resources.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\acpi.h">
+      <Filter>Framework\PEP\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\aeob.h">
+      <Filter>Framework\PEP\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\aeob_validate.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\ARC\inc\arc_rail.h">
+      <Filter>SystemLibs\ARC\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\bcl.h">
+      <Filter>Framework\PEP\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\ICB\8845\inc\bcm.h">
+      <Filter>SystemLibs\ICB\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\DAL\inc\chipinfo.h">
+      <Filter>SystemLibs\DAL\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\clock\8845\inc\composite.h">
+      <Filter>SystemLibs\clock\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\clock\8845\inc\graph.h">
+      <Filter>SystemLibs\clock\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\clock\8845\inc\opcode8480.h">
+      <Filter>SystemLibs\clock\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\perf_clock_desc.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\perf_clock_win.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\CmdDb\inc\cmddb.h">
+      <Filter>SystemLibs\CmdDb\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\component_perf.h">
+      <Filter>Framework\PEP\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\state_owner.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\crash_dump.h">
+      <Filter>Framework\PEP\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\dcvs.h">
+      <Filter>Framework\PEP\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\dcvs_rundown.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\api\resource_ddi.h">
+      <Filter>api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\deep_standby.h">
+      <Filter>Framework\PEP\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\delay_provider.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\diag.h">
+      <Filter>Framework\PEP\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\dpm_identity.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\dpm_verified.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\driver.h">
+      <Filter>Framework\PEP\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\etw.h">
+      <Filter>Framework\PEP\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\ex_soc_mgmt.h">
+      <Filter>Framework\PEP\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\factory.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\gdsc_native.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\nodes.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\fs_npa_client.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\registry.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\DeviceLib\inc\io_target.h">
+      <Filter>Framework\DeviceLib\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\clock\8845\inc\gcc.h">
+      <Filter>SystemLibs\clock\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\clock\8845\inc\commit.h">
+      <Filter>SystemLibs\clock\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\clock\8845\inc\config.h">
+      <Filter>SystemLibs\clock\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\gic_d0_map_win.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\gic_irq37_owned_win.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\hw_backend.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\hw_win.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\hw_backend_windows_wdf.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\ICB\8845\inc\bus.h">
+      <Filter>SystemLibs\ICB\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\init_gate.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\interrupt.h">
+      <Filter>Framework\PEP\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\api\ioctl_contract.h">
+      <Filter>api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\mmio_win.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\mmrm.h">
+      <Filter>Framework\PEP\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\molokai_catalog.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\gdsc_phys.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\soc_model.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\soc_transport.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\npa_client.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\npa_graph.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\NPA\inc\identity.h">
+      <Filter>SystemLibs\NPA\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\clock\8845\inc\npa_bridge.h">
+      <Filter>SystemLibs\clock\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\NPA\inc\scalar.h">
+      <Filter>SystemLibs\NPA\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_amc_command_queue.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_amc_completion.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\clock\8845\inc\domains.h">
+      <Filter>SystemLibs\clock\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\CmdDb\inc\resolve.h">
+      <Filter>SystemLibs\CmdDb\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_direct_rsc_map.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\oem_direct_rsc_map_win.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_gic_dispatch.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_pnp_d0_lease.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_rpmh_host_fence.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_rpmh_workitems.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\oem_rsc_identity_win.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_rsc_pnp_evidence.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\oem_rsc_pnp_evidence_win.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_rsc_readback.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\oem_rsc_readback_win.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_rsc_tcs_survey.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\oem_rsc_tcs_survey_win.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_sleepwake_bridge.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_sleepwake_dependencies.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_sleepwake_handoff.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_sleepwake_program.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_tcs_async.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_tcs_batch_async.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_voter_sets.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\oem_voter_state.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\oem_wdf_dpc_tracker_win.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\oem_wdf_irq_bridge.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\oem_wdf_irq_create.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\oem_wdf_irq_mask_owner.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\oem_wdf_rundown_win.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\oem_wdf_work_provider.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\owner_attach_policy.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\peer_component.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\peplog.h">
+      <Filter>Framework\PEP\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\platform_resources.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\PPP\8845\inc\gpio.h">
+      <Filter>SystemLibs\PPP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\PPP\8845\inc\pmic_rail.h">
+      <Filter>SystemLibs\PPP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\po_fx.h">
+      <Filter>Framework\PEP\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\required.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\group_vote.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\perf_desc.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\pofx_perf.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\pstate_payload.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\perf_clients.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\scalar_required.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\power_delay.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\power_desc.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\state_txn.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\power_control.h">
+      <Filter>Framework\PEP\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\ppm_diag.h">
+      <Filter>Framework\PEP\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\provider_select.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\api\public.h">
+      <Filter>api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\res_graph.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\resource_cache.h">
+      <Filter>Framework\PEP\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_amc_drain.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_busy_arbitration.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_client_scheduler.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_deferred_scheduler.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_irq_pipeline.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_irq_rundown.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_oem_irq_group.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_oem_pnp_plan.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\rpmh_oem_pnp_win.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_oem_read_sequence.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_oem_work.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_sync_deferred.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_tcs.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_vote_bridge.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\vrm.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\rpmh_wdf_lifecycle.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\rpmh_wdf_quiesce.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_write_fence.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rsc_completion.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\rsc_d0_map_win.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rsc_irq_assignment.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rsc_irq_latched.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\rsc_irq_pnp_win.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rsc_irq_processor.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rsc_irq_snapshot.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rsc_pnp_ownership.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\rsc_pnp_win.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\resource_diag.h">
+      <Filter>Framework\PEP\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\runtime_component.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\runtime_component_win.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\runtime_dstate.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\aeob_idx.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\runtime_res.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\clock\8845\inc\compat_ids.h">
+      <Filter>SystemLibs\clock\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\soc_subsystem.h">
+      <Filter>Framework\PEP\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\stats.h">
+      <Filter>Framework\PEP\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\thermal_request.h">
+      <Filter>Framework\PEP\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\timer.h">
+      <Filter>Framework\PEP\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\TLMM\8845\inc\tlmm.h">
+      <Filter>SystemLibs\TLMM\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\tlmm_graph.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\trace.h">
+      <Filter>Framework\PEP\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\Tsens\inc\tsens.h">
+      <Filter>SystemLibs\Tsens\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\ufs_catalog.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\ufs_cxmx_owner.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\ufs_footswitch_component.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\ufs_footswitch_graph.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\ufs_native_program.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\ufs_native_provision.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\ufs_pstate_graph_bridge.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\api\vendor.h">
+      <Filter>api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\vendor_payloads.h">
+      <Filter>Framework\PEP\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\NPA\inc\vote.h">
+      <Filter>SystemLibs\NPA\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\vrm_acpi.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\vrm_graph.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\PPP\8845\inc\rail_bank.h">
+      <Filter>SystemLibs\PPP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\win_delay.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\wmi.h">
+      <Filter>Framework\PEP\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\xo_diag.h">
+      <Filter>Framework\PEP\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\api\thermalioct.h">
+      <Filter>api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\limits.h">
+      <Filter>Framework\PEP\inc\dispatch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\dispatch_types.h">
+      <Filter>Framework\PEP\inc\dispatch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\dstate_types.h">
+      <Filter>Framework\PEP\inc\dispatch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\dump_types.h">
+      <Filter>Framework\PEP\inc\dispatch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\fstate_types.h">
+      <Filter>Framework\PEP\inc\dispatch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\idle_types.h">
+      <Filter>Framework\PEP\inc\dispatch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\node_types.h">
+      <Filter>Framework\PEP\inc\dispatch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\park_types.h">
+      <Filter>Framework\PEP\inc\dispatch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\ppm_types.h">
+      <Filter>Framework\PEP\inc\dispatch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\pstate_types.h">
+      <Filter>Framework\PEP\inc\dispatch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\work_types.h">
+      <Filter>Framework\PEP\inc\dispatch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\dstate_priv.h">
+      <Filter>Framework\PEP\inc\dispatch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\dump_priv.h">
+      <Filter>Framework\PEP\inc\dispatch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\fstate_priv.h">
+      <Filter>Framework\PEP\inc\dispatch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\idle_priv.h">
+      <Filter>Framework\PEP\inc\dispatch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\main_priv.h">
+      <Filter>Framework\PEP\inc\dispatch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\park_priv.h">
+      <Filter>Framework\PEP\inc\dispatch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\ppm_priv.h">
+      <Filter>Framework\PEP\inc\dispatch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\pstate_priv.h">
+      <Filter>Framework\PEP\inc\dispatch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\dispatch\work_priv.h">
+      <Filter>Framework\PEP\inc\dispatch</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\SystemLibs\ICB\8845\data\icb_policy.json">
+      <Filter>SystemLibs\ICB\8845\data</Filter>
+    </None>
+    <None Include="..\Framework\PEP\data\aop_subsystem_aliases.inc">
+      <Filter>Framework\PEP\data</Filter>
+    </None>
+    <None Include="..\Framework\PEP\data\arc_resource_aliases.inc">
+      <Filter>Framework\PEP\data</Filter>
+    </None>
+    <None Include="..\Framework\PEP\data\cmddb_slv_aliases.inc">
+      <Filter>Framework\PEP\data</Filter>
+    </None>
+    <None Include="..\Framework\PEP\data\glink_event_aliases.inc">
+      <Filter>Framework\PEP\data</Filter>
+    </None>
+    <None Include="..\Framework\PEP\data\icb_master_aliases.inc">
+      <Filter>Framework\PEP\data</Filter>
+    </None>
+    <None Include="..\Framework\PEP\data\icb_master_names.inc">
+      <Filter>Framework\PEP\data</Filter>
+    </None>
+    <None Include="..\Framework\PEP\data\icb_slave_aliases.inc">
+      <Filter>Framework\PEP\data</Filter>
+    </None>
+    <None Include="..\Framework\PEP\data\icb_slave_names.inc">
+      <Filter>Framework\PEP\data</Filter>
+    </None>
+    <None Include="..\Framework\PEP\data\npa_client_aliases.inc">
+      <Filter>Framework\PEP\data</Filter>
+    </None>
+    <None Include="..\Framework\PEP\data\pcu_resource_state_aliases.inc">
+      <Filter>Framework\PEP\data</Filter>
+    </None>
+    <None Include="..\Framework\PEP\data\pcu_resource_type_aliases.inc">
+      <Filter>Framework\PEP\data</Filter>
+    </None>
+    <None Include="..\Framework\PEP\data\ppp_resource_aliases.inc">
+      <Filter>Framework\PEP\data</Filter>
+    </None>
+    <None Include="..\Framework\PEP\data\ppp_resource_names.inc">
+      <Filter>Framework\PEP\data</Filter>
+    </None>
+    <None Include="..\Framework\PEP\data\rpmh_set_aliases.inc">
+      <Filter>Framework\PEP\data</Filter>
+    </None>
+    <None Include="..\Framework\PEP\data\kind_enum_kind_list.inc">
+      <Filter>Framework\PEP\data</Filter>
+    </None>
+    <None Include="..\Framework\PEP\data\kind_enum_tables.inc">
+      <Filter>Framework\PEP\data</Filter>
+    </None>
+    <None Include="..\Framework\PEP\data\rsc_request_aliases.inc">
+      <Filter>Framework\PEP\data</Filter>
+    </None>
+    <None Include="..\Framework\PEP\data\subsystem_symbol_aliases.inc">
+      <Filter>Framework\PEP\data</Filter>
+    </None>
+    <None Include="..\Framework\PEP\data\symbol_tokens.inc">
+      <Filter>Framework\PEP\data</Filter>
+    </None>
+    <None Include="..\Framework\PEP\data\tlmm_drive_aliases.inc">
+      <Filter>Framework\PEP\data</Filter>
+    </None>
+    <None Include="..\Framework\PEP\data\tsens_threshold_aliases.inc">
+      <Filter>Framework\PEP\data</Filter>
+    </None>
+    <None Include="..\Framework\PEP\data\clock_driver_aliases.inc">
+      <Filter>Framework\PEP\data</Filter>
+    </None>
+    <None Include="..\Framework\PEP\data\pdc_drv_aliases.inc">
+      <Filter>Framework\PEP\data</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Inf Include="..\inf\qcpep.inx" />
+  </ItemGroup>
+</Project>

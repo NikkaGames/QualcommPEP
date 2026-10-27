@@ -1,0 +1,61 @@
+#ifndef CLOCK_COMPOSITE_H
+#define CLOCK_COMPOSITE_H
+/* sc8480 EN_SETFREQ: an enable-client request followed by an independent freq-client
+ * request. */
+
+#include "scalar.h"
+#include "opcode8480.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct clock_composite {
+    scalar_res_t* enable;
+    scalar_res_t* freq;
+    scalar_handle_t enable_client;
+    scalar_handle_t freq_client;
+    uint8_t active;
+    uint8_t quarantined;
+    uint8_t native_npa;
+} clock_composite_t;
+
+typedef struct clock_composite_snapshot {
+    uint32_t enable_req;
+    uint32_t freq_req;
+    uint8_t enable_present;
+    uint8_t freq_present;
+    uint32_t match_opaque;
+    uint32_t enable_slot;
+    uint32_t enable_generation;
+    uint32_t freq_slot;
+    uint32_t freq_generation;
+} clock_composite_snapshot_t;
+
+/* no implicit mapping or physical ownership is granted. Returned clients are for a single
+ * graph/D-state owner only. */
+
+int clock_composite_bind(clock_composite_t*, scalar_res_t* enable, scalar_res_t* freq);
+/* the 8480 DSDT's second DWORD remains opaque; no fabricated clock matching algorithm. */
+
+int clock_composite_issue(clock_composite_t*, const power_action_t*,
+                          clock_composite_snapshot_t* prior);
+/* for native SC8480 resources d3 issues an EXPLICIT enable=OFF(2), retaining the freq
+ * client vote, matching the signed CLOCK DISABLE request. Never conflate OFF with
+ * npa_complete_request or client destruction. */
+
+int clock_composite_release(clock_composite_t*, clock_composite_snapshot_t* prior);
+/* restore only this client's two votes, compensating a partially completed hardware
+ * transaction; quarantine if either independent readback fails. */
+
+int clock_composite_restore(clock_composite_t*, const clock_composite_snapshot_t* prior);
+/* read-only, ownership-checked client snapshot and state validation. effective hardware
+ * readback is mandatory; another client's aggregate vote can be higher than this
+ * composite's own state. */
+
+int clock_composite_snapshot(clock_composite_t*, clock_composite_snapshot_t*);
+int clock_composite_verify_state(clock_composite_t*, uint8_t enabled, uint32_t hertz);
+int clock_composite_unbind(clock_composite_t*);
+#ifdef __cplusplus
+}
+#endif
+#endif
