@@ -372,25 +372,32 @@ static int rpmh_wait_deadline(void* ctx, uint32_t ms)
 {
     owners_t* o = ctx;
     LARGE_INTEGER interval;
-    ULONGLONG deadline, now, remaining;
-    NTSTATUS status;
+    ULONGLONG started, deadline, now, remaining;
+    ULONG waits = 0u;
+    NTSTATUS status = STATUS_TIMEOUT;
     if (!o || !ms || KeGetCurrentIrql() != PASSIVE_LEVEL)
         return 0;
-    deadline = KeQueryInterruptTime() + (ULONGLONG)ms * 10000ULL;
+    started = KeQueryInterruptTime();
+    deadline = started + (ULONGLONG)ms * 10000ULL;
     for (;;) {
+        /* drain an already-pending completion before waiting on the system work queue. */
+        rpmh_observe_completion(o);
         now = KeQueryInterruptTime();
         if (now >= deadline)
-            return 0;
+            break;
         remaining = deadline - now;
         interval.QuadPart = -(LONGLONG)(remaining < 100000ULL ? remaining : 100000ULL);
         status = KeWaitForSingleObject(&o->rpmh_completion_event, Executive, KernelMode, FALSE,
                                        &interval);
-        if (status == STATUS_SUCCESS)
-            return 1;
+        ++waits;
         if (status != STATUS_TIMEOUT)
-            return 0;
-        rpmh_observe_completion(o);
+            break;
     }
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_RPMH,
+                "rpmh: wait ticket=%lu status=%08X waits=%lu elapsed-us=%llu",
+                (ULONG)o->rpmh_wait.active_req, status, waits,
+                (unsigned long long)((KeQueryInterruptTime() - started) / 10ULL));
+    return status == STATUS_SUCCESS;
 }
 
 /* authorized owner must call this *after* scheduler promotion and before advertising RPMh

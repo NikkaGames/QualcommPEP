@@ -5,6 +5,7 @@
 static WDFTIMER g_timer;
 static volatile LONG g_timer_tick_cnt;
 static ULONG g_timer_period_ms;
+static ULONG g_timer_snapshot_every;
 
 static VOID timer_publish_snapshot(VOID)
 {
@@ -29,10 +30,7 @@ static VOID timer_func(_In_ WDFTIMER timer)
 
     InterlockedIncrement(&g_stats.ioctl_cnt);
 
-    ULONG every = registry_query_u_long(L"TimerSnapshotEvery", 6);
-    if (every == 0)
-        every = 1;
-    if (((ULONG)g_timer_tick_cnt % every) == 0)
+    if (((ULONG)g_timer_tick_cnt % g_timer_snapshot_every) == 0)
         timer_publish_snapshot();
 }
 
@@ -42,6 +40,10 @@ NTSTATUS timer_init(_In_ WDFDRIVER driver)
     WDF_OBJECT_ATTRIBUTES attrs;
 
     g_timer_tick_cnt = 0;
+    /* the periodic callback runs at DISPATCH_LEVEL; read policy before starting it. */
+    g_timer_snapshot_every = registry_query_u_long(L"TimerSnapshotEvery", 6);
+    if (g_timer_snapshot_every == 0)
+        g_timer_snapshot_every = 1;
     g_timer_period_ms = registry_query_u_long(L"TimerPeriodMs", 5000);
     if (g_timer_period_ms < 200)
         g_timer_period_ms = 200;

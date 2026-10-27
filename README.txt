@@ -11,4 +11,4 @@ Maintenance docs, symbol maps, generators and verification tools:
 ../qcpep8845_development/README.md
 
 Tracing: WPP and Inflight Trace Recorder in both configurations.
-Current image marker: rev=413 platform-naming
+Current image marker: rev=414 completion-latency
