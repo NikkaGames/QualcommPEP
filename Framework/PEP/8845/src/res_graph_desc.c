@@ -159,7 +159,7 @@ int graph_build_from_descriptors(res_graph_t* graph, const graph_desc_t* descrip
 
         memset(workspace->candidates, 0, sizeof(workspace->candidates));
         uint32_t n = 0, k;
-        if (descriptors[i].method[4] != '\0' || !method_is_read_only_res(descriptors[i].method) ||
+        if (descriptors[i].preload || !resource_method_valid(descriptors[i].method) ||
             !descriptors[i].buf || !descriptors[i].bytes)
             goto fail;
         for (j = 0; j < i; ++j)
@@ -185,7 +185,22 @@ int graph_build_from_descriptors(res_graph_t* graph, const graph_desc_t* descrip
     }
     if (!dev_cnt)
         goto fail;
-    for (i = 0; i < dev_cnt; ++i)
+    for (i = 0; i < dev_cnt; ++i) {
+        uint32_t mask = 0u;
+        /* Component-only descriptions remain available through the runtime DDI. */
+        for (j = 0u; j < cnt; ++j)
+            for (state = 0u; state < POWER_DSTATE_COUNT; ++state) {
+                uint32_t actions;
+                aeob_status_t status =
+                    aeo_b_visit_dev_d_state(descriptors[j].buf, descriptors[j].bytes,
+                                            workspace->paths[i], state, NULL, NULL, &actions);
+                if (status == AEO_B_OK)
+                    mask |= 1u << state;
+                else if (status != AEO_B_NOT_FOUND)
+                    goto fail;
+            }
+        if ((mask & 9u) != 9u)
+            continue;
         for (state = 0; state < POWER_DSTATE_COUNT; ++state) {
             int hits = 0;
             for (j = 0; j < cnt; ++j) {
@@ -205,6 +220,7 @@ int graph_build_from_descriptors(res_graph_t* graph, const graph_desc_t* descrip
             if ((state == 0u || state == 3u) && hits != 1)
                 goto fail;
         }
+    }
     /* a firmware-added COMPONENT on TSC1, SPK1, or any later SSDT res must not be silently
      * accepted as a D-state-only PEP device. */
 

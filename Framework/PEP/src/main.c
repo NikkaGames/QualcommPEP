@@ -6,6 +6,7 @@
 #include "peplog.h"
 #include "soc_subsystem.h"
 #include "dcvs.h"
+#include "cpu_device.h"
 #include "soc_transport.h"
 #include "component_perf.h"
 #include "perf_clock_win.h"
@@ -39,7 +40,6 @@
 #include "dispatch/idle_types.h"
 #include "dispatch/node_types.h"
 #include "dispatch/park_types.h"
-#include "dispatch/ppm_types.h"
 #include "dispatch/pstate_types.h"
 #include "dispatch/work_types.h"
 #include "dispatch/dstate_priv.h"
@@ -895,8 +895,6 @@ C_ASSERT(FIELD_OFFSET(pep_plugin_reg_t, acpi_notify) ==
 
 static volatile LONG g_pep_plugin_registered;
 
-static_assert(FIELD_OFFSET(pep_proc_query_caps_t, directed_p_state) == 8, "pep caps offset");
-
 static pep_msg_handler_t dev_msg_handler_table[41] = {
     {0u, NULL},
     {1u, pep_prepare_dev},
@@ -941,56 +939,12 @@ static pep_msg_handler_t dev_msg_handler_table[41] = {
     {40u, pep_dpm_query_soc_subsystem_metadata},
 };
 
-static pep_proc_msg_handler_t proc_msg_handler_table[44] = {
-    {0u, NULL},
-    {1u, pep_query_caps},
-    {2u, NULL},
-    {3u, NULL},
-    {4u, NULL},
-    {5u, NULL},
-    {6u, NULL},
-    {7u, NULL},
-    {8u, NULL},
-    {9u, pep_query_feedback_counters},
-    {10u, pep_feedback_read},
-    {11u, pep_query_perf_caps},
-    {12u, pep_perf_constraints},
-    {13u, NULL},
-    {14u, NULL},
-    {15u, NULL},
-    {16u, NULL},
-    {17u, NULL},
-    {18u, NULL},
-    {19u, NULL},
-    {20u, NULL},
-    {21u, NULL},
-    {22u, NULL},
-    {23u, pep_query_platform_state_residencies},
-    {24u, pep_query_veto_reasons},
-    {25u, pep_query_veto_reason},
-    {26u, pep_query_enumerate_boot_vetoes},
-    {27u, NULL},
-    {28u, NULL},
-    {29u, NULL},
-    {30u, NULL},
-    {31u, pep_park_selection_v2},
-    {32u, pep_park_mask},
-    {33u, pep_perf_check_complete},
-    {34u, pep_override_lpi_support},
-    {35u, pep_update_lpi_proc_states},
-    {36u, pep_update_lpi_coordinated_states},
-    {37u, pep_idle_lpi_pre_execute},
-    {38u, pep_idle_lpi_complete},
-    {39u, pep_ppm_enter_system_state},
-    {40u, pep_ppm_from_system_state},
-    {41u, pep_query_discrete_perf_states},
-    {42u, pep_query_domain_info},
-    {43u, pep_perf_set_state},
-};
-
 static BOOLEAN __fastcall pep_dev_notify(_In_ ULONG notify, _Inout_opt_ PVOID data)
 {
     ULONG_PTR rc;
+    BOOLEAN result;
+    if (cpu_device_notify(notify, data, &result))
+        return result;
     if (notify >= ARRAYSIZE(dev_msg_handler_table)) {
         pep_log_write(PEPLOG_EVT_DEV_NOTIFY, notify, STATUS_INVALID_PARAMETER, 0, 0, 0, 0);
         return 0;
@@ -1024,42 +978,7 @@ static BOOLEAN __fastcall pep_dev_notify(_In_ ULONG notify, _Inout_opt_ PVOID da
 static BOOLEAN __fastcall pep_proc_notify(_In_opt_ PVOID pep_handle, _In_ ULONG notify,
                                           _Inout_opt_ PVOID data)
 {
-    if (notify >= ARRAYSIZE(proc_msg_handler_table)) {
-        pep_log_write(PEPLOG_EVT_PROC_NOTIFY, notify, STATUS_INVALID_PARAMETER, 0, 0, 0, 0);
-        return 0;
-    }
-
-    if (pep_handle) {
-        ULONG cpu = get_cpu_num_from_pep_handle(pep_handle);
-        if (cpu < RTL_NUMBER_OF(g_cpu_kernel_handle)) {
-            PVOID kernel_handle = pep_extract_kernel_handle_from_pep_handle(pep_handle);
-            g_cpu_pep_handle[cpu] = pep_handle;
-            g_cpu_kernel_handle[cpu] = kernel_handle ? kernel_handle : pep_handle;
-        }
-        if (g_vetoes_enumerated)
-            pep_flush_pending_vetoes();
-    }
-
-    pep_proc_handler_t fn = proc_msg_handler_table[notify].handler_func;
-    if (!fn) {
-        ULONG lo = (ULONG)(ULONG_PTR)data;
-        ULONG hi = (ULONG)((ULONG_PTR)data >> 32);
-        pep_log_write(PEPLOG_EVT_PROC_NOTIFY, notify, STATUS_INVALID_DEVICE_REQUEST, 0, lo, hi, 0);
-        return 0;
-    }
-
-    if (notify != proc_msg_handler_table[notify].notify) {
-        pep_log_write(PEPLOG_EVT_PROC_NOTIFY, notify, STATUS_INVALID_PARAMETER,
-                      proc_msg_handler_table[notify].notify, 0, 0, 0);
-    }
-
-    fn(data, pep_handle);
-    {
-        ULONG lo = (ULONG)(ULONG_PTR)data;
-        ULONG hi = (ULONG)((ULONG_PTR)data >> 32);
-        pep_log_write(PEPLOG_EVT_PROC_NOTIFY, notify, STATUS_SUCCESS, 1, lo, hi, 0);
-    }
-    return 1;
+    return ppm_notify(pep_handle, notify, data);
 }
 
 static NTSTATUS reg_pep_plugin(VOID)
@@ -1090,16 +1009,7 @@ static NTSTATUS reg_pep_plugin(VOID)
     reg.Version = PEP_INFORMATION_VERSION;
     reg.Size = (USHORT)sizeof(reg);
     reg.AcceptDeviceNotification = pep_dev_notify;
-    /* processor performance requires independently authorized DVFS transport and readback; RSC/DPM
-     * admission does not establish it. */
-
-    BOOLEAN cpu_owner_verified = molokai_transport_ownership_verified();
-    ULONG dvfs_requested = registry_query_u_long(L"MolokaiDvfsEnable", 0);
-    reg.AcceptProcessorNotification =
-        (cpu_owner_verified && dvfs_requested == 1u) ? pep_proc_notify : NULL;
-    if (!reg.AcceptProcessorNotification)
-        TraceEvents(TRACE_LEVEL_WARNING, TRACE_PPM,
-                    "ppm: performance callbacks disabled reason=DVFS-owner-unverified");
+    reg.AcceptProcessorNotification = dcvs_ready() ? pep_proc_notify : NULL;
     /* firmware AML owns ACPI methods until an audited ACPI PEP provider exists. */
     reg.AcceptAcpiNotification = NULL;
 

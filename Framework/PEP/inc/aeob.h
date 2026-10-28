@@ -37,6 +37,8 @@ typedef int (*aeob_visitor_t)(const aeob_argument_t* arg, void* ctx);
 
 aeob_status_t aeo_b_walk(const void* buf, size_t avail_bytes, aeob_visitor_t visit, void* ctx,
                          uint32_t* top_argument_cnt);
+/* Valid empty packages are distinct from malformed responses and integer zero. */
+int aeo_b_empty(const void* buf, size_t bytes);
 
 aeob_status_t aeo_b_decode_stnd(const void* buf, size_t avail_bytes, char* names, uint32_t capacity,
                                 uint32_t* name_cnt);

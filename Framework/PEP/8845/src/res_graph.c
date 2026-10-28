@@ -88,7 +88,9 @@ int graph_retain_sources(res_graph_t* g, graph_desc_t* sources, uint32_t cnt,
         if (!sources[i].buf || !sources[i].bytes || sources[i].method[4] || !sources[i].method[0])
             return 0;
         for (j = 0u; j < i; ++j)
-            if (!strcmp(sources[i].method, sources[j].method) || sources[i].buf == sources[j].buf)
+            if ((!strcmp(sources[i].method, sources[j].method) &&
+                 sources[i].preload == sources[j].preload) ||
+                sources[i].buf == sources[j].buf)
                 return 0;
     }
     memcpy(g->sources, sources, cnt * sizeof(*sources));
@@ -114,7 +116,7 @@ int graph_src_copy(res_graph_t* g, const char* method, uint64_t serial, void* bu
         g->src_cnt <= GRAPH_SRC_MAX) {
         for (i = 0u; i < g->src_cnt; ++i) {
             const graph_desc_t* src = &g->sources[i];
-            if (strcmp(src->method, method))
+            if (src->preload || strcmp(src->method, method))
                 continue;
             if (!src->buf || !src->bytes)
                 break;

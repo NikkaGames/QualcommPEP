@@ -2,6 +2,66 @@
 
 static WDFKEY g_params_key;
 
+NTSTATUS registry_query_resource(PCWSTR name, PVOID* buffer, PULONG bytes)
+{
+    OBJECT_ATTRIBUTES attributes;
+    HANDLE root = NULL, resources = NULL;
+    UNICODE_STRING subkey, value;
+    PKEY_VALUE_PARTIAL_INFORMATION info = NULL;
+    ULONG required = 0u, allocated = 0u;
+    NTSTATUS status;
+    if (!name || !buffer || !bytes || KeGetCurrentIrql() != PASSIVE_LEVEL)
+        return STATUS_INVALID_PARAMETER;
+    *buffer = NULL;
+    *bytes = 0u;
+    InitializeObjectAttributes(&attributes, &g.services_registry_path,
+                               OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
+    status = ZwOpenKey(&root, KEY_READ, &attributes);
+    if (!NT_SUCCESS(status))
+        return status;
+    RtlInitUnicodeString(&subkey, L"Resources");
+    InitializeObjectAttributes(&attributes, &subkey, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, root,
+                               NULL);
+    status = ZwOpenKey(&resources, KEY_READ, &attributes);
+    if (!NT_SUCCESS(status))
+        goto done;
+    RtlInitUnicodeString(&value, name);
+    status = ZwQueryValueKey(resources, &value, KeyValuePartialInformation, NULL, 0u, &required);
+    if ((status != STATUS_BUFFER_TOO_SMALL && status != STATUS_BUFFER_OVERFLOW) ||
+        required < FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data) || required > 1024u * 1024u)
+        goto done;
+    allocated = required;
+    info = ExAllocatePool2(POOL_FLAG_NON_PAGED, required, POOL_TAG);
+    if (!info) {
+        status = STATUS_INSUFFICIENT_RESOURCES;
+        goto done;
+    }
+    status =
+        ZwQueryValueKey(resources, &value, KeyValuePartialInformation, info, required, &required);
+    if (!NT_SUCCESS(status))
+        goto done;
+    if (required < FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data) || required > allocated ||
+        info->Type != REG_BINARY || !info->DataLength ||
+        info->DataLength > required - FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data)) {
+        status = STATUS_DATA_ERROR;
+        goto done;
+    }
+    *buffer = ExAllocatePool2(POOL_FLAG_NON_PAGED, info->DataLength, POOL_TAG);
+    if (!*buffer) {
+        status = STATUS_INSUFFICIENT_RESOURCES;
+        goto done;
+    }
+    RtlCopyMemory(*buffer, info->Data, info->DataLength);
+    *bytes = info->DataLength;
+done:
+    if (info)
+        ExFreePool(info);
+    if (resources)
+        ZwClose(resources);
+    ZwClose(root);
+    return status;
+}
+
 NTSTATUS registry_init(_In_ WDFDRIVER driver)
 {
     g_params_key = NULL;

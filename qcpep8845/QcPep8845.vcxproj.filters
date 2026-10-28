@@ -1265,9 +1265,6 @@
     <ClInclude Include="..\Framework\PEP\inc\dispatch\park_types.h">
       <Filter>Framework\PEP\inc\dispatch</Filter>
     </ClInclude>
-    <ClInclude Include="..\Framework\PEP\inc\dispatch\ppm_types.h">
-      <Filter>Framework\PEP\inc\dispatch</Filter>
-    </ClInclude>
     <ClInclude Include="..\Framework\PEP\inc\dispatch\pstate_types.h">
       <Filter>Framework\PEP\inc\dispatch</Filter>
     </ClInclude>
@@ -1375,5 +1372,51 @@
   </ItemGroup>
   <ItemGroup>
     <Inf Include="..\inf\qcpep.inx" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="SystemLibs\SCMI">
+      <UniqueIdentifier>{87D2E40E-9EC1-5791-B2E3-DDADA8B5C1BC}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\SCMI\inc">
+      <UniqueIdentifier>{F90B15A9-2FF5-5776-ABF4-AD17BA0D2A9B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\SCMI\src">
+      <UniqueIdentifier>{D3948DD9-3182-5B39-82BD-93A3993BFF33}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\SCMI\8845">
+      <UniqueIdentifier>{D52D9BBB-BE27-51B2-9CA0-6417649C9C88}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\SCMI\8845\inc">
+      <UniqueIdentifier>{3949A70E-AC71-5507-992C-BD66162F9316}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SystemLibs\SCMI\8845\src">
+      <UniqueIdentifier>{0BFFF958-8728-5BD0-9A13-12EA1D96021F}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\SystemLibs\SCMI\src\perf.c">
+      <Filter>SystemLibs\SCMI\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\SCMI\8845\src\perf_target.c">
+      <Filter>SystemLibs\SCMI\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\cpu_device.c">
+      <Filter>Framework\PEP\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\acpi\cpu_topology.c">
+      <Filter>Framework\PEP\src\acpi</Filter>
+    </ClCompile>
+    <ClInclude Include="..\SystemLibs\SCMI\inc\perf.h">
+      <Filter>SystemLibs\SCMI\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\SCMI\8845\inc\perf_target.h">
+      <Filter>SystemLibs\SCMI\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\cpu_device.h">
+      <Filter>Framework\PEP\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\inc\cpu_topology.h">
+      <Filter>Framework\PEP\inc</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

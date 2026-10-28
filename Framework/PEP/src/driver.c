@@ -80,7 +80,7 @@ NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT driver_object, _In_ PUNICODE_STRING reg
     }
 
     g.driver_object = driver_object;
-    g.services_registry_path = *registry_path;
+    RtlInitUnicodeString(&g.services_registry_path, WdfDriverGetRegistryPath(g.driver));
 
     status = registry_init(g.driver);
     if (NT_SUCCESS(status))
@@ -123,6 +123,7 @@ NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT driver_object, _In_ PUNICODE_STRING reg
 
     (VOID) etw_reg();
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "driver: build rev=419 device-power-states");
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER,
+                "driver: build rev=420 firmware-cpu-performance");
     return STATUS_SUCCESS;
 }

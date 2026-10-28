@@ -94,6 +94,7 @@ typedef struct dcvs_snapshot {
 } dcvs_snapshot_t;
 
 NTSTATUS dcvs_init(VOID);
+BOOLEAN dcvs_ready(VOID);
 VOID dcvs_deinit(VOID);
 
 ULONG dcvs_get_cpu_cnt(VOID);
@@ -128,7 +129,6 @@ NTSTATUS dcvs_perf_set_state_checked(_In_ ULONG cpu, _In_ ULONG minimum_performa
 VOID dcvs_perf_set_state(_In_ ULONG cpu, _In_ ULONG minimum_performance_state,
                          _In_ ULONG maximum_performance_state, _In_ ULONG desired_performance_state,
                          _In_ ULONG energy_performance_preference);
-VOID dcvs_perf_check_complete(VOID);
 
 VOID dcvs_reset_feedback_counters(VOID);
 

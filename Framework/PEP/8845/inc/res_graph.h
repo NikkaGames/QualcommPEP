@@ -18,6 +18,7 @@ typedef struct graph_desc {
     char method[5];
     const void* buf;
     size_t bytes;
+    uint8_t preload;
 } graph_desc_t;
 
 typedef struct graph_provider {

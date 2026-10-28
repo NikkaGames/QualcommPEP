@@ -266,6 +266,7 @@ NTSTATUS forward_send(_In_ WDFDEVICE dev, _In_ ULONG ioctl, _In_opt_ PVOID in_bu
                       _Out_opt_ PULONG bytes_returned);
 
 NTSTATUS registry_set_u_long(_In_ PCWSTR name, _In_ ULONG value);
+NTSTATUS registry_query_resource(PCWSTR name, PVOID* buffer, PULONG bytes);
 
 NTSTATUS deep_standby_init(_In_ WDFDRIVER driver);
 VOID deep_standby_deinit(VOID);

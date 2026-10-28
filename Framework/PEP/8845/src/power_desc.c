@@ -1,19 +1,16 @@
 #include "power_desc.h"
 #include <string.h>
 
-static const char* const read_only_methods[] = {
-
-    "BSMD", "BPMD", "LPMX", "OPMD", "SPKX"};
-
-int method_is_read_only_res(const char method[5])
+int resource_method_valid(const char method[5])
 {
     unsigned i;
-    if (!method || strlen(method) != 4u)
+    if (!method || !(method[0] == '_' || (method[0] >= 'A' && method[0] <= 'Z')))
         return 0;
-    for (i = 0; i < sizeof(read_only_methods) / sizeof(read_only_methods[0]); ++i)
-        if (memcmp(method, read_only_methods[i], 5u) == 0)
-            return 1;
-    return 0;
+    for (i = 1u; i < 4u; ++i)
+        if (!(method[i] == '_' || (method[i] >= 'A' && method[i] <= 'Z') ||
+              (method[i] >= '0' && method[i] <= '9')))
+            return 0;
+    return method[4] == '\0';
 }
 
 power_result_t power_discover_dev_d_state(const char* const* methods, uint32_t cnt,
@@ -42,8 +39,10 @@ power_result_t power_discover_dev_d_state(const char* const* methods, uint32_t c
             goto error;
         }
 
-        if (!method_is_read_only_res(methods[i]))
-            continue;
+        if (!resource_method_valid(methods[i])) {
+            result = POWER_BAD_INPUT;
+            goto error;
+        }
         for (j = 0; j < i; ++j)
             if (methods[j] && strcmp(methods[i], methods[j]) == 0) {
                 repeated = 1;

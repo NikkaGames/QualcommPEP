@@ -11,4 +11,17 @@ Maintenance docs, symbol maps, generators and verification tools:
 ../qcpep8845_development/README.md
 
 Tracing: WPP and Inflight Trace Recorder in both configurations.
-Current image marker: rev=419 device-power-states
+Current image marker: rev=420 firmware-cpu-performance
+
+CPU performance control is enabled: Parameters\CpuPerformanceEnable (DWORD), default 1.
+It discovers SCMI performance levels and fast channels, then checks the CCGP CPU
+identities against physical processor affinity. No fixed frequency table is used.
+Hardware validation remains pending. Use KD for the first test boot.
+Install the INF package to provision CPU topology; copying the SYS is insufficient.
+Set CpuPerformanceEnable to 0 and reboot to disable CPU performance control.
+The CPU provider leaves voltage sequencing and thermal limits to PDP firmware.
+
+ACPI descriptors are discovered through STND and optional PREL, or submitted by
+client drivers through the runtime resource interface. Unlisted namespace methods
+are not probed. Nonempty preload descriptions are retained separately; execution
+requires a verified preload provider. Empty packages require no resource actions.

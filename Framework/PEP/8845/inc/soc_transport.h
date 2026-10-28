@@ -1,10 +1,15 @@
 #pragma once
 #include "driver.h"
 
-/* the fixed-address PDP/SCMI input transport below is NOT a confirmed Windows-owned CPU
- * performance provider. A successful MMIO map says nothing about firmware ownership. */
+#include "perf.h"
 
-BOOLEAN molokai_transport_ownership_verified(VOID);
+/* Performance control is published only after firmware discovery and channel readback. */
+
+BOOLEAN molokai_transport_ready(VOID);
 NTSTATUS molokai_transport_init(VOID);
 VOID molokai_transport_deinit(VOID);
+VOID molokai_transport_suspend(BOOLEAN suspended);
 NTSTATUS molokai_transport_set_level(_In_ ULONG domain, _In_ ULONG level);
+NTSTATUS molokai_transport_get_level(_In_ ULONG domain, _Out_ ULONG* level);
+const scmi_perf_domain_t* molokai_transport_domain(_In_ ULONG domain);
+ULONG molokai_transport_latency(ULONG domain);

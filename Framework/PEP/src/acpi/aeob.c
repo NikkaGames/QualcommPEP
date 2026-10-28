@@ -120,7 +120,21 @@ aeob_status_t aeo_b_walk(const void* buf, size_t avail_bytes, aeob_visitor_t vis
     return AEO_B_OK;
 }
 
-/* never guess a method name or tolerate a mixed / nested malformed manifest. */
+static int empty_visit(const aeob_argument_t* arg, void* ctx)
+{
+    int* empty = ctx;
+    if (arg->type != 3u)
+        *empty = 0;
+    return 1;
+}
+
+int aeo_b_empty(const void* buf, size_t bytes)
+{
+    int empty = 1;
+    return aeo_b_walk(buf, bytes, empty_visit, &empty, NULL) == AEO_B_OK && empty;
+}
+
+/* Method manifests contain reversed four-character ACPI names. */
 
 typedef struct stnd_ctx {
     char* names;
@@ -183,6 +197,8 @@ aeob_status_t aeo_b_decode_stnd(const void* buf, size_t avail_bytes, char* names
     if (!names || !name_cnt || capacity == 0 || capacity > 32)
         return AEO_B_INVALID;
     *name_cnt = 0;
+    if (aeo_b_empty(buf, avail_bytes))
+        return AEO_B_OK;
     c.names = names;
     c.capacity = capacity;
     c.cnt = 0;

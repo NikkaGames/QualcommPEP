@@ -113,6 +113,7 @@ typedef struct gfx_acd_interface {
 } gfx_acd_interface_t, *gfx_acd_interface_ptr_t;
 
 NTSTATUS ddi_reg_all(_In_ WDFDEVICE dev);
+NTSTATUS runtime_res_import(PACPI_EVAL_OUTPUT_BUFFER buffer, resource_parse_result_ptr_t result);
 
 /* records are driver-lifetime, nonpaged, keyed by exact ACPI path. */
 

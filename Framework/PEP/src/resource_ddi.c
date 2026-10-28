@@ -517,6 +517,11 @@ static NTSTATUS parse_desc_validated(_In_ PACPI_EVAL_OUTPUT_BUFFER output_buf,
         return STATUS_INVALID_DEVICE_STATE;
     if (!output_buf)
         return STATUS_INVALID_PARAMETER;
+    if (aeo_b_empty(output_buf, output_buf->Length)) {
+        pep_result->errorLevel = RESOURCE_ERROR_NONE;
+        pep_result->eStatus = RESOURCE_PARSE_VALID;
+        return STATUS_SUCCESS;
+    }
 
     st = ddi_parse_acpi_output_buf(output_buf, &stats);
     if (!NT_SUCCESS(st))
@@ -540,10 +545,7 @@ static NTSTATUS parse_desc_validated(_In_ PACPI_EVAL_OUTPUT_BUFFER output_buf,
         ExFreePool(info);
         return STATUS_DATA_ERROR;
     }
-    /* that reference is what makes the loop below safe: it passes the same pointer to every
-     * device's runtime_res_record, holds no lock between those calls, and a concurrent peer
-     * re-recording a path this submission has already recorded would otherwise free the blob
-     * out from under the loop. still. */
+    /* Retain a submission reference across per-device publication and concurrent replacement. */
 
     if (output_buf->Length == 0u || output_buf->Length > RUNTIME_MAX_BYTES) {
         pep_result->eStatus = RESOURCE_PARSE_INTERNAL_FAILURE;
@@ -597,10 +599,16 @@ static NTSTATUS parse_desc_validated(_In_ PACPI_EVAL_OUTPUT_BUFFER output_buf,
                 output_buf->Length);
     pep_result->errorLevel = RESOURCE_ERROR_NONE;
     pep_result->eStatus = RESOURCE_PARSE_VALID;
-    (VOID) RtlStringCchCopyA(pep_result->deviceName, RTL_NUMBER_OF(pep_result->deviceName),
-                             info->devices[0].path);
+    if (info->dev_cnt)
+        (VOID) RtlStringCchCopyA(pep_result->deviceName, RTL_NUMBER_OF(pep_result->deviceName),
+                                 info->devices[0].path);
     ExFreePool(info);
     return STATUS_SUCCESS;
+}
+
+NTSTATUS runtime_res_import(PACPI_EVAL_OUTPUT_BUFFER buffer, resource_parse_result_ptr_t result)
+{
+    return parse_desc_validated(buffer, result, "ACPI");
 }
 
 static NTSTATUS parse_dev_res_buf_impl(_In_ PACPI_EVAL_OUTPUT_BUFFER output_buf,

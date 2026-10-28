@@ -1,6 +1,8 @@
 #include "acpi.h"
 #include "aeob.h"
 #include "res_graph.h"
+#include "runtime_res.h"
+#include "resource_ddi.h"
 #include "trace.h"
 #include "acpi_eval.tmh"
 #ifndef IOCTL_ACPI_EVAL_METHOD_EX
@@ -623,9 +625,9 @@ NTSTATUS acpi_molokai_prepare_lpi(_In_ WDFDEVICE dev)
     return initialized == 1 ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
 }
 
-NTSTATUS acpi_query_stnd_method_names(_In_ WDFDEVICE dev,
-                                      _Out_writes_bytes_(capacity * 5) CHAR* names,
-                                      _In_ ULONG capacity, _Out_ PULONG name_cnt)
+static NTSTATUS query_resource_methods(_In_ WDFDEVICE dev, const CHAR list[5],
+                                       _Out_writes_bytes_(capacity * 5) CHAR* names,
+                                       _In_ ULONG capacity, _Out_ PULONG name_cnt)
 {
     ACPI_EVAL_INPUT_BUFFER inb;
     PACPI_EVAL_OUTPUT_BUFFER out = NULL;
@@ -638,7 +640,7 @@ NTSTATUS acpi_query_stnd_method_names(_In_ WDFDEVICE dev,
     RtlZeroMemory(names, capacity * 5u);
     RtlZeroMemory(&inb, sizeof(inb));
     inb.Signature = ACPI_EVAL_INPUT_BUFFER_SIGNATURE;
-    inb.MethodNameAsUlong = 0x444e5453u;
+    RtlCopyMemory(&inb.MethodNameAsUlong, list, 4u);
     st = acpi_eval_with_auto_buf(dev, &inb, sizeof(inb), &out, &out_len);
     if (!NT_SUCCESS(st))
         return st;
@@ -647,8 +649,8 @@ NTSTATUS acpi_query_stnd_method_names(_In_ WDFDEVICE dev,
         /* print only header metadata, never blindly dereference payload. */
 
         TraceEvents(TRACE_LEVEL_WARNING, TRACE_ACPI,
-                    "acpi: STND decode failed AEOB=%u length=%lu count=%lu", (unsigned)decoded,
-                    out_len, (ULONG)out->Count);
+                    "acpi: list=%s decode failed AEOB=%u length=%lu count=%lu", list,
+                    (unsigned)decoded, out_len, (ULONG)out->Count);
         st = STATUS_INVALID_PARAMETER;
     } else {
         *name_cnt = (ULONG)cnt;
@@ -656,6 +658,11 @@ NTSTATUS acpi_query_stnd_method_names(_In_ WDFDEVICE dev,
     }
     ExFreePool(out);
     return st;
+}
+
+NTSTATUS acpi_query_stnd_method_names(WDFDEVICE dev, CHAR* names, ULONG capacity, PULONG count)
+{
+    return query_resource_methods(dev, "STND", names, capacity, count);
 }
 
 /* do NOT call d0/d3 ACPI execution methods here; obtaining a res description is distinct
@@ -700,6 +707,8 @@ NTSTATUS acpi_compile_molokai_lpmx(_In_ WDFDEVICE pep_dev, _In_z_ const char* de
 
 typedef struct acpi_method_ctx {
     WDFDEVICE dev;
+    const CHAR* names;
+    ULONG count;
 } acpi_method_ctx_t;
 
 static method_eval_result_t acpi_evaluate_desc(void* ctx_arg, const char method[5],
@@ -710,7 +719,13 @@ static method_eval_result_t acpi_evaluate_desc(void* ctx_arg, const char method[
     PACPI_EVAL_OUTPUT_BUFFER output = NULL;
     ULONG output_length = 0;
     NTSTATUS status;
-    if (!ctx || !method || !buf || !bytes || !method_is_read_only_res(method))
+    ULONG index;
+    if (!ctx || !method || !buf || !bytes || !resource_method_valid(method))
+        return METHOD_EVALUATION_FAILED;
+    for (index = 0u; index < ctx->count; ++index)
+        if (!memcmp(ctx->names + index * 5u, method, 5u))
+            break;
+    if (index == ctx->count)
         return METHOD_EVALUATION_FAILED;
     *buf = NULL;
     *bytes = 0;
@@ -720,15 +735,15 @@ static method_eval_result_t acpi_evaluate_desc(void* ctx_arg, const char method[
     RtlCopyMemory(&input.MethodNameAsUlong, method, 4);
     status = acpi_eval_with_auto_buf(ctx->dev, &input, sizeof(input), &output, &output_length);
     if (!NT_SUCCESS(status)) {
+        if (status == STATUS_OBJECT_NAME_NOT_FOUND || status == STATUS_OBJECT_PATH_NOT_FOUND ||
+            status == STATUS_NOT_FOUND)
+            return METHOD_NOT_PRESENT;
         /* oem-format evaluation remains fail-closed unless ACPI explicitly says absent. */
 
         TraceEvents(TRACE_LEVEL_WARNING, TRACE_ACPI,
                     "acpi: method=%c%c%c%c evaluation failed status=%08X extended=%lu", (method)[0],
                     (method)[1], (method)[2], (method)[3], status,
                     registry_query_u_long(L"AcpiUseEvalEx", 1));
-        if (status == STATUS_OBJECT_NAME_NOT_FOUND || status == STATUS_OBJECT_PATH_NOT_FOUND ||
-            status == STATUS_NOT_FOUND)
-            return METHOD_NOT_PRESENT;
         return METHOD_EVALUATION_FAILED;
     }
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_ACPI,
@@ -777,6 +792,8 @@ NTSTATUS acpi_compile_molokai_dev_power(_In_ WDFDEVICE pep_dev, _In_z_ const cha
     for (i = 0; i < method_cnt; ++i)
         method_ptrs[i] = method_names + (i * 5u);
     ctx.dev = pep_dev;
+    ctx.names = method_names;
+    ctx.count = method_cnt;
     result =
         power_discover_dev_d_state(method_ptrs, method_cnt, acpi_evaluate_desc, acpi_release_desc,
                                    &ctx, dev_path, target_d_state, sequence, selected_method);
@@ -792,93 +809,107 @@ NTSTATUS acpi_compile_molokai_dev_power(_In_ WDFDEVICE pep_dev, _In_z_ const cha
 /* this read-only helper grants no ownership. Bind verified providers and reconcile PnP/ACPI
  * identity before execution. */
 
-NTSTATUS acpi_populate_molokai_res_graph(_In_ WDFDEVICE pep_dev, _Inout_ struct res_graph* graph,
-                                         _Out_ power_sequence_t* sequence_scratch)
+NTSTATUS acpi_populate_molokai_res_graph(WDFDEVICE pep_dev, res_graph_t* graph,
+                                         power_sequence_t* sequence_scratch)
 {
     CHAR names[MOLOKAI_STND_METHOD_MAX * 5u] = {0};
-    graph_desc_t descriptors[MOLOKAI_STND_METHOD_MAX] = {0};
-    acpi_method_ctx_t ctx;
-    ULONG i, cnt = 0, accepted = 0, unreviewed = 0;
-    NTSTATUS status = STATUS_DATA_ERROR;
+    graph_desc_t retained[GRAPH_SRC_MAX] = {0};
+    graph_desc_t boot[GRAPH_SRC_MAX] = {0};
+    acpi_method_ctx_t ctx = {0};
+    runtime_desc_info_t* info = NULL;
     graph_build_workspace_t* workspace = NULL;
+    resource_parse_result_t parsed;
+    ULONG retained_count = 0u, boot_count = 0u, count = 0u;
+    NTSTATUS status = STATUS_DATA_ERROR;
     if (!pep_dev || !graph || !sequence_scratch)
         return STATUS_INVALID_PARAMETER;
-    if (KeGetCurrentIrql() != PASSIVE_LEVEL)
+    if (KeGetCurrentIrql() != PASSIVE_LEVEL || graph->sealed || graph->retired || graph->dev_cnt)
         return STATUS_INVALID_DEVICE_STATE;
-    if (graph->sealed || graph->retired || graph->dev_cnt)
-        return STATUS_INVALID_DEVICE_STATE;
-    status = acpi_query_stnd_method_names(pep_dev, names, MOLOKAI_STND_METHOD_MAX, &cnt);
-    if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_WARNING, TRACE_ACPI, "acpi: STND discovery failed status=%08X",
-                    status);
-        return status;
+    workspace = ExAllocatePool2(POOL_FLAG_NON_PAGED, sizeof(*workspace), POOL_TAG);
+    info = ExAllocatePool2(POOL_FLAG_NON_PAGED, sizeof(*info), POOL_TAG);
+    if (!workspace || !info) {
+        status = STATUS_INSUFFICIENT_RESOURCES;
+        goto cleanup;
     }
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_ACPI,
-                "acpi: PEP0 descriptor discovery ownership=0 output-limit=20000");
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_ACPI, "acpi: evaluation extended=%lu methods=%lu",
-                registry_query_u_long(L"AcpiUseEvalEx", 1), cnt);
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_ACPI, "acpi: STND methods=%lu", cnt);
-    /* the graph builder enumerates bounded ACPI paths twice; always allocate its workspace in
-     * NONPAGED pool, never on the kernel stack. */
-
-    workspace = (graph_build_workspace_t*)ExAllocatePool2(POOL_FLAG_NON_PAGED, sizeof(*workspace),
-                                                          POOL_TAG);
-    if (!workspace)
-        return STATUS_INSUFFICIENT_RESOURCES;
     ctx.dev = pep_dev;
-    for (i = 0; i < cnt; ++i) {
-        const char* method = names + i * 5u;
-        const void* bytes = NULL;
-        size_t size = 0;
-        method_eval_result_t result;
-        if (!method_is_read_only_res(method)) {
-            /* record them without executing unknown AML (which may write hardware). A missing
-             * allowlist entry never implies that the new scope is safe or supported. */
-
-            ++unreviewed;
-            TraceEvents(TRACE_LEVEL_WARNING, TRACE_ACPI,
-                        "acpi: method=%c%c%c%c excluded reason=unreviewed", (method)[0],
-                        (method)[1], (method)[2], (method)[3]);
+    ctx.names = names;
+    for (ULONG list = 0u; list < 2u; ++list) {
+        const char* list_name = list ? "PREL" : "STND";
+        status = query_resource_methods(pep_dev, list_name, names, MOLOKAI_STND_METHOD_MAX, &count);
+        if (list && (status == STATUS_OBJECT_NAME_NOT_FOUND ||
+                     status == STATUS_OBJECT_PATH_NOT_FOUND || status == STATUS_NOT_FOUND))
             continue;
-        }
-        result = acpi_evaluate_desc(&ctx, method, &bytes, &size);
-        if (result == METHOD_NOT_PRESENT)
-            continue;
-        if (result != METHOD_EVALUATED || !bytes || !size) {
-            TraceEvents(TRACE_LEVEL_WARNING, TRACE_ACPI,
-                        "acpi: method=%c%c%c%c evaluation rejected result=%u", (method)[0],
-                        (method)[1], (method)[2], (method)[3], (unsigned)result);
-            status = STATUS_DATA_ERROR;
+        if (!NT_SUCCESS(status))
             goto cleanup;
+        ctx.count = count;
+        TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_ACPI, "acpi: list=%s methods=%lu", list_name,
+                    count);
+        for (ULONG i = 0u; i < count; ++i) {
+            const char* method = names + i * 5u;
+            const void* buffer = NULL;
+            size_t size = 0u;
+            method_eval_result_t evaluated;
+            if (retained_count == GRAPH_SRC_MAX) {
+                status = STATUS_QUOTA_EXCEEDED;
+                goto cleanup;
+            }
+            evaluated = acpi_evaluate_desc(&ctx, method, &buffer, &size);
+            if (evaluated == METHOD_NOT_PRESENT)
+                continue;
+            if (evaluated != METHOD_EVALUATED || !buffer || !size) {
+                TraceEvents(TRACE_LEVEL_WARNING, TRACE_ACPI,
+                            "acpi: method=%s descriptor unavailable result=%u", method, evaluated);
+                continue;
+            }
+            graph_desc_t* source = &retained[retained_count++];
+            RtlCopyMemory(source->method, method, 5u);
+            source->buf = buffer;
+            source->bytes = size;
+            source->preload = (uint8_t)list;
+            if (aeo_b_empty(buffer, size))
+                continue;
+            if (!validate_runtime_desc(buffer, size, info)) {
+                TraceEvents(TRACE_LEVEL_WARNING, TRACE_ACPI,
+                            "acpi: method=%s descriptor rejected status=%u failure=%u", method,
+                            info->status, info->failure);
+                continue;
+            }
+            if (list) {
+                /* Preload programs have separate ownership from OS-managed device states. */
+                TraceEvents(TRACE_LEVEL_WARNING, TRACE_ACPI,
+                            "acpi: method=%s preload devices=%lu execution=unavailable", method,
+                            info->dev_cnt);
+                continue;
+            }
+            status = runtime_res_import((PACPI_EVAL_OUTPUT_BUFFER)buffer, &parsed);
+            if (!NT_SUCCESS(status)) {
+                TraceEvents(TRACE_LEVEL_WARNING, TRACE_ACPI,
+                            "acpi: method=%s runtime registration failed status=%08X", method,
+                            status);
+                continue;
+            }
+            /* Unsupported providers affect their own runtime devices, not the boot graph. */
+            if (!info->unsupported_devices)
+                boot[boot_count++] = *source;
         }
-        RtlCopyMemory(descriptors[accepted].method, method, 5u);
-        descriptors[accepted].buf = bytes;
-        descriptors[accepted].bytes = size;
-        ++accepted;
     }
-    if (unreviewed)
-        TraceEvents(TRACE_LEVEL_WARNING, TRACE_ACPI, "acpi: STND excluded methods=%lu", unreviewed);
-    if (!accepted) {
+    if (!boot_count) {
         status = STATUS_NOT_FOUND;
         goto cleanup;
     }
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_ACPI, "acpi: graph compile descriptors=%lu",
-                accepted);
-    status = graph_build_from_descriptors(graph, descriptors, accepted, sequence_scratch, workspace)
+    status = graph_build_from_descriptors(graph, boot, boot_count, sequence_scratch, workspace)
                  ? STATUS_SUCCESS
                  : STATUS_DATA_ERROR;
     if (NT_SUCCESS(status) &&
-        !graph_retain_sources(graph, descriptors, accepted, acpi_release_graph_src))
+        !graph_retain_sources(graph, retained, retained_count, acpi_release_graph_src))
         status = STATUS_DATA_ERROR;
-    if (!NT_SUCCESS(status))
-        TraceEvents(TRACE_LEVEL_WARNING, TRACE_ACPI,
-                    "acpi: descriptor validation failed methods=%lu", accepted);
 cleanup:
-    for (i = 0; i < accepted; ++i)
-        acpi_release_desc(&ctx, descriptors[i].buf);
+    for (ULONG i = 0u; i < retained_count; ++i)
+        acpi_release_desc(&ctx, retained[i].buf);
     if (workspace)
         ExFreePool(workspace);
-    /* a partial/failed setup is not a valid provider-owned namespace. */
+    if (info)
+        ExFreePool(info);
     if (!NT_SUCCESS(status))
         graph->retired = 1u;
     return status;

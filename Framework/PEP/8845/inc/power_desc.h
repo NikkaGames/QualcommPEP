@@ -18,10 +18,9 @@ typedef method_eval_result_t (*method_evaluate_t)(void* ctx, const char method[5
                                                   size_t* bytes);
 typedef void (*method_release_t)(void* ctx, const void* buf);
 
-/* stnd can advertise methods from SSDTs: those must be reviewed before extending the
- * allowlist. */
-
-int method_is_read_only_res(const char method[5]);
+/* Names must come from the firmware STND/PREL descriptor contracts, never a namespace scan.
+ * This helper validates syntax; it does not authorize method evaluation. */
+int resource_method_valid(const char method[5]);
 
 /* require one descriptor for this path/state and reject duplicate or malformed results.
  * release every returned buffer; discovery does not execute resource actions. */
