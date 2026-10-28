@@ -2,6 +2,7 @@
 #include "cpu_device.h"
 #include "dcvs.h"
 #include "soc_transport.h"
+#include "lpi.h"
 
 static ULONG frequency_mhz(ULONG frequency)
 {
@@ -10,6 +11,9 @@ static ULONG frequency_mhz(ULONG frequency)
 
 BOOLEAN ppm_notify(PVOID handle, ULONG notify, PVOID data)
 {
+    BOOLEAN accepted;
+    if (lpi_notify(handle, notify, data, &accepted))
+        return accepted;
     ULONG cpu = cpu_device_index(handle);
     ULONG count;
     if (notify == PEP_NOTIFY_PPM_ENTER_SYSTEM_STATE) {
@@ -27,6 +31,11 @@ BOOLEAN ppm_notify(PVOID handle, ULONG notify, PVOID data)
             return FALSE;
         ((PPEP_PPM_QUERY_VETO_REASONS)data)->VetoReasonCount = 0u;
         return TRUE;
+    }
+    if (notify == PEP_NOTIFY_PPM_QUERY_CAPABILITIES && data && cpu != MAXULONG &&
+        !dcvs_ready()) {
+        RtlZeroMemory(data, sizeof(PEP_PPM_QUERY_CAPABILITIES));
+        return lpi_ready();
     }
     if (!data || cpu == MAXULONG || !dcvs_ready())
         return FALSE;

@@ -1,6 +1,7 @@
 #include "soc_transport.h"
 #include "soc_model.h"
 #include "perf_target.h"
+#include "lpi.h"
 #include "trace.h"
 #include <arm64intr.h>
 #include "soc_transport.tmh"
@@ -17,6 +18,7 @@ typedef struct cpu_channel {
     ULONG requested_level;
     BOOLEAN pending;
     BOOLEAN requested;
+    BOOLEAN issued;
 } cpu_channel_t;
 
 static cpu_channel_t channels[PERF_TARGET_DOMAINS];
@@ -25,6 +27,7 @@ static volatile UCHAR* control;
 static volatile LONG state;
 static volatile LONG fault;
 static volatile LONG suspended;
+static volatile LONG idle_paused;
 static ULONG token;
 static ULONGLONG affinities[PERF_TARGET_CPUS];
 static KSPIN_LOCK doorbell_lock;
@@ -201,6 +204,7 @@ static int issue(cpu_channel_t* c, ULONG level)
     c->last_request = now100ns();
     c->requested_level = level;
     c->requested = TRUE;
+    c->issued = TRUE;
     c->pending = FALSE;
     return 1;
 }
@@ -217,10 +221,13 @@ static VOID deferred_request(PEX_TIMER timer, PVOID context)
     ULONGLONG elapsed, interval;
     BOOLEAN failed = FALSE;
     UNREFERENCED_PARAMETER(timer);
+    if (!lpi_io_enter())
+        return;
     KeAcquireSpinLock(&c->lock, &irql);
     if (InterlockedCompareExchange(&state, 0, 0) == 2 &&
         !InterlockedCompareExchange(&fault, 0, 0) &&
-        !InterlockedCompareExchange(&suspended, 0, 0) && c->pending) {
+        !InterlockedCompareExchange(&suspended, 0, 0) &&
+        !InterlockedCompareExchange(&idle_paused, 0, 0) && c->pending) {
         elapsed = now100ns() - c->last_request;
         interval = (ULONGLONG)c->firmware.rate_limit_us * 10u;
         if (elapsed < interval)
@@ -229,6 +236,7 @@ static VOID deferred_request(PEX_TIMER timer, PVOID context)
             failed = InterlockedCompareExchange(&fault, 1, 0) == 0;
     }
     KeReleaseSpinLock(&c->lock, irql);
+    lpi_io_leave();
     if (failed)
         TraceEvents(TRACE_LEVEL_ERROR, TRACE_PPM,
                     "ppm: deferred performance request failed domain=%lu", c->firmware.id);
@@ -238,7 +246,31 @@ BOOLEAN molokai_transport_ready(VOID)
 {
     return InterlockedCompareExchange(&state, 0, 0) == 2 &&
            !InterlockedCompareExchange(&fault, 0, 0) &&
-           !InterlockedCompareExchange(&suspended, 0, 0);
+           !InterlockedCompareExchange(&suspended, 0, 0) &&
+           !InterlockedCompareExchange(&idle_paused, 0, 0);
+}
+
+BOOLEAN molokai_transport_idle_begin(VOID)
+{
+    if (InterlockedCompareExchange(&state, 0, 0) != 2)
+        return TRUE;
+    /* The LPI admission fence excludes every channel reader, writer and timer callback. */
+    if (InterlockedCompareExchange(&fault, 0, 0) ||
+        InterlockedCompareExchange(&suspended, 0, 0))
+        return FALSE;
+    for (ULONG i = 0u; i < PERF_TARGET_DOMAINS; ++i)
+        if (channels[i].pending)
+            return FALSE;
+    InterlockedExchange(&idle_paused, 1);
+    return TRUE;
+}
+
+VOID molokai_transport_idle_end(VOID)
+{
+    /* Reconcile the next OS request with firmware after its native suspend path. */
+    for (ULONG i = 0u; i < PERF_TARGET_DOMAINS; ++i)
+        channels[i].requested = FALSE;
+    InterlockedExchange(&idle_paused, 0);
 }
 
 VOID molokai_transport_suspend(BOOLEAN pause)
@@ -260,7 +292,7 @@ VOID molokai_transport_suspend(BOOLEAN pause)
         InterlockedExchange(&suspended, 0);
 }
 
-NTSTATUS molokai_transport_init(VOID)
+static NTSTATUS init_channels(VOID)
 {
     const perf_target_t* target = perf_target();
     scmi_perf_io_t io = {NULL, transfer};
@@ -341,7 +373,7 @@ fail:
     return status;
 }
 
-VOID molokai_transport_deinit(VOID)
+static VOID release_channels(VOID)
 {
     if (KeGetCurrentIrql() != PASSIVE_LEVEL || InterlockedCompareExchange(&state, 3, 2) != 2)
         return;
@@ -359,6 +391,26 @@ VOID molokai_transport_deinit(VOID)
         }
     }
     unmap_channels();
+}
+
+NTSTATUS molokai_transport_init(VOID)
+{
+    NTSTATUS result;
+    if (KeGetCurrentIrql() != PASSIVE_LEVEL)
+        return STATUS_INVALID_DEVICE_STATE;
+    lpi_io_acquire();
+    result = init_channels();
+    lpi_io_leave();
+    return result;
+}
+
+VOID molokai_transport_deinit(VOID)
+{
+    if (KeGetCurrentIrql() != PASSIVE_LEVEL)
+        return;
+    lpi_io_acquire();
+    release_channels();
+    lpi_io_leave();
 }
 
 ULONG molokai_transport_latency(ULONG domain)
@@ -382,12 +434,13 @@ NTSTATUS molokai_transport_get_level(ULONG domain, ULONG* level)
     KIRQL irql;
     BOOLEAN valid;
     if (!level || domain >= PERF_TARGET_DOMAINS || KeGetCurrentIrql() > DISPATCH_LEVEL ||
-        !molokai_transport_ready())
+        !molokai_transport_ready() || !lpi_io_enter())
         return STATUS_DEVICE_NOT_READY;
     c = &channels[domain];
     KeAcquireSpinLock(&c->lock, &irql);
     valid = molokai_transport_ready() && delivered(c, level);
     KeReleaseSpinLock(&c->lock, irql);
+    lpi_io_leave();
     return valid ? STATUS_SUCCESS : STATUS_DEVICE_NOT_READY;
 }
 
@@ -399,7 +452,7 @@ NTSTATUS molokai_transport_set_level(ULONG domain, ULONG level)
     ULONGLONG elapsed, interval;
     BOOLEAN failed = FALSE;
     if (domain >= PERF_TARGET_DOMAINS || KeGetCurrentIrql() > DISPATCH_LEVEL ||
-        !molokai_transport_ready())
+        !molokai_transport_ready() || !lpi_io_enter())
         return status;
     c = &channels[domain];
     KeAcquireSpinLock(&c->lock, &irql);
@@ -412,7 +465,7 @@ NTSTATUS molokai_transport_set_level(ULONG domain, ULONG level)
     }
     elapsed = now100ns() - c->last_request;
     interval = (ULONGLONG)c->firmware.rate_limit_us * 10u;
-    if (c->requested && elapsed < interval) {
+    if (c->issued && elapsed < interval) {
         c->pending_level = level;
         c->pending = TRUE;
         schedule(c, interval - elapsed);
@@ -424,6 +477,7 @@ NTSTATUS molokai_transport_set_level(ULONG domain, ULONG level)
     }
 done:
     KeReleaseSpinLock(&c->lock, irql);
+    lpi_io_leave();
     if (failed)
         TraceEvents(TRACE_LEVEL_ERROR, TRACE_PPM,
                     "ppm: performance request failed domain=%lu level=%lu", domain, level);

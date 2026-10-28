@@ -6,6 +6,7 @@
 #include "peplog.h"
 #include "soc_subsystem.h"
 #include "dcvs.h"
+#include "lpi.h"
 #include "cpu_device.h"
 #include "soc_transport.h"
 #include "component_perf.h"
@@ -1009,7 +1010,7 @@ static NTSTATUS reg_pep_plugin(VOID)
     reg.Version = PEP_INFORMATION_VERSION;
     reg.Size = (USHORT)sizeof(reg);
     reg.AcceptDeviceNotification = pep_dev_notify;
-    reg.AcceptProcessorNotification = dcvs_ready() ? pep_proc_notify : NULL;
+    reg.AcceptProcessorNotification = cpu_device_count() ? pep_proc_notify : NULL;
     /* firmware AML owns ACPI methods until an audited ACPI PEP provider exists. */
     reg.AcceptAcpiNotification = NULL;
 
@@ -3043,9 +3044,7 @@ BOOLEAN wcs_contains_insensitive(_In_opt_ PCWSTR haystack, _In_z_ PCWSTR needle)
     return FALSE;
 }
 
-/* the native Windows RPMh+clock idle entry/exit and ownership handshake have not been
- * implemented. This gate MUST remain false until both entry and exit are verifiably
- * hardware-backed and DSDT _LPI contracts match. */
+/* The legacy manual idle engine is separate from the native ACPI LPI provider in lpi.c. */
 
 BOOLEAN pep_is_molokai_idle_execution_ready(VOID)
 {
@@ -3291,6 +3290,9 @@ NTSTATUS pep_global_init(VOID)
     st = dcvs_init();
     if (!NT_SUCCESS(st))
         return st;
+    st = cpu_device_init();
+    if (NT_SUCCESS(st))
+        lpi_init(cpu_device_count());
 
     st = reg_pep_plugin();
     if (NT_SUCCESS(st))
@@ -3300,6 +3302,7 @@ NTSTATUS pep_global_init(VOID)
 
 VOID pep_global_deinit(VOID)
 {
+    lpi_stop();
     /* closing first prevents producer admission during lookaside rundown. */
 
     InterlockedExchange(&g_pep_work_shutdown, 1);

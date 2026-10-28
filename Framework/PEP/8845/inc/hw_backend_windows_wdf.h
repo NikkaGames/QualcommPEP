@@ -14,6 +14,8 @@
 
 /* driverentry only: prepare owner lifecycle lock before WdfDriverCreate. */
 VOID hw_backend_win_lifecycle_init(VOID);
+/* Requires exclusive LPI producer admission; no waiting, register writes or WDF calls. */
+BOOLEAN hw_backend_win_idle_quiescent(VOID);
 /* call only after verified WDF ISR, completion-work ownership and RSC ledger ownership.
  * Promotes the existing production scheduler in place, retaining
  * BUSARB/PMIC/READBACK/PROBE clients. */

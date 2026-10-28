@@ -43,6 +43,7 @@
 #include "arc_rail.h"
 #include "domains.h"
 #include "trace.h"
+#include "lpi.h"
 #include "hw_win.tmh"
 
 NTSTATUS pep_publish_verified_molokai_graph(_Inout_ res_graph_t* graph,
@@ -292,14 +293,18 @@ static int rpmh_lock_fn(void* c)
     /* shared with the passive WDF ISR bridge and completion worker. A PASSIVE KMUTEX does not
      * elevate IRQL; no KMDF wait-lock is acquired while this command/ledger mutex is held. */
 
-    return o && KeGetCurrentIrql() == PASSIVE_LEVEL &&
-           KeWaitForSingleObject(&o->rpmh_lock, Executive, KernelMode, FALSE, NULL) ==
-               STATUS_SUCCESS;
+    if (!o || KeGetCurrentIrql() != PASSIVE_LEVEL || !lpi_io_enter())
+        return 0;
+    if (KeWaitForSingleObject(&o->rpmh_lock, Executive, KernelMode, FALSE, NULL) == STATUS_SUCCESS)
+        return 1;
+    lpi_io_leave();
+    return 0;
 }
 
 static void rpmh_unlock_fn(void* c)
 {
     (VOID) KeReleaseMutex(&((owners_t*)c)->rpmh_lock, FALSE);
+    lpi_io_leave();
 }
 
 /* the existing synchronous polling TCS writer is the temporary Windows execution adapter.
@@ -334,24 +339,32 @@ static int rpmh_scheduler_enter(void* ctx)
      * lock. Both paths acquire the KMDF interrupt wait lock; a FAST_MUTEX would elevate IRQL
      * and prevent any completion. */
 
-    return o && KeGetCurrentIrql() == PASSIVE_LEVEL &&
-           KeWaitForSingleObject(&o->rpmh_scheduler_lock, Executive, KernelMode, FALSE, NULL) ==
-               STATUS_SUCCESS;
+    if (!o || KeGetCurrentIrql() != PASSIVE_LEVEL || !lpi_io_enter())
+        return 0;
+    if (KeWaitForSingleObject(&o->rpmh_scheduler_lock, Executive, KernelMode, FALSE, NULL) ==
+        STATUS_SUCCESS)
+        return 1;
+    lpi_io_leave();
+    return 0;
 }
 
 static void rpmh_scheduler_leave(void* ctx)
 {
     (VOID) KeReleaseMutex(&((owners_t*)ctx)->rpmh_scheduler_lock, FALSE);
+    lpi_io_leave();
 }
 
 static int rpmh_scheduler_try_enter(void* ctx)
 {
     LARGE_INTEGER timeout;
-    if (!ctx || KeGetCurrentIrql() != PASSIVE_LEVEL)
+    if (!ctx || KeGetCurrentIrql() != PASSIVE_LEVEL || !lpi_io_enter())
         return 0;
     timeout.QuadPart = 0;
-    return KeWaitForSingleObject(&((owners_t*)ctx)->rpmh_scheduler_lock, Executive, KernelMode,
-                                 FALSE, &timeout) == STATUS_SUCCESS;
+    if (KeWaitForSingleObject(&((owners_t*)ctx)->rpmh_scheduler_lock, Executive, KernelMode,
+                              FALSE, &timeout) == STATUS_SUCCESS)
+        return 1;
+    lpi_io_leave();
+    return 0;
 }
 
 static void rpmh_wait_reset(void* ctx)
@@ -847,13 +860,52 @@ static int owners_lock(owners_t* o)
 {
     /* do not elevate IRQL through this outer mutex. */
 
-    return o && KeGetCurrentIrql() <= APC_LEVEL &&
-           KeWaitForSingleObject(&o->lock, Executive, KernelMode, FALSE, NULL) == STATUS_SUCCESS;
+    if (!o || KeGetCurrentIrql() > APC_LEVEL || !lpi_io_enter())
+        return 0;
+    if (KeWaitForSingleObject(&o->lock, Executive, KernelMode, FALSE, NULL) == STATUS_SUCCESS)
+        return 1;
+    lpi_io_leave();
+    return 0;
 }
 
 static void owners_unlock(owners_t* o)
 {
     (VOID) KeReleaseMutex(&o->lock, FALSE);
+    lpi_io_leave();
+}
+
+BOOLEAN hw_backend_win_idle_quiescent(VOID)
+{
+    win_backend_instance_t* instance = g_win_backend;
+    owners_t* owner = instance ? instance->io.owners : NULL;
+    uint32_t value;
+    if (!owner || !owner->rpmh_live || !owner->clocks_live || !owner->tlmm_live ||
+        owner->tlmm_uncertain || owner->rpmh_write_fence.quarantined ||
+        InterlockedCompareExchange(&owner->os_rsc_lease.active, 0, 0) != 1 ||
+        owner->os_rsc_lease.owner_epoch != instance->core.owner_epoch ||
+        !owner->rpmh_scheduler.execution_authorized || owner->rpmh_scheduler.busy_mask ||
+        owner->rpmh_scheduler.quarantined_mask || owner->rpmh.deferred_active_mask ||
+        owner->rpmh_wait.active_req || owner->rpmh_wait.awaiting_irq_restore ||
+        owner->rpmh_wait.faulted || owner->rpmh_irq_pipeline.faulted ||
+        !owner->rpmh_irq_pipeline.bound ||
+        owner->rpmh_irq_pipeline.work.state != RPMH_WORK_READY ||
+        owner->rpmh_irq_pipeline.work.irq_masked ||
+        owner->rpmh_irq_pipeline.pending.active || owner->rpmh_irq_pipeline.unmask_finalizing.active)
+        return FALSE;
+    for (ULONG i = 0u; i < RPMH_JOBS; ++i)
+        if (owner->rpmh_scheduler.jobs[i].state != RPMH_JOB_FREE)
+            return FALSE;
+    if (!rpmh_read(owner, RSC_ID_OFFSET, &value) || (value & RSC_ID_MASK) != RSC_ID_POR ||
+        !rpmh_read(owner, TCS_IRQ_STATUS, &value) || value)
+        return FALSE;
+    for (ULONG i = 0u; i < MOLOKAI_WIN_AMC_CNT; ++i)
+        if (owner->rsc_completion.amc[i].state != RSC_AMC_VACANT ||
+            !rpmh_read(owner, TCS_STATUS(i), &value) || !(value & TCS_STATUS_IDLE))
+            return FALSE;
+    /* Keep required clock/rail votes and firmware-owned sleep/wake TCS images intact.
+     * The current providers issue ACTIVE commands only. Explicit staged sets need
+     * their own image owner before they can participate in platform entry. */
+    return TRUE;
 }
 
 /* the PRE-lock rpmh_live/clock/TLMM checks are only a fast rejection. D0Quiesce must close
@@ -2201,9 +2253,9 @@ NTSTATUS hw_backend_win_ufs_scalar_transition(_In_z_ const char* path, _In_ ULON
     NTSTATUS result;
     if (KeGetCurrentIrql() != PASSIVE_LEVEL)
         return STATUS_INVALID_DEVICE_STATE;
-    (VOID) KeWaitForSingleObject(&g_win_lifecycle_lock, Executive, KernelMode, FALSE, NULL);
+    lpi_mutex_acquire(&g_win_lifecycle_lock);
     result = hw_backend_win_ufs_scalar_transition_locked(path, comp, set, state, d0, f0);
-    (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+    lpi_mutex_release(&g_win_lifecycle_lock);
     return result;
 }
 
@@ -2259,9 +2311,9 @@ NTSTATUS hw_backend_win_ufs_fs_transition(_In_z_ const char* path, _In_ ULONG co
     NTSTATUS result;
     if (KeGetCurrentIrql() != PASSIVE_LEVEL)
         return STATUS_INVALID_DEVICE_STATE;
-    (VOID) KeWaitForSingleObject(&g_win_lifecycle_lock, Executive, KernelMode, FALSE, NULL);
+    lpi_mutex_acquire(&g_win_lifecycle_lock);
     result = hw_backend_win_ufs_fs_transition_locked(path, comp, state, d0, f0);
-    (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+    lpi_mutex_release(&g_win_lifecycle_lock);
     return result;
 }
 
@@ -2284,13 +2336,13 @@ int hw_backend_win_ufs_owner_ready(const res_graph_t* graph, uint64_t epoch)
     int ready = 0;
     if (!graph || !epoch || KeGetCurrentIrql() != PASSIVE_LEVEL || !hw_backend_ready())
         return 0;
-    (VOID) KeWaitForSingleObject(&g_win_lifecycle_lock, Executive, KernelMode, FALSE, NULL);
+    lpi_mutex_acquire(&g_win_lifecycle_lock);
     inst = g_win_backend;
     o = inst ? inst->io.owners : NULL;
     if (o && o->ufs_group_bridge && o->ufs_group_bridge->graph == graph &&
         graph->native_ufs_owner_epoch == epoch && graph->backend_binding_serial == epoch)
         ready = native_ufs_owner_attest(o, epoch);
-    (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+    lpi_mutex_release(&g_win_lifecycle_lock);
     return ready;
 }
 
@@ -2385,7 +2437,7 @@ power_result_t hw_backend_win_ufs_program_execute(const power_sequence_t* sequen
          (!current_f->state_known || current_f->quarantined || current_f->current_d_state > 1u)) ||
         KeGetCurrentIrql() != PASSIVE_LEVEL || !hw_backend_ready())
         return POWER_UNSUPPORTED;
-    (VOID) KeWaitForSingleObject(&g_win_lifecycle_lock, Executive, KernelMode, FALSE, NULL);
+    lpi_mutex_acquire(&g_win_lifecycle_lock);
     inst = g_win_backend;
     o = inst ? inst->io.owners : NULL;
     if (!native_group_bound(o, epoch) ||
@@ -2470,7 +2522,7 @@ power_result_t hw_backend_win_ufs_program_execute(const power_sequence_t* sequen
     trace->failure_idx = i;
 done:
     trace->result = result;
-    (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+    lpi_mutex_release(&g_win_lifecycle_lock);
     return result;
 }
 
@@ -2481,12 +2533,12 @@ int hw_backend_win_ufs_program_verify(const power_sequence_t* sequence, uint64_t
     int result = 0;
     if (!sequence || !epoch || KeGetCurrentIrql() != PASSIVE_LEVEL || !hw_backend_ready())
         return 0;
-    (VOID) KeWaitForSingleObject(&g_win_lifecycle_lock, Executive, KernelMode, FALSE, NULL);
+    lpi_mutex_acquire(&g_win_lifecycle_lock);
     inst = g_win_backend;
     o = inst ? inst->io.owners : NULL;
     if (native_group_bound(o, epoch))
         result = native_ufs_program_read_locked(o, sequence);
-    (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+    lpi_mutex_release(&g_win_lifecycle_lock);
     return result;
 }
 
@@ -2958,9 +3010,9 @@ NTSTATUS hw_backend_win_bcm_command_cnt(_In_z_ const char* master, _In_z_ const 
     *cnt = 0;
     if (KeGetCurrentIrql() != PASSIVE_LEVEL)
         return STATUS_INVALID_DEVICE_STATE;
-    (VOID) KeWaitForSingleObject(&g_win_lifecycle_lock, Executive, KernelMode, FALSE, NULL);
+    lpi_mutex_acquire(&g_win_lifecycle_lock);
     st = win_bcm_command_cnt_locked(master, slave, cnt);
-    (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+    lpi_mutex_release(&g_win_lifecycle_lock);
     return st;
 }
 
@@ -2975,9 +3027,9 @@ NTSTATUS hw_backend_win_bcm_commands(_In_z_ const char* master, _In_z_ const cha
     *cnt = 0;
     if (KeGetCurrentIrql() != PASSIVE_LEVEL)
         return STATUS_INVALID_DEVICE_STATE;
-    (VOID) KeWaitForSingleObject(&g_win_lifecycle_lock, Executive, KernelMode, FALSE, NULL);
+    lpi_mutex_acquire(&g_win_lifecycle_lock);
     st = win_bcm_commands_locked(master, slave, ib, ab, out, capacity, cnt);
-    (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+    lpi_mutex_release(&g_win_lifecycle_lock);
     return st;
 }
 
@@ -3724,7 +3776,7 @@ NTSTATUS hw_backend_win_bind_deferred_completion(_In_ WDFDEVICE dev, _In_ ULONGL
     if (!dev || !owner_epoch || !ledger_epoch || KeGetCurrentIrql() != PASSIVE_LEVEL)
         return STATUS_INVALID_DEVICE_STATE;
     dev_ctx = get_dev_ctx(dev);
-    (VOID) KeWaitForSingleObject(&g_win_lifecycle_lock, Executive, KernelMode, FALSE, NULL);
+    lpi_mutex_acquire(&g_win_lifecycle_lock);
     instance = g_win_backend;
     o = instance && instance->io.dev == dev ? instance->io.owners : NULL;
     /* a nonce, IRQ vector or PnP generation is not an adequate substitute for the backend
@@ -3847,7 +3899,7 @@ NTSTATUS hw_backend_win_bind_deferred_completion(_In_ WDFDEVICE dev, _In_ ULONGL
         }
         rpmh_scheduler_leave(o);
     }
-    (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+    lpi_mutex_release(&g_win_lifecycle_lock);
     return status;
 }
 
@@ -3874,7 +3926,7 @@ NTSTATUS hw_backend_win_prepare_granted_amcs(WDFDEVICE dev, ULONGLONG pnp_genera
         (granted_amcs & (UCHAR)~MOLOKAI_WIN_AMC_MASK) || !exclusive_amc_owner ||
         KeGetCurrentIrql() != PASSIVE_LEVEL)
         return STATUS_INVALID_PARAMETER;
-    (VOID) KeWaitForSingleObject(&g_win_lifecycle_lock, Executive, KernelMode, FALSE, NULL);
+    lpi_mutex_acquire(&g_win_lifecycle_lock);
     inst = g_win_backend;
     o = inst && inst->io.dev == dev ? inst->io.owners : NULL;
     ctx = o ? get_dev_ctx(dev) : NULL;
@@ -3972,7 +4024,7 @@ rollback:
     } else
         result = STATUS_DEVICE_HARDWARE_ERROR;
 out:
-    (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+    lpi_mutex_release(&g_win_lifecycle_lock);
     return result;
 }
 
@@ -3995,7 +4047,7 @@ NTSTATUS hw_backend_win_abort_unpublished_granted_amcs(
         !exclusive_amc_owner || (granted_amcs & (UCHAR)~MOLOKAI_WIN_AMC_MASK) ||
         KeGetCurrentIrql() != PASSIVE_LEVEL)
         return STATUS_INVALID_PARAMETER;
-    (VOID) KeWaitForSingleObject(&g_win_lifecycle_lock, Executive, KernelMode, FALSE, NULL);
+    lpi_mutex_acquire(&g_win_lifecycle_lock);
     inst = g_win_backend;
     o = inst && inst->io.dev == dev ? inst->io.owners : NULL;
     ctx = o ? get_dev_ctx(dev) : NULL;
@@ -4050,7 +4102,7 @@ NTSTATUS hw_backend_win_abort_unpublished_granted_amcs(
     } else
         result = STATUS_SUCCESS;
 out:
-    (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+    lpi_mutex_release(&g_win_lifecycle_lock);
     return result;
 }
 
@@ -4193,7 +4245,7 @@ NTSTATUS hw_backend_win_d0_acquire_firmware_configured_rpmh(_In_ WDFDEVICE dev,
     ULONG slot;
     if (!dev || !pnp_generation || KeGetCurrentIrql() != PASSIVE_LEVEL)
         return STATUS_INVALID_PARAMETER;
-    (VOID) KeWaitForSingleObject(&g_win_lifecycle_lock, Executive, KernelMode, FALSE, NULL);
+    lpi_mutex_acquire(&g_win_lifecycle_lock);
     inst = g_win_backend;
     o = inst && inst->io.dev == dev ? inst->io.owners : NULL;
     ctx = o ? get_dev_ctx(dev) : NULL;
@@ -4310,7 +4362,7 @@ NTSTATUS hw_backend_win_d0_acquire_firmware_configured_rpmh(_In_ WDFDEVICE dev,
                 irq_enable_b, (ULONG)o->os_rsc_lease.pre_enabled_amc_irq_mask);
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_RPMH, "rpmh: AMC baseline pending=0 slots=vacant");
     InterlockedExchange(&o->os_rsc_lease.active, 1);
-    (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+    lpi_mutex_release(&g_win_lifecycle_lock);
     /* existing hardware-enforcing transactions perform all GICD/TCS writes. */
 
     result = hw_backend_win_prepare_gic_irq37_mask(dev, pnp_generation, epoch,
@@ -4321,7 +4373,7 @@ NTSTATUS hw_backend_win_d0_acquire_firmware_configured_rpmh(_In_ WDFDEVICE dev,
          * write. The GIC provider leaves Active/faulted clear ONLY when it has not tried a
          * physical mask transition. */
 
-        (VOID) KeWaitForSingleObject(&g_win_lifecycle_lock, Executive, KernelMode, FALSE, NULL);
+        lpi_mutex_acquire(&g_win_lifecycle_lock);
         if (g_win_backend == inst && inst->io.owners == o && o->os_rsc_lease.dev == dev &&
             o->os_rsc_lease.owner_epoch == epoch &&
             o->os_rsc_lease.pnp_generation == pnp_generation &&
@@ -4333,13 +4385,13 @@ NTSTATUS hw_backend_win_d0_acquire_firmware_configured_rpmh(_In_ WDFDEVICE dev,
             !o->rpmh_irq_pipeline.bound) {
             InterlockedExchange(&o->os_rsc_lease.active, 0);
             RtlZeroMemory(&o->os_rsc_lease, sizeof(o->os_rsc_lease));
-            (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+            lpi_mutex_release(&g_win_lifecycle_lock);
             TraceEvents(TRACE_LEVEL_WARNING, TRACE_RPMH,
                         "rpmh: GIC admission rejected status=%08X dispatched=0 lease=retired",
                         result);
             return STATUS_DEVICE_NOT_READY;
         }
-        (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+        lpi_mutex_release(&g_win_lifecycle_lock);
         TraceEvents(TRACE_LEVEL_ERROR, TRACE_RPMH,
                     "rpmh: GIC acquisition uncertain status=%08X owner=retained", result);
     }
@@ -4374,13 +4426,13 @@ NTSTATUS hw_backend_win_d0_acquire_firmware_configured_rpmh(_In_ WDFDEVICE dev,
     /* retain the lease + MMIO mappings: a failed D0Entry must not blindly clear a hardware
      * owner. */
 
-    (VOID) KeWaitForSingleObject(&g_win_lifecycle_lock, Executive, KernelMode, FALSE, NULL);
+    lpi_mutex_acquire(&g_win_lifecycle_lock);
     if (g_win_backend == inst && inst->io.owners == o)
         g_quarantined_rsc_owner = o;
-    (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+    lpi_mutex_release(&g_win_lifecycle_lock);
     return STATUS_DEVICE_BUSY;
 unlock:
-    (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+    lpi_mutex_release(&g_win_lifecycle_lock);
     return result;
 }
 
@@ -4398,7 +4450,7 @@ hw_backend_win_prepare_gic_irq37_mask(WDFDEVICE dev, ULONGLONG pnp_generation,
     if (!dev || !pnp_generation || !owner_epoch || !wdf_interrupt || !exclusive_owner || !ops ||
         KeGetCurrentIrql() != PASSIVE_LEVEL)
         return STATUS_INVALID_PARAMETER;
-    (VOID) KeWaitForSingleObject(&g_win_lifecycle_lock, Executive, KernelMode, FALSE, NULL);
+    lpi_mutex_acquire(&g_win_lifecycle_lock);
     inst = g_win_backend;
     o = inst && inst->io.dev == dev ? inst->io.owners : NULL;
     ctx = o ? get_dev_ctx(dev) : NULL;
@@ -4432,7 +4484,7 @@ hw_backend_win_prepare_gic_irq37_mask(WDFDEVICE dev, ULONGLONG pnp_generation,
         o->rpmh_irq_mask_ops = *ops;
         status = STATUS_SUCCESS;
     }
-    (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+    lpi_mutex_release(&g_win_lifecycle_lock);
     return status;
 }
 
@@ -4445,14 +4497,14 @@ NTSTATUS hw_backend_win_retire_gic_irq37_mask(WDFDEVICE dev, ULONGLONG owner_epo
     if (!dev || !owner_epoch || !wdf_interrupt || !owner_drained ||
         KeGetCurrentIrql() != PASSIVE_LEVEL)
         return STATUS_INVALID_PARAMETER;
-    (VOID) KeWaitForSingleObject(&g_win_lifecycle_lock, Executive, KernelMode, FALSE, NULL);
+    lpi_mutex_acquire(&g_win_lifecycle_lock);
     inst = g_win_backend;
     o = inst && inst->io.dev == dev ? inst->io.owners : NULL;
     if (o && inst->core.owner_epoch == owner_epoch &&
         gic_irq37_retire_mask_ops_win(&o->gic_irq37_owner, owner_epoch, wdf_interrupt,
                                       owner_drained))
         status = STATUS_SUCCESS;
-    (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+    lpi_mutex_release(&g_win_lifecycle_lock);
     return status;
 }
 
@@ -4474,7 +4526,7 @@ NTSTATUS hw_backend_win_d0_map_rsc(_In_ WDFDEVICE dev, _In_ ULONGLONG pnp_genera
         ctx->rpmh_wdf_lifecycle.phase != RPMH_WDF_D0_OBSERVED ||
         identity != &ctx->rpmh_rsc_identity || !ctx->rpmh_rsc_identity.identity_matched)
         return STATUS_DEVICE_NOT_READY;
-    (VOID) KeWaitForSingleObject(&g_win_lifecycle_lock, Executive, KernelMode, FALSE, NULL);
+    lpi_mutex_acquire(&g_win_lifecycle_lock);
     inst = g_win_backend;
     o = inst && inst->io.dev == dev ? inst->io.owners : NULL;
     if (o && !o->mmio.rsc.base && !o->d0_rsc.base && rsc_d0_mapping_can_close(o) &&
@@ -4524,7 +4576,7 @@ NTSTATUS hw_backend_win_d0_map_rsc(_In_ WDFDEVICE dev, _In_ ULONGLONG pnp_genera
             }
         }
     }
-    (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+    lpi_mutex_release(&g_win_lifecycle_lock);
     return status;
 }
 
@@ -4544,7 +4596,7 @@ NTSTATUS hw_backend_win_d0_revalidate(_In_ WDFDEVICE dev)
     int probe_ready = 0;
     if (!dev || KeGetCurrentIrql() != PASSIVE_LEVEL)
         return STATUS_INVALID_DEVICE_STATE;
-    (VOID) KeWaitForSingleObject(&g_win_lifecycle_lock, Executive, KernelMode, FALSE, NULL);
+    lpi_mutex_acquire(&g_win_lifecycle_lock);
     inst = g_win_backend;
     ctx = inst && inst->io.dev == dev ? get_dev_ctx(dev) : NULL;
     o = inst ? inst->io.owners : NULL;
@@ -4724,7 +4776,7 @@ out:
     if (!NT_SUCCESS(result))
         TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_RESOURCE,
                     "resources: D0 owner or hardware probes unavailable admission=closed");
-    (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+    lpi_mutex_release(&g_win_lifecycle_lock);
     return result;
 }
 
@@ -4866,7 +4918,7 @@ NTSTATUS hw_backend_win_d0_quiesce(_In_ WDFDEVICE dev)
         return STATUS_INVALID_DEVICE_STATE;
     if (!NT_SUCCESS(pep_native_perf_quiesce_gate()))
         return STATUS_DEVICE_BUSY;
-    (VOID) KeWaitForSingleObject(&g_win_lifecycle_lock, Executive, KernelMode, FALSE, NULL);
+    lpi_mutex_acquire(&g_win_lifecycle_lock);
     inst = g_win_backend;
     if (inst && inst->io.dev == dev && inst->core.registered) {
         /* group clients need a live transport for final readback. drain graph admissions, then
@@ -4875,7 +4927,7 @@ NTSTATUS hw_backend_win_d0_quiesce(_In_ WDFDEVICE dev)
             (!g_published_graph || !graph_begin_drain(g_published_graph) ||
              !native_ufs_group_close(inst->io.owners))) {
             g_quarantined_rsc_owner = inst->io.owners;
-            (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+            lpi_mutex_release(&g_win_lifecycle_lock);
             return STATUS_DEVICE_BUSY;
         }
         if (!hw_backend_quiesce_d0(inst->core.owner_epoch)) {
@@ -4927,7 +4979,7 @@ NTSTATUS hw_backend_win_d0_quiesce(_In_ WDFDEVICE dev)
             }
         }
     }
-    (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+    lpi_mutex_release(&g_win_lifecycle_lock);
     return status;
 }
 
@@ -4946,7 +4998,7 @@ NTSTATUS hw_backend_win_d0_retire_published_owner(_In_ WDFDEVICE dev)
     NTSTATUS result = STATUS_DEVICE_BUSY;
     if (!dev || KeGetCurrentIrql() != PASSIVE_LEVEL)
         return STATUS_INVALID_DEVICE_STATE;
-    (VOID) KeWaitForSingleObject(&g_win_lifecycle_lock, Executive, KernelMode, FALSE, NULL);
+    lpi_mutex_acquire(&g_win_lifecycle_lock);
     inst = g_win_backend;
     o = inst && inst->io.dev == dev ? inst->io.owners : NULL;
     ctx = o ? get_dev_ctx(dev) : NULL;
@@ -5009,7 +5061,7 @@ NTSTATUS hw_backend_win_d0_retire_published_owner(_In_ WDFDEVICE dev)
             goto unlock_first;
         }
     }
-    (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+    lpi_mutex_release(&g_win_lifecycle_lock);
 
     /* a WDF ISR cannot enqueue after framework disable. */
 
@@ -5019,7 +5071,7 @@ NTSTATUS hw_backend_win_d0_retire_published_owner(_In_ WDFDEVICE dev)
         !oem_wdf_drain_published_work_win(irq, epoch))
         goto fail_unlocked;
 
-    (VOID) KeWaitForSingleObject(&g_win_lifecycle_lock, Executive, KernelMode, FALSE, NULL);
+    lpi_mutex_acquire(&g_win_lifecycle_lock);
     inst = g_win_backend;
     if (!inst || inst->io.dev != dev || inst->io.owners != o || inst->core.owner_epoch != epoch ||
         g_quarantined_rsc_owner || !oem_wdf_published_owner_stopped_win(irq, epoch) ||
@@ -5061,7 +5113,7 @@ NTSTATUS hw_backend_win_d0_retire_published_owner(_In_ WDFDEVICE dev)
     if (!rpmh_deferred_scheduler_retire_owner(&o->deferred_scheduler, &o->rpmh_wait, epoch,
                                               ledger_epoch))
         goto fail_locked;
-    (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+    lpi_mutex_release(&g_win_lifecycle_lock);
 
     /* do not hold lifecycle locks across WdfWorkItemFlush. Keep the GIC owner active through WDF
      * detach and verified physical release. */
@@ -5070,7 +5122,7 @@ NTSTATUS hw_backend_win_d0_retire_published_owner(_In_ WDFDEVICE dev)
         !NT_SUCCESS(hw_backend_win_retire_gic_irq37_mask(dev, epoch, irq, 1)))
         goto fail_unlocked;
 
-    (VOID) KeWaitForSingleObject(&g_win_lifecycle_lock, Executive, KernelMode, FALSE, NULL);
+    lpi_mutex_acquire(&g_win_lifecycle_lock);
     if (!g_win_backend || g_win_backend != inst || inst->io.dev != dev || inst->io.owners != o ||
         o->gic_irq37_owner.active || !oem_wdf_owner_publication_vacant_win(irq))
         goto fail_locked;
@@ -5107,20 +5159,20 @@ NTSTATUS hw_backend_win_d0_retire_published_owner(_In_ WDFDEVICE dev)
     o->rpmh_live = FALSE;
     o->probe &= ~(PROBE_RPMH | PROBE_RSC_ID);
     result = STATUS_SUCCESS;
-    (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+    lpi_mutex_release(&g_win_lifecycle_lock);
     return result;
 fail_locked:
     g_quarantined_rsc_owner = o;
-    (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+    lpi_mutex_release(&g_win_lifecycle_lock);
     return STATUS_DEVICE_BUSY;
 fail_unlocked:
     /* an unretired IRQ or outstanding work must never permit PnP to unmap the RSC/GICD
      * controller or destroy the retained WDF callbacks. */
 
-    (VOID) KeWaitForSingleObject(&g_win_lifecycle_lock, Executive, KernelMode, FALSE, NULL);
+    lpi_mutex_acquire(&g_win_lifecycle_lock);
     g_quarantined_rsc_owner = o;
 unlock_first:
-    (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+    lpi_mutex_release(&g_win_lifecycle_lock);
     return result;
 }
 
@@ -5131,7 +5183,7 @@ NTSTATUS hw_backend_win_d0_unmap_rsc(_In_ WDFDEVICE dev)
     NTSTATUS status = STATUS_SUCCESS;
     if (!dev || KeGetCurrentIrql() != PASSIVE_LEVEL)
         return STATUS_INVALID_DEVICE_STATE;
-    (VOID) KeWaitForSingleObject(&g_win_lifecycle_lock, Executive, KernelMode, FALSE, NULL);
+    lpi_mutex_acquire(&g_win_lifecycle_lock);
     inst = g_win_backend;
     o = inst && inst->io.dev == dev ? inst->io.owners : NULL;
     if (o &&
@@ -5143,7 +5195,7 @@ NTSTATUS hw_backend_win_d0_unmap_rsc(_In_ WDFDEVICE dev)
                     (unsigned long long)o->os_rsc_lease.owner_epoch,
                     (unsigned long long)o->ufs_native.factory.normal_handle,
                     (unsigned)o->ufs_owner_uncertain);
-        (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+        lpi_mutex_release(&g_win_lifecycle_lock);
         return STATUS_DEVICE_BUSY;
     }
     /* the RSC/GICD d0 transport is ONE native lifetime. Check BOTH live maps and their
@@ -5195,7 +5247,7 @@ NTSTATUS hw_backend_win_d0_unmap_rsc(_In_ WDFDEVICE dev)
             owners_unlock(o);
         }
     }
-    (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+    lpi_mutex_release(&g_win_lifecycle_lock);
     return status;
 }
 
@@ -5204,9 +5256,9 @@ NTSTATUS hw_backend_win_attach(_In_ WDFDEVICE dev)
     NTSTATUS status;
     if (!dev || KeGetCurrentIrql() != PASSIVE_LEVEL)
         return STATUS_INVALID_DEVICE_STATE;
-    (VOID) KeWaitForSingleObject(&g_win_lifecycle_lock, Executive, KernelMode, FALSE, NULL);
+    lpi_mutex_acquire(&g_win_lifecycle_lock);
     status = hw_backend_win_attach_locked(dev);
-    (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+    lpi_mutex_release(&g_win_lifecycle_lock);
     return status;
 }
 
@@ -5288,9 +5340,9 @@ VOID hw_backend_win_detach(_In_ WDFDEVICE dev)
                     "resources: detach rejected reason=IRQL-or-owner");
         return;
     }
-    (VOID) KeWaitForSingleObject(&g_win_lifecycle_lock, Executive, KernelMode, FALSE, NULL);
+    lpi_mutex_acquire(&g_win_lifecycle_lock);
     hw_backend_win_detach_locked(dev);
-    (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+    lpi_mutex_release(&g_win_lifecycle_lock);
 }
 
 static int graph_acquire(void* ctx)
@@ -5576,9 +5628,9 @@ NTSTATUS hw_backend_win_try_publish(_In_ WDFDEVICE dev)
     NTSTATUS status;
     if (!dev || KeGetCurrentIrql() != PASSIVE_LEVEL)
         return STATUS_INVALID_DEVICE_STATE;
-    (VOID) KeWaitForSingleObject(&g_win_lifecycle_lock, Executive, KernelMode, FALSE, NULL);
+    lpi_mutex_acquire(&g_win_lifecycle_lock);
 
     status = hw_backend_win_try_publish_locked(dev);
-    (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
+    lpi_mutex_release(&g_win_lifecycle_lock);
     return status;
 }

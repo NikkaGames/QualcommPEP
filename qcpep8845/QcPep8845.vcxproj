@@ -85,7 +85,7 @@
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
     </DriverSign>
     <Inf>
-      <TimeStamp>700.32000.0.421</TimeStamp>
+      <TimeStamp>700.32000.0.422</TimeStamp>
     </Inf>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
@@ -105,7 +105,7 @@
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
     </DriverSign>
     <Inf>
-      <TimeStamp>700.32000.0.421</TimeStamp>
+      <TimeStamp>700.32000.0.422</TimeStamp>
     </Inf>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -119,6 +119,10 @@
   <ItemGroup>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Framework\PEP\src\idle\lpi.c">
+      <ObjectFileName>$(IntDir)lpi.obj</ObjectFileName>
+      <WppEnabled>true</WppEnabled>
+    </ClCompile>
     <ClCompile Include="..\Framework\PEP\src\driver.c">
       <ObjectFileName>$(IntDir)driver_cddce7a9.obj</ObjectFileName>
       <WppEnabled>true</WppEnabled>
@@ -657,6 +661,7 @@
     <ClInclude Include="..\Framework\PEP\inc\diag.h" />
     <ClInclude Include="..\Framework\PEP\8845\inc\dpm_identity.h" />
     <ClInclude Include="..\Framework\PEP\8845\inc\dpm_verified.h" />
+    <ClInclude Include="..\Framework\PEP\inc\lpi.h" />
     <ClInclude Include="..\Framework\PEP\inc\driver.h" />
     <ClInclude Include="..\Framework\PEP\inc\etw.h" />
     <ClInclude Include="..\Framework\PEP\inc\ex_soc_mgmt.h" />

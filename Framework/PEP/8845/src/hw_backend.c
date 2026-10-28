@@ -183,6 +183,22 @@ int hw_backend_ready(void)
     return !(rundown_load() & RUNDOWN_CLOSED);
 }
 
+/* Native idle keeps the same verified registration while excluding every provider call. */
+int hw_backend_idle_begin(uint64_t* serial)
+{
+    if (!serial || !g_registered || !g_validated || !g_reg_serial ||
+        !rundown_cas(0u, RUNDOWN_CLOSED))
+        return 0;
+    *serial = g_reg_serial;
+    return 1;
+}
+
+int hw_backend_idle_end(uint64_t serial)
+{
+    return serial && g_registered && g_validated && serial == g_reg_serial &&
+           rundown_open();
+}
+
 /* epoch alone is not sufficient for bound-graph identity. */
 uint64_t hw_backend_verified_serial(void)
 {

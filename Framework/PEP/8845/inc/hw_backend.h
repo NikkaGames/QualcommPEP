@@ -92,6 +92,8 @@ int hw_backend_validate(uint64_t owner_epoch);
  * at any IRQL: it only reads latched state. */
 
 int hw_backend_ready(void);
+int hw_backend_idle_begin(uint64_t* serial);
+int hw_backend_idle_end(uint64_t serial);
 
 const hw_backend_t* hw_backend_get(void);
 
