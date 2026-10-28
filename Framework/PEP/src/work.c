@@ -607,7 +607,8 @@ ULONG_PTR pep_work(_Inout_opt_ PVOID data)
     pep_work_item_t* item = pep_dequeue_work(&more);
     if (!item) {
         w->need_work = 0;
-        return 0;
+        /* Worker notifications remain mandatory after another worker drains the queue. */
+        return 1;
     }
 
     UCHAR need_work = 0;
