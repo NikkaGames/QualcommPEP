@@ -47,15 +47,13 @@ int runtime_dstate_compile(runtime_dstate_scope_t* s, const void* data, size_t b
             if (!(s->idx.d_state_mask & (uint8_t)(1u << state)))
                 continue;
             if (program_idx_compile(&s->idx, data, bytes, PROGRAM_D_STATE, 0u, 0u, state, sequence,
-                                    0) != POWER_OK ||
-                (!sequence->action_cnt && (state == 0u || state == 3u)))
+                                    0) != POWER_OK)
                 goto bad;
         }
     }
     /* a power-on-only descriptor retains D0 resources. Missing D3 does not authorize an inferred
      * release sequence. */
-    if (!s->d0.action_cnt || (s->idx.has_d3 && !s->d3.action_cnt))
-        goto bad;
+    s->last_nonempty_target = UINT32_MAX;
     s->valid = 1u;
     return 1;
 bad:

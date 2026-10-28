@@ -123,7 +123,6 @@ NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT driver_object, _In_ PUNICODE_STRING reg
 
     (VOID) etw_reg();
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER,
-                "driver: build rev=418 resource-state-ownership");
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "driver: build rev=419 device-power-states");
     return STATUS_SUCCESS;
 }

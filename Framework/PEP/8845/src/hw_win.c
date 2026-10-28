@@ -5340,8 +5340,8 @@ static NTSTATUS hw_backend_audit_scopes_read_only(_In_ WDFDEVICE dev)
         for (i = 0; i < graph->dev_cnt; ++i) {
             const graph_dev_t* d = &graph->devices[i];
             TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_ACPI,
-                        "acpi: scope=%s D0=%u D3=%u components=%u ownership=0", d->path,
-                        (ULONG)d->has_d0, (ULONG)d->has_d3, (ULONG)d->requires_comp_runtime);
+                        "acpi: scope=%s D-states=%02X components=%u ownership=0", d->path,
+                        (unsigned)d->d_state_mask, (unsigned)d->requires_comp_runtime);
         }
     } else {
         TraceEvents(TRACE_LEVEL_WARNING, TRACE_ACPI,

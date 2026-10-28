@@ -74,7 +74,8 @@ int resolve_pep_dev_path(const res_graph_t* graph, const uint16_t* unicode_id, s
     if (!acpi_path(candidate))
         return 0;
     for (i = 0; i < graph->dev_cnt; ++i) {
-        if (graph->devices[i].has_d0 && graph->devices[i].has_d3 &&
+        if (graph_has_d_state(&graph->devices[i], 0u) &&
+            graph_has_d_state(&graph->devices[i], 3u) &&
             eq_path_ascii(candidate, graph->devices[i].path)) {
             if (match != GRAPH_MAX_DEVICES)
                 return 0;

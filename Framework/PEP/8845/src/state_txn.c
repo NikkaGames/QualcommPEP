@@ -218,13 +218,6 @@ power_result_t power_compile_aeo_b(const void* buf, size_t length, const char* p
         memset(sequence, 0, sizeof(*sequence));
         return builder.overflow ? POWER_TOO_MANY_ACTIONS : POWER_INVALID_PROGRAM;
     }
-    /* empty sequences can only reverify a committed nonempty sequence under its provider lease.
-     * They cannot establish initial power or final withdrawal. */
-
-    if (sequence->action_cnt == 0u && (state == 0u || state == 3u)) {
-        memset(sequence, 0, sizeof(*sequence));
-        return POWER_INVALID_PROGRAM;
-    }
     /* executing arbitrarily long ACPI delays on the PoFx worker could deadlock unrelated
      * device power. */
 
@@ -379,10 +372,7 @@ static power_result_t power_execute_mode(const power_sequence_t* sequence, power
     if (!sequence || !dev || !scratch || !be || !be->lock || !be->unlock ||
         (!be->execute_owned_program &&
          (!be->snapshot || !be->apply || !be->verify || !be->restore || !be->verify_restored)) ||
-        !be->supports || !be->verify_current_state ||
-        (sequence->action_cnt == 0u && !is_comp &&
-         (sequence->target_d_state == 0u || sequence->target_d_state == 3u)) ||
-        sequence->action_cnt > POWER_MAX_ACTIONS ||
+        !be->supports || !be->verify_current_state || sequence->action_cnt > POWER_MAX_ACTIONS ||
         (is_comp ? sequence->target_d_state >= 32u : (sequence->target_d_state > 3u))) {
         trace->result = POWER_BAD_INPUT;
         return trace->result;

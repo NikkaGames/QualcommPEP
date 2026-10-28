@@ -184,9 +184,7 @@ int clock_composite_issue(clock_composite_t* c, const power_action_t* a,
     if (!old || !decode_clock_opcode(a, &decoded) || decoded.kind != CLOCK_OP_ENABLE_SET_FREQ ||
         decoded.parameter0 == 0u || !c || !action_matches_clock(a, c->freq) || !snapshot(c, old))
         return 0;
-    /* this is still a mock scalar-core path; no Windows provider or hardware completion is
-     * implied. */
-
+    /* The scalar provider verifies each request before the pair is committed. */
     if (!scalar_issue(c->enable, c->enable_client, 1u) ||
         !scalar_issue(c->freq, c->freq_client, decoded.parameter0))
         return recover(c, old);
@@ -203,6 +201,8 @@ int clock_composite_release(clock_composite_t* c, clock_composite_snapshot_t* ol
     if (!old || !snapshot(c, old))
         return 0;
     if (c->native_npa) {
+        if (old->enable_present && old->enable_req == 2u && old->freq_present && old->freq_req)
+            return 1;
         /* the freq client is retained until its own final teardown, rather than silently
          * completed. */
 

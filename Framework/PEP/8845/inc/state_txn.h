@@ -8,6 +8,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#define POWER_DSTATE_COUNT 4u
 #define POWER_MAX_ACTIONS 64u
 #define POWER_NAME_BYTES 128u
 

@@ -1182,9 +1182,9 @@ NTSTATUS pep_publish_verified_molokai_graph(_Inout_ res_graph_t* graph,
                         d->path, (unsigned)d->verified_ic_empty_f0);
             TraceEvents(
                 TRACE_LEVEL_VERBOSE, TRACE_RESOURCE,
-                "resources: path=%s D0=%lu D3=%lu components=%u graph=%u clients=%u eligible=%u",
-                d->path, (ULONG)d->d0.action_cnt, (ULONG)d->d3.action_cnt,
-                (unsigned)d->requires_comp_runtime, (unsigned)graph_claim, (unsigned)client_ready,
+                "resources: path=%s D-states=%02X components=%u graph=%u clients=%u eligible=%u",
+                d->path, (unsigned)d->d_state_mask, (unsigned)d->requires_comp_runtime,
+                (unsigned)graph_claim, (unsigned)client_ready,
                 (unsigned)(graph_claim && client_ready));
         }
     }
@@ -1239,8 +1239,7 @@ power_result_t pep_run_molokai_lifecycle(_In_ const UNICODE_STRING* dev_id, _In_
     char path[256];
     if (!pep_resolve_molokai_dev(dev_id, path))
         return result;
-    /* this Molokai scope is d0/d3 only (zero PoFx components). Only when the independently
-     * verified upstream backend/graph/client checks have passed may prepare and verify d0. */
+    /* PREPARE establishes D0; ABANDON verifies the declared D3 release before teardown. */
 
     if (prepare) {
         RtlZeroMemory(&trace, sizeof(trace));
@@ -1269,10 +1268,8 @@ power_result_t pep_run_molokai_lifecycle(_In_ const UNICODE_STRING* dev_id, _In_
 static power_result_t pep_run_molokai_d_state(_In_ const UNICODE_STRING* dev_id, _In_ ULONG state)
 {
     power_scratch_t* scratch;
-    power_sequence_t* expanded = NULL;
     power_execution_t trace;
     power_result_t result;
-    ULONG i, nested = 0u;
     char path[256];
     RtlZeroMemory(&trace, sizeof(trace));
     if (!g_molokai_dpm_authoritative_graph || KeGetCurrentIrql() != PASSIVE_LEVEL ||
@@ -1642,8 +1639,8 @@ static int runtime_d_verify_final(void* v, const power_sequence_t* sequence)
     /* under the owner/graph lock, verify the last resource-voting sequence. Empty actions cannot
      * establish success or authorize inferred withdrawals. */
 
-    if ((state != 1 && state != 2) || !s->program.physical.state_known ||
-        s->program.physical.quarantined)
+    if (!s->program.physical.state_known || s->program.physical.quarantined ||
+        s->program.last_nonempty_target >= POWER_DSTATE_COUNT)
         return 0;
     {
         const ULONG prev = s->program.last_nonempty_target;
@@ -2220,13 +2217,13 @@ static int pep_native_owner_verify(void* ctx, const power_sequence_t* sequence)
         sequence->action_cnt <= POWER_MAX_ACTIONS) {
         for (i = 0u; i < graph->dev_cnt; ++i) {
             const graph_dev_t* dev = &graph->devices[i];
-            if (strcmp(dev->path, "\\_SB.UFS0") || !dev->has_d3 ||
-                sequence->action_cnt != dev->d3.action_cnt ||
-                strcmp(sequence->dev_path, dev->d3.dev_path))
+            if (strcmp(dev->path, "\\_SB.UFS0") || !graph_has_d_state(dev, 3u) ||
+                sequence->action_cnt != dev->d_states[3].action_cnt ||
+                strcmp(sequence->dev_path, dev->d_states[3].dev_path))
                 continue;
             desc_matches = TRUE;
             for (j = 0u; j < sequence->action_cnt; ++j)
-                if (RtlCompareMemory(&sequence->actions[j], &dev->d3.actions[j],
+                if (RtlCompareMemory(&sequence->actions[j], &dev->d_states[3].actions[j],
                                      sizeof(power_action_t)) != sizeof(power_action_t)) {
                     desc_matches = FALSE;
                     break;
@@ -2377,6 +2374,24 @@ static BOOLEAN pep_native_ufs_verify_f1(pep_native_producer_scope_t* scope, comp
     valid = (BOOLEAN)scope->backend.verify_current_state(scope, &work->expanded);
     scope->backend.unlock(scope);
     return valid;
+}
+
+BOOLEAN pep_node_d_state_declared(pep_devnode_t* n, ULONG target)
+{
+    char path[256];
+    uint8_t mask;
+    if (!n || target >= POWER_DSTATE_COUNT)
+        return FALSE;
+    if (n->runtime_dstate_scope)
+        mask = n->runtime_dstate_scope->program.idx.d_state_mask;
+    else if (n->native_owner)
+        mask = n->native_owner->producer.owner.idx.d_state_mask;
+    else if (n->runtime_comp || n->peer_scope)
+        return target == 0u || target == 3u;
+    else
+        return pep_resolve_molokai_dev(&n->instance_path, path) &&
+               graph_d_state_declared(g_molokai_dpm_authoritative_graph, path, target);
+    return (mask & (uint8_t)(1u << target)) != 0u;
 }
 
 power_result_t pep_run_node_d_state(pep_devnode_t* n, ULONG target)

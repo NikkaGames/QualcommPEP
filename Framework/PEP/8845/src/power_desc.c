@@ -25,7 +25,7 @@ power_result_t power_discover_dev_d_state(const char* const* methods, uint32_t c
     char winning_method[5] = {0};
     power_result_t result = POWER_INVALID_PROGRAM;
     if (!methods || !evaluate || !release || !path || !sequence || !selected_method || cnt == 0 ||
-        cnt > DISCOVERY_MAX_METHODS || (state != 0u && state != 3u))
+        cnt > DISCOVERY_MAX_METHODS || state >= POWER_DSTATE_COUNT)
         return POWER_BAD_INPUT;
     memset(sequence, 0, sizeof(*sequence));
     memset(selected_method, 0, 5u);
@@ -64,7 +64,7 @@ power_result_t power_discover_dev_d_state(const char* const* methods, uint32_t c
             release(ctx, bytes);
             continue;
         }
-        if (ast != AEO_B_OK || action_cnt == 0u || found) {
+        if (ast != AEO_B_OK || found) {
             release(ctx, bytes);
             goto error;
         }

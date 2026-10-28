@@ -8,26 +8,22 @@
 extern "C" {
 #endif
 
+typedef struct npa_req_group {
+    const npa_slot_t* states[POWER_DSTATE_COUNT];
+    uint32_t target;
+} npa_req_group_t;
+
 typedef struct npa_req_ops {
     void* ctx;
-    /* every request must be a reversible d0/d3 CLIENT PAIR transfer. A vote on a separate d3
-     * handle does not release the d0 client's vote. */
-
-    int (*supports_pair)(void*, const npa_key_t*, void*, const npa_key_t*, void*,
-                         const power_action_t*);
-    int (*read_pair)(void*, const npa_key_t*, void*, const npa_key_t*, void*, power_snapshot_t*);
-    /* scalar issue has no return status; verify ownership, completion and effective state. */
-
-    int (*issue_pair)(void*, const npa_key_t*, void*, const npa_key_t*, void*,
-                      const power_action_t*);
-    int (*verify_pair)(void*, const npa_key_t*, void*, const npa_key_t*, void*,
-                       const power_action_t*);
-    int (*restore_pair)(void*, const npa_key_t*, void*, const npa_key_t*, void*,
-                        const power_snapshot_t*);
-    int (*verify_restored_pair)(void*, const npa_key_t*, void*, const npa_key_t*, void*,
-                                const power_snapshot_t*);
-    int (*verify_final_pair)(void*, const npa_key_t*, void*, const npa_key_t*, void*,
-                             const power_action_t*);
+    /* A state change transfers this resource's request across all declared clients.
+     * Snapshot and rollback cover the entire group under the graph lock. */
+    int (*supports)(void*, const npa_req_group_t*, const power_action_t*);
+    int (*read)(void*, const npa_req_group_t*, power_snapshot_t*);
+    int (*issue)(void*, const npa_req_group_t*, const power_action_t*);
+    int (*verify)(void*, const npa_req_group_t*, const power_action_t*);
+    int (*restore)(void*, const npa_req_group_t*, const power_snapshot_t*);
+    int (*verify_restored)(void*, const npa_req_group_t*, const power_snapshot_t*);
+    int (*verify_final)(void*, const npa_req_group_t*, const power_action_t*);
 } npa_req_ops_t;
 
 typedef struct npa_graph_ctx {

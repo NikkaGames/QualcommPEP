@@ -8,9 +8,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-/* runtime res submissions already support 32 DEVICE packages; graph discovery must not
- * silently reject the ninth future PEP scope. graph/working memory remains caller-owned
- * NONPAGED pool (roughly 1.21 MiB graph at this capacity on 64-bit hosts). */
+/* Graph and workspace storage is caller-owned nonpaged memory. */
 
 #define GRAPH_MAX_DEVICES 32u
 #define GRAPH_PROVIDER_CNT 9u
@@ -38,8 +36,10 @@ typedef struct graph_provider {
 
 typedef struct graph_dev {
     char path[256];
-    power_sequence_t d0, d3;
-    uint8_t has_d0, has_d3, prepared;
+    power_sequence_t d_states[POWER_DSTATE_COUNT];
+    /* A set bit distinguishes a declared empty state from an absent state. */
+    uint8_t d_state_mask;
+    uint8_t prepared;
     /* distinguish PREPARE admission from the first provider transaction. ABANDON before the
      * first d0 is metadata-only; after an attempted d0 it must never discard ownership without
      * confirmed d3 reconciliation. */
@@ -54,8 +54,8 @@ typedef struct graph_dev {
 
     uint8_t verified_ic_empty_f0;
     power_dev_t state;
-    uint16_t d0_clients[POWER_MAX_ACTIONS];
-    uint16_t d3_clients[POWER_MAX_ACTIONS];
+    uint16_t state_clients[POWER_DSTATE_COUNT][POWER_MAX_ACTIONS];
+    uint32_t last_nonempty_state; /* Resource requests retained by an empty state. */
 } graph_dev_t;
 
 typedef struct res_graph {
@@ -107,6 +107,8 @@ void graph_init(res_graph_t*, void*, int (*)(void*), void (*)(void*));
 int graph_add_sequence(res_graph_t*, const power_sequence_t*);
 int graph_bind(res_graph_t*, power_action_kind_t, const graph_provider_t*);
 int graph_seal(res_graph_t*);
+int graph_has_d_state(const graph_dev_t*, uint32_t state);
+int graph_d_state_declared(res_graph_t*, const char*, uint32_t state);
 /* takes the nonrecursive graph lock. Cannot replace a provider or mutate an
  * executing/prepared graph. */
 

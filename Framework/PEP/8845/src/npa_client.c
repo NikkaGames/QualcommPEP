@@ -184,14 +184,15 @@ int npa_inventory(npa_registry_t* reg, const res_graph_t* graph)
 
     for (i = 0; i < graph->dev_cnt; ++i) {
         const graph_dev_t* d = &graph->devices[i];
-        if (!d->has_d0 || !d->has_d3)
+        if (!graph_has_d_state(d, 0u) || !graph_has_d_state(d, 3u))
             goto fail;
-        for (s = 0; s < 2u; ++s) {
-            const power_sequence_t* p = s ? &d->d3 : &d->d0;
+        for (s = 0; s < POWER_DSTATE_COUNT; ++s) {
+            const power_sequence_t* p = &d->d_states[s];
+            if (!graph_has_d_state(d, s))
+                continue;
             if (!terminated(d->path, sizeof(d->path)) ||
-                !terminated(p->dev_path, sizeof(p->dev_path)) ||
-                p->target_d_state != (s ? 3u : 0u) || strcmp(p->dev_path, d->path) ||
-                !p->action_cnt || p->action_cnt > POWER_MAX_ACTIONS)
+                !terminated(p->dev_path, sizeof(p->dev_path)) || p->target_d_state != s ||
+                strcmp(p->dev_path, d->path) || p->action_cnt > POWER_MAX_ACTIONS)
                 goto fail;
             for (j = 0; j < p->action_cnt; ++j) {
                 npa_key_t key;
@@ -225,18 +226,19 @@ int npa_inventory(npa_registry_t* reg, const res_graph_t* graph)
     }
     if (!reg->cnt)
         goto fail;
-    /* each graph NPA identity needs an opposite-state peer for transactional release.
-     * Otherwise require an independently verified release operation. */
+    /* Each resource used in D0/D1/D2 needs a declared D3 release entry.
+     * Several active states can share that release identity. */
 
     for (i = 0; i < reg->cnt; ++i) {
         const npa_key_t* a = &reg->slots[i].key;
         uint32_t matches = 0;
         for (k = 0; k < reg->cnt; ++k) {
             const npa_key_t* b = &reg->slots[k].key;
-            if (a->d_state != b->d_state && npa_same_res_identity(a, b))
+            if (a->d_state != b->d_state && (a->d_state == 3u || b->d_state == 3u) &&
+                npa_same_res_identity(a, b))
                 ++matches;
         }
-        if (matches != 1u)
+        if (!matches || (a->d_state != 3u && matches != 1u))
             goto fail;
     }
     reg->owner_graph = graph;
@@ -447,7 +449,7 @@ int npa_resolve_action(const npa_registry_t* reg, const char* path, uint32_t sta
     uint32_t i;
     if (result)
         *result = NULL;
-    if (!reg || !result || !path || !action || (state != 0u && state != 3u) ||
+    if (!reg || !result || !path || !action || state >= POWER_DSTATE_COUNT ||
         !active_slots_consistent(reg) || !reg->provider.validate || !reg->provider.owns ||
         !make_key(&key, path, state, action))
         return 0;

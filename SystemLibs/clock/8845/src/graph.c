@@ -34,14 +34,13 @@ static int valid_text(const char* s, size_t cap)
 
 static int action_for(const power_action_t* a, const hybrid_clock_entry_t* e, uint32_t st)
 {
-    if (!a || !e || a->kind != POWER_CLOCK || strcmp(a->u.clock.name, e->clock_name))
+    if (!a || !e || st >= POWER_DSTATE_COUNT || a->kind != POWER_CLOCK ||
+        strcmp(a->u.clock.name, e->clock_name))
         return 0;
-    if (st == 0u)
-        return a->u.clock.vote == 8u && a->u.clock.extra_cnt == 2u &&
-               a->u.clock.extra[0] == e->hertz && a->u.clock.extra[1] == e->opaque_param;
-    if (st == 3u)
-        return a->u.clock.vote == 2u && !a->u.clock.extra_cnt;
-    return 0;
+    if (a->u.clock.vote == 8u)
+        return a->u.clock.extra_cnt == 2u && a->u.clock.extra[0] &&
+               a->u.clock.extra[1] == e->opaque_param;
+    return a->u.clock.vote == 2u && !a->u.clock.extra_cnt;
 }
 
 static hybrid_clock_entry_t* lookup(hybrid_clock_ctx_t* c, const char* path,
@@ -152,8 +151,8 @@ static int apply(void* v, const char* path, uint32_t st, const power_action_t* a
     if (!e)
         return c->simple.apply(c->simple.ctx, path, st, a);
 
-    return st == 0u ? clock_composite_issue(e->composite, a, &old)
-                    : clock_composite_release(e->composite, &old);
+    return a->u.clock.vote == 8u ? clock_composite_issue(e->composite, a, &old)
+                                 : clock_composite_release(e->composite, &old);
 }
 
 static int verify(void* v, const char* path, uint32_t st, const power_action_t* a)
@@ -164,8 +163,15 @@ static int verify(void* v, const char* path, uint32_t st, const power_action_t* 
         return 0;
     if (!e)
         return c->simple.verify(c->simple.ctx, path, st, a);
-    return clock_composite_verify_state(e->composite, (uint8_t)(st == 0u),
-                                        (st == 0u || e->composite->native_npa) ? e->hertz : 0u);
+    if (a->u.clock.vote == 8u)
+        return clock_composite_verify_state(e->composite, 1u, a->u.clock.extra[0]);
+    {
+        clock_composite_snapshot_t current;
+        if (!clock_composite_snapshot(e->composite, &current))
+            return 0;
+        return clock_composite_verify_state(e->composite, 0u,
+                                            e->composite->native_npa ? current.freq_req : 0u);
+    }
 }
 
 static int restore(void* v, const char* path, uint32_t st, const power_action_t* a,
@@ -240,18 +246,20 @@ static int verify_state(void* v, const char* path, uint32_t st, const power_sequ
     return 1;
 }
 
-static int cnt_action(const power_sequence_t* p, const hybrid_clock_entry_t* e, uint32_t st)
+static int valid_state_actions(const power_sequence_t* p, const hybrid_clock_entry_t* e,
+                               uint32_t state)
 {
     uint32_t i;
     int cnt = 0;
     for (i = 0; i < p->action_cnt; ++i)
         if (p->actions[i].kind == POWER_CLOCK &&
             !strcmp(p->actions[i].u.clock.name, e->clock_name)) {
-            if (!action_for(&p->actions[i], e, st))
+            if (!action_for(&p->actions[i], e, state) ||
+                (state == 3u && p->actions[i].u.clock.vote != 2u))
                 return 0;
             ++cnt;
         }
-    return cnt == 1;
+    return cnt <= 1 && (state != 3u || cnt == 1);
 }
 
 /* this check rejects an unlisted opcode-8 res even if a caller's fallback provider
@@ -261,30 +269,36 @@ static int cnt_action(const power_sequence_t* p, const hybrid_clock_entry_t* e, 
 static int complete_composite_coverage(const res_graph_t* g, const hybrid_clock_entry_t* entries,
                                        uint32_t cnt)
 {
-    uint32_t i, j, k, found = 0u;
-    if (!g || !entries || !cnt)
-        return 0;
-    if (g->dev_cnt > GRAPH_MAX_DEVICES)
+    uint32_t i, state, j, k, found[HYBRID_MAX_COMPOSITES] = {0};
+    if (!g || !entries || !cnt || cnt > HYBRID_MAX_COMPOSITES || g->dev_cnt > GRAPH_MAX_DEVICES)
         return 0;
     for (i = 0; i < g->dev_cnt; ++i) {
         const graph_dev_t* d = &g->devices[i];
-        if (d->d0.action_cnt > POWER_MAX_ACTIONS)
-            return 0;
-        for (j = 0; j < d->d0.action_cnt; ++j) {
-            const power_action_t* a = &d->d0.actions[j];
-            if (a->kind != POWER_CLOCK || a->u.clock.vote != 8u)
+        for (state = 0u; state < POWER_DSTATE_COUNT; ++state) {
+            const power_sequence_t* sequence = &d->d_states[state];
+            if (!graph_has_d_state(d, state))
                 continue;
-            for (k = 0; k < cnt; ++k)
-                if (!strcmp(d->path, entries[k].dev_path) &&
-                    !strcmp(a->u.clock.name, entries[k].clock_name))
-                    break;
-            if (k == cnt || !action_for(a, &entries[k], 0u))
+            if (sequence->action_cnt > POWER_MAX_ACTIONS)
                 return 0;
-            if (++found > cnt)
-                return 0;
+            for (j = 0; j < sequence->action_cnt; ++j) {
+                const power_action_t* a = &sequence->actions[j];
+                if (a->kind != POWER_CLOCK || a->u.clock.vote != 8u)
+                    continue;
+                for (k = 0; k < cnt; ++k)
+                    if (!strcmp(d->path, entries[k].dev_path) &&
+                        !strcmp(a->u.clock.name, entries[k].clock_name))
+                        break;
+                if (k == cnt || !action_for(a, &entries[k], state) ||
+                    !valid_state_actions(sequence, &entries[k], state))
+                    return 0;
+                ++found[k];
+            }
         }
     }
-    return found == cnt;
+    for (k = 0u; k < cnt; ++k)
+        if (!found[k])
+            return 0;
+    return 1;
 }
 
 static int same_native_clock(const clock_composite_t* c, const char* clock_name)
@@ -312,7 +326,7 @@ int clock_hybrid_discover(const res_graph_t* g, clock_composite_resolve_t resolv
                           hybrid_clock_entry_t* entries, uint32_t capacity, uint32_t* discovered)
 {
     hybrid_clock_entry_t temporary[HYBRID_MAX_COMPOSITES];
-    uint32_t i, j, k, cnt = 0u;
+    uint32_t i, state, j, k, cnt = 0u;
     if (discovered)
         *discovered = 0u;
     /* an old manifest must not survive a failed admission attempt. */
@@ -325,67 +339,78 @@ int clock_hybrid_discover(const res_graph_t* g, clock_composite_resolve_t resolv
     memset(temporary, 0, sizeof(temporary));
     for (i = 0; i < g->dev_cnt; ++i) {
         const graph_dev_t* d = &g->devices[i];
-        if (!d->has_d0 || !d->has_d3 || bounded(d->path, sizeof(d->path)) == sizeof(d->path) ||
-            bounded(d->d0.dev_path, sizeof(d->d0.dev_path)) == sizeof(d->d0.dev_path) ||
-            bounded(d->d3.dev_path, sizeof(d->d3.dev_path)) == sizeof(d->d3.dev_path) ||
-            strcmp(d->d0.dev_path, d->path) || strcmp(d->d3.dev_path, d->path) ||
-            d->d0.target_d_state != 0u || d->d3.target_d_state != 3u ||
-            d->d0.action_cnt > POWER_MAX_ACTIONS || d->d3.action_cnt > POWER_MAX_ACTIONS)
+        if (!graph_has_d_state(d, 0u) || !graph_has_d_state(d, 3u) ||
+            bounded(d->path, sizeof(d->path)) == sizeof(d->path) ||
+            bounded(d->d_states[0].dev_path, sizeof(d->d_states[0].dev_path)) ==
+                sizeof(d->d_states[0].dev_path) ||
+            bounded(d->d_states[3].dev_path, sizeof(d->d_states[3].dev_path)) ==
+                sizeof(d->d_states[3].dev_path) ||
+            strcmp(d->d_states[0].dev_path, d->path) || strcmp(d->d_states[3].dev_path, d->path) ||
+            d->d_states[0].target_d_state != 0u || d->d_states[3].target_d_state != 3u ||
+            d->d_states[0].action_cnt > POWER_MAX_ACTIONS ||
+            d->d_states[3].action_cnt > POWER_MAX_ACTIONS)
             return 0;
-        for (j = 0; j < d->d0.action_cnt; ++j) {
-            const power_action_t* a = &d->d0.actions[j];
-            hybrid_clock_entry_t* e;
-            clock_composite_t* c;
-            uint32_t same_d0 = 0u, same_d3 = 0u;
-            if (a->kind != POWER_CLOCK || a->u.clock.vote != 8u)
+        for (state = 0u; state < POWER_DSTATE_COUNT; ++state) {
+            const power_sequence_t* sequence = &d->d_states[state];
+            if (!graph_has_d_state(d, state))
                 continue;
-            if (cnt == capacity || !valid_text(a->u.clock.name, sizeof(a->u.clock.name)) ||
-                a->u.clock.extra_cnt != 2u || !a->u.clock.extra[0])
+            if (sequence->target_d_state != state || sequence->action_cnt > POWER_MAX_ACTIONS ||
+                bounded(sequence->dev_path, sizeof(sequence->dev_path)) ==
+                    sizeof(sequence->dev_path) ||
+                strcmp(sequence->dev_path, d->path))
                 return 0;
-            for (k = 0; k < d->d0.action_cnt; ++k)
-                if (d->d0.actions[k].kind == POWER_CLOCK &&
-                    !strcmp(d->d0.actions[k].u.clock.name, a->u.clock.name))
-                    ++same_d0;
-            for (k = 0; k < d->d3.action_cnt; ++k)
-                if (d->d3.actions[k].kind == POWER_CLOCK &&
-                    !strcmp(d->d3.actions[k].u.clock.name, a->u.clock.name)) {
-                    if (d->d3.actions[k].u.clock.vote != 2u || d->d3.actions[k].u.clock.extra_cnt)
+            for (j = 0; j < sequence->action_cnt; ++j) {
+                const power_action_t* a = &sequence->actions[j];
+                hybrid_clock_entry_t* e;
+                clock_composite_t* c;
+                if (a->kind != POWER_CLOCK || a->u.clock.vote != 8u)
+                    continue;
+                if (!valid_text(a->u.clock.name, sizeof(a->u.clock.name)) ||
+                    a->u.clock.extra_cnt != 2u || !a->u.clock.extra[0])
+                    return 0;
+                for (k = 0u; k < cnt; ++k)
+                    if (!strcmp(temporary[k].dev_path, d->path) &&
+                        !strcmp(temporary[k].clock_name, a->u.clock.name))
+                        break;
+                if (k < cnt) {
+                    if (!action_for(a, &temporary[k], state))
                         return 0;
-                    ++same_d3;
+                    continue;
                 }
-            if (same_d0 != 1u || same_d3 != 1u)
-                return 0;
-            /* non-mutating native NPA 0x1000 query plus independent provider initialization/epoch
-             * attestation. */
-
-            {
-                uint64_t native_epoch = 0;
-                if (!match_query_checked(query, query_ctx, d->path, a->u.clock.name,
-                                         a->u.clock.extra[1], 0u, &native_epoch))
+                if (cnt == capacity)
                     return 0;
-                /* saved with the client manifest; provider replacement is denied at publication AND
-                 * every later state transition. */
+                /* non-mutating native NPA 0x1000 query plus independent provider
+                 * initialization/epoch attestation. */
 
-                temporary[cnt].owner_epoch = native_epoch;
+                {
+                    uint64_t native_epoch = 0;
+                    if (!match_query_checked(query, query_ctx, d->path, a->u.clock.name,
+                                             a->u.clock.extra[1], 0u, &native_epoch))
+                        return 0;
+                    /* saved with the client manifest; provider replacement is denied at publication
+                     * AND every later state transition. */
+
+                    temporary[cnt].owner_epoch = native_epoch;
+                }
+                c = resolver(resolver_ctx, d->path, a->u.clock.name, a->u.clock.extra[0],
+                             a->u.clock.extra[1]);
+                if (!same_native_clock(c, a->u.clock.name) ||
+                    (c->native_npa && (c->enable->owner_epoch != temporary[cnt].owner_epoch ||
+                                       c->freq->owner_epoch != temporary[cnt].owner_epoch)))
+                    return 0;
+                /* a composite is state owned: it may never be assigned to a second graph device
+                 * even if both refer to the same clock. */
+
+                for (k = 0; k < cnt; ++k)
+                    if (temporary[k].composite == c)
+                        return 0;
+                e = &temporary[cnt++];
+                memcpy(e->dev_path, d->path, strlen(d->path) + 1u);
+                memcpy(e->clock_name, a->u.clock.name, strlen(a->u.clock.name) + 1u);
+                e->hertz = a->u.clock.extra[0];
+                e->opaque_param = a->u.clock.extra[1];
+                e->composite = c;
             }
-            c = resolver(resolver_ctx, d->path, a->u.clock.name, a->u.clock.extra[0],
-                         a->u.clock.extra[1]);
-            if (!same_native_clock(c, a->u.clock.name) ||
-                (c->native_npa && (c->enable->owner_epoch != temporary[cnt].owner_epoch ||
-                                   c->freq->owner_epoch != temporary[cnt].owner_epoch)))
-                return 0;
-            /* a composite is state owned: it may never be assigned to a second graph device even if
-             * both refer to the same clock. */
-
-            for (k = 0; k < cnt; ++k)
-                if (temporary[k].composite == c)
-                    return 0;
-            e = &temporary[cnt++];
-            memcpy(e->dev_path, d->path, strlen(d->path) + 1u);
-            memcpy(e->clock_name, a->u.clock.name, strlen(a->u.clock.name) + 1u);
-            e->hertz = a->u.clock.extra[0];
-            e->opaque_param = a->u.clock.extra[1];
-            e->composite = c;
         }
     }
     if (!cnt || !complete_composite_coverage(g, temporary, cnt))
@@ -434,9 +459,12 @@ int clock_hybrid_make_provider(hybrid_clock_ctx_t* c, const res_graph_t* g,
             const graph_dev_t* d = &g->devices[j];
             if (strcmp(d->path, e->dev_path))
                 continue;
-            if (!d->has_d0 || !d->has_d3 || !cnt_action(&d->d0, e, 0u) ||
-                !cnt_action(&d->d3, e, 3u))
+            if (!graph_has_d_state(d, 3u))
                 return 0;
+            for (uint32_t state = 0u; state < POWER_DSTATE_COUNT; ++state)
+                if (graph_has_d_state(d, state) &&
+                    !valid_state_actions(&d->d_states[state], e, state))
+                    return 0;
             ++found;
         }
         if (found != 1)

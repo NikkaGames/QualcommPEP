@@ -33,7 +33,7 @@ static int valid_clock_name(const char* name)
 static int is_same_clock(const npa_key_t* key, const power_action_t* action)
 {
     return key && action && key->kind == POWER_CLOCK && action->kind == POWER_CLOCK &&
-           (key->d_state == 0u || key->d_state == 3u) && valid_clock_name(key->res) &&
+           key->d_state < POWER_DSTATE_COUNT && valid_clock_name(key->res) &&
            strcmp(key->res, action->u.clock.name) == 0 && action->u.clock.vote < 32u &&
            (key->clock_mode_bits & (1u << action->u.clock.vote)) != 0u;
 }
@@ -75,9 +75,8 @@ int npa_describe_composite_clock_clients(const npa_key_t* key, const power_actio
     if (!out)
         return 0;
     memset(out, 0, sizeof(*out));
-    if (!is_same_clock(key, action) || key->d_state != 0u ||
-        !decode_clock_opcode(action, &decoded) || decoded.kind != CLOCK_OP_ENABLE_SET_FREQ ||
-        decoded.param_cnt != 2u || !decoded.parameter0)
+    if (!is_same_clock(key, action) || !decode_clock_opcode(action, &decoded) ||
+        decoded.kind != CLOCK_OP_ENABLE_SET_FREQ || decoded.param_cnt != 2u || !decoded.parameter0)
         return 0;
     n = strlen(key->res);
     total = (sizeof(prefix) - 1u) + n;
@@ -169,7 +168,7 @@ int npa_describe_bus_client(const npa_key_t* key, const char* resolved_native_re
     memset(out, 0, sizeof(*out));
     /* the ACPI BUSARB selector does not encode a native driver ID. */
 
-    if (!key || key->kind != POWER_ICB || (key->d_state != 0u && key->d_state != 3u) ||
+    if (!key || key->kind != POWER_ICB || key->d_state >= POWER_DSTATE_COUNT ||
         rsc_driver_id == UINT32_MAX || native_client_type == 0u ||
         native_client_type == UINT32_MAX || !valid_bus_resource_name(resolved_native_res_name) ||
         !npa_build_bus_client_reference(key, ref))

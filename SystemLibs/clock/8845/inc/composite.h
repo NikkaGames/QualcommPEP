@@ -38,8 +38,8 @@ int clock_composite_bind(clock_composite_t*, scalar_res_t* enable, scalar_res_t*
 
 int clock_composite_issue(clock_composite_t*, const power_action_t*,
                           clock_composite_snapshot_t* prior);
-/* D3 issues enable=2 while retaining the frequency vote; OFF is distinct from completion and
- * destruction. */
+/* Disable issues enable=2 while retaining the frequency vote. Repeated disable requests
+ * verify the existing state; completion and client destruction remain separate operations. */
 
 int clock_composite_release(clock_composite_t*, clock_composite_snapshot_t* prior);
 /* restore only this client's two votes, compensating a partially completed hardware

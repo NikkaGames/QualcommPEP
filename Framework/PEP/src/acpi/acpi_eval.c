@@ -670,7 +670,7 @@ NTSTATUS acpi_compile_molokai_lpmx(_In_ WDFDEVICE pep_dev, _In_z_ const char* de
     power_result_t result;
     NTSTATUS status;
 
-    if (!pep_dev || !dev_path || !sequence || (d_state != 0u && d_state != 3u))
+    if (!pep_dev || !dev_path || !sequence || d_state >= POWER_DSTATE_COUNT)
         return STATUS_INVALID_PARAMETER;
     if (KeGetCurrentIrql() != PASSIVE_LEVEL)
         return STATUS_INVALID_DEVICE_STATE;
@@ -762,7 +762,7 @@ NTSTATUS acpi_compile_molokai_dev_power(_In_ WDFDEVICE pep_dev, _In_z_ const cha
     power_result_t result;
     NTSTATUS status;
     if (!pep_dev || !dev_path || !sequence || !selected_method ||
-        (target_d_state != 0u && target_d_state != 3u))
+        target_d_state >= POWER_DSTATE_COUNT)
         return STATUS_INVALID_PARAMETER;
     RtlZeroMemory(sequence, sizeof(*sequence));
     RtlZeroMemory(selected_method, 5u);

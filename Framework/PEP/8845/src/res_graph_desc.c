@@ -186,7 +186,7 @@ int graph_build_from_descriptors(res_graph_t* graph, const graph_desc_t* descrip
     if (!dev_cnt)
         goto fail;
     for (i = 0; i < dev_cnt; ++i)
-        for (state = 0; state <= 3u; state += 3u) {
+        for (state = 0; state < POWER_DSTATE_COUNT; ++state) {
             int hits = 0;
             for (j = 0; j < cnt; ++j) {
                 uint32_t actions = 0;
@@ -195,15 +195,15 @@ int graph_build_from_descriptors(res_graph_t* graph, const graph_desc_t* descrip
                                             workspace->paths[i], state, NULL, NULL, &actions);
                 if (status == AEO_B_NOT_FOUND)
                     continue;
-                if (status != AEO_B_OK || !actions || ++hits != 1)
+                if (status != AEO_B_OK || ++hits != 1)
                     goto fail;
                 if (power_compile_aeo_b(descriptors[j].buf, descriptors[j].bytes,
                                         workspace->paths[i], state, scratch) != POWER_OK ||
                     !graph_add_sequence(graph, scratch))
                     goto fail;
             }
-            if (hits != 1)
-                goto fail; /* never treat a missing D-state as success. */
+            if ((state == 0u || state == 3u) && hits != 1)
+                goto fail;
         }
     /* a firmware-added COMPONENT on TSC1, SPK1, or any later SSDT res must not be silently
      * accepted as a D-state-only PEP device. */
@@ -338,11 +338,11 @@ int graph_build_from_descriptors(res_graph_t* graph, const graph_desc_t* descrip
         }
     }
     for (i = 0u; i < graph->dev_cnt; ++i)
-        if (!expand_dstate(descriptors, cnt, &graph->devices[i].d0, scratch, &workspace->program,
-                           graph->devices[i].d0_clients) ||
-            !expand_dstate(descriptors, cnt, &graph->devices[i].d3, scratch, &workspace->program,
-                           graph->devices[i].d3_clients))
-            goto fail;
+        for (state = 0u; state < POWER_DSTATE_COUNT; ++state)
+            if (graph_has_d_state(&graph->devices[i], state) &&
+                !expand_dstate(descriptors, cnt, &graph->devices[i].d_states[state], scratch,
+                               &workspace->program, graph->devices[i].state_clients[state]))
+                goto fail;
 
     /* inventory is valid only after all references resolve. */
 

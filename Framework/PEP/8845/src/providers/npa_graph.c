@@ -1,107 +1,89 @@
 #include "npa_graph.h"
 #include <string.h>
 
-/* windows callback rundown must also retain both state clients and this provider context
- * throughout every transaction. A d0 or d3 vote is NOT complete while a vote from the
- * opposite-state client remains applied. */
-
-static int paired(npa_graph_ctx_t* c, const char* path, uint32_t st, const power_action_t* action,
-                  const npa_slot_t** current, const npa_slot_t** opposite)
+/* Callback rundown retains the registry and every client in a resource group. */
+static int request_group(npa_graph_ctx_t* c, const char* path, uint32_t state,
+                         const power_action_t* action, npa_req_group_t* group)
 {
+    const npa_slot_t* current = NULL;
     uint32_t i;
-    const npa_slot_t* slot = NULL;
-    if (current)
-        *current = NULL;
-    if (opposite)
-        *opposite = NULL;
-    if (!c || !c->registry || !action || !path || !current || !opposite ||
-        action->kind != c->kind || (st != 0u && st != 3u) ||
-        !npa_resolve_action(c->registry, path, st, action, &slot))
+    if (!group)
         return 0;
-    for (i = 0; i < c->registry->cnt; ++i) {
-        const npa_slot_t* peer = &c->registry->slots[i];
-        if (peer->key.d_state == (st == 0u ? 3u : 0u) &&
-            npa_same_res_identity(&peer->key, &slot->key)) {
-            if (!peer->active || !peer->handle || !c->registry->provider.owns ||
-                !c->registry->provider.validate ||
-                !c->registry->provider.owns(c->registry->provider.ctx, &peer->key) ||
-                !c->registry->provider.validate(c->registry->provider.ctx, &peer->key,
-                                                peer->handle))
-                return 0;
-            *current = slot;
-            *opposite = peer;
-            return 1;
-        }
+    memset(group, 0, sizeof(*group));
+    if (!c || !c->registry || !action || !path || state >= POWER_DSTATE_COUNT ||
+        action->kind != c->kind || !npa_resolve_action(c->registry, path, state, action, &current))
+        return 0;
+    group->target = state;
+    for (i = 0u; i < c->registry->cnt; ++i) {
+        const npa_slot_t* slot = &c->registry->slots[i];
+        uint32_t target = slot->key.d_state;
+        if (!npa_same_res_identity(&slot->key, &current->key))
+            continue;
+        if (target >= POWER_DSTATE_COUNT || group->states[target] || !slot->active ||
+            !slot->handle || !c->registry->provider.owns || !c->registry->provider.validate ||
+            !c->registry->provider.owns(c->registry->provider.ctx, &slot->key) ||
+            !c->registry->provider.validate(c->registry->provider.ctx, &slot->key, slot->handle))
+            return 0;
+        group->states[target] = slot;
     }
-    return 0;
+    return group->states[state] == current;
 }
 
-static int supports_pair(npa_graph_ctx_t* c, const char* path, uint32_t st, const power_action_t* a,
-                         const npa_slot_t** current, const npa_slot_t** opposite)
-{
-    return paired(c, path, st, a, current, opposite) &&
-           c->requests.supports_pair(c->requests.ctx, &(*current)->key, (*current)->handle,
-                                     &(*opposite)->key, (*opposite)->handle, a);
-}
-
-static int supported(void* opaque, const char* path, uint32_t st, const power_action_t* a)
+static int supported(void* opaque, const char* path, uint32_t state, const power_action_t* a)
 {
     npa_graph_ctx_t* c = opaque;
-    const npa_slot_t *s = NULL, *peer = NULL;
-    return supports_pair(c, path, st, a, &s, &peer);
+    npa_req_group_t group;
+    return request_group(c, path, state, a, &group) &&
+           c->requests.supports(c->requests.ctx, &group, a);
 }
 
-static int snapshot(void* opaque, const char* path, uint32_t st, const power_action_t* a,
+static int snapshot(void* opaque, const char* path, uint32_t state, const power_action_t* a,
                     power_snapshot_t* old)
 {
     npa_graph_ctx_t* c = opaque;
-    const npa_slot_t *s = NULL, *peer = NULL;
-    if (!old || !supports_pair(c, path, st, a, &s, &peer))
+    npa_req_group_t group;
+    if (!old || !request_group(c, path, state, a, &group) ||
+        !c->requests.supports(c->requests.ctx, &group, a))
         return 0;
     memset(old, 0, sizeof(*old));
-    return c->requests.read_pair(c->requests.ctx, &s->key, s->handle, &peer->key, peer->handle,
-                                 old);
+    return c->requests.read(c->requests.ctx, &group, old);
 }
 
-static int apply(void* opaque, const char* path, uint32_t st, const power_action_t* a)
+static int apply(void* opaque, const char* path, uint32_t state, const power_action_t* a)
 {
     npa_graph_ctx_t* c = opaque;
-    const npa_slot_t *s = NULL, *peer = NULL;
-    return supports_pair(c, path, st, a, &s, &peer) &&
-           c->requests.issue_pair(c->requests.ctx, &s->key, s->handle, &peer->key, peer->handle, a);
+    npa_req_group_t group;
+    return request_group(c, path, state, a, &group) &&
+           c->requests.supports(c->requests.ctx, &group, a) &&
+           c->requests.issue(c->requests.ctx, &group, a);
 }
 
-static int verify(void* opaque, const char* path, uint32_t st, const power_action_t* a)
+static int verify(void* opaque, const char* path, uint32_t state, const power_action_t* a)
 {
     npa_graph_ctx_t* c = opaque;
-    const npa_slot_t *s = NULL, *peer = NULL;
-    return supports_pair(c, path, st, a, &s, &peer) &&
-           c->requests.verify_pair(c->requests.ctx, &s->key, s->handle, &peer->key, peer->handle,
-                                   a);
+    npa_req_group_t group;
+    return request_group(c, path, state, a, &group) &&
+           c->requests.supports(c->requests.ctx, &group, a) &&
+           c->requests.verify(c->requests.ctx, &group, a);
 }
 
-static int restore(void* opaque, const char* path, uint32_t st, const power_action_t* a,
+static int restore(void* opaque, const char* path, uint32_t state, const power_action_t* a,
                    const power_snapshot_t* old)
 {
     npa_graph_ctx_t* c = opaque;
-    const npa_slot_t *s = NULL, *peer = NULL;
-    return old && paired(c, path, st, a, &s, &peer) &&
-           c->requests.restore_pair(c->requests.ctx, &s->key, s->handle, &peer->key, peer->handle,
-                                    old);
+    npa_req_group_t group;
+    return old && request_group(c, path, state, a, &group) &&
+           c->requests.restore(c->requests.ctx, &group, old);
 }
 
-static int verify_restored(void* opaque, const char* path, uint32_t st, const power_action_t* a,
+static int verify_restored(void* opaque, const char* path, uint32_t state, const power_action_t* a,
                            const power_snapshot_t* old)
 {
     npa_graph_ctx_t* c = opaque;
-    const npa_slot_t *s = NULL, *peer = NULL;
-    return old && paired(c, path, st, a, &s, &peer) &&
-           c->requests.verify_restored_pair(c->requests.ctx, &s->key, s->handle, &peer->key,
-                                            peer->handle, old);
+    npa_req_group_t group;
+    return old && request_group(c, path, state, a, &group) &&
+           c->requests.verify_restored(c->requests.ctx, &group, old);
 }
-
-/* a sequence may have been damaged after sealing; bound the path and action inventory before
- * strcmp or any provider readback. */
 
 static int bounded_path(const char* path, size_t limit)
 {
@@ -114,43 +96,43 @@ static int bounded_path(const char* path, size_t limit)
     return 0;
 }
 
-static int verify_final(void* opaque, const char* path, uint32_t st,
+static int verify_final(void* opaque, const char* path, uint32_t state,
                         const power_sequence_t* sequence)
 {
     npa_graph_ctx_t* c = opaque;
     uint32_t i, j;
     int found = 0;
-    if (!c || !path || !sequence || (st != 0u && st != 3u) || sequence->target_d_state != st ||
-        !sequence->action_cnt || sequence->action_cnt > POWER_MAX_ACTIONS ||
+    if (!c || !path || !sequence || state >= POWER_DSTATE_COUNT ||
+        sequence->target_d_state != state || !sequence->action_cnt ||
+        sequence->action_cnt > POWER_MAX_ACTIONS ||
         !bounded_path(sequence->dev_path, sizeof(sequence->dev_path)) ||
         !bounded_path(path, sizeof(sequence->dev_path)) || strcmp(sequence->dev_path, path))
         return 0;
-    /* final verification is per action selector; one successful vote must not validate a stale
-     * selector on the same res. */
-
-    for (i = 0; i < sequence->action_cnt; ++i) {
+    for (i = 0u; i < sequence->action_cnt; ++i) {
         const power_action_t* a = &sequence->actions[i];
-        const npa_slot_t *s = NULL, *peer = NULL;
+        npa_req_group_t group;
         int superseded = 0;
         if (a->kind != c->kind)
             continue;
         found = 1;
-        if (!supports_pair(c, path, st, a, &s, &peer))
+        if (!request_group(c, path, state, a, &group) ||
+            !c->requests.supports(c->requests.ctx, &group, a))
             return 0;
         for (j = i + 1u; j < sequence->action_cnt; ++j) {
             const power_action_t* later = &sequence->actions[j];
-            const npa_slot_t *other = NULL, *other_peer = NULL;
+            npa_req_group_t other;
             if (later->kind != c->kind)
                 continue;
-            if (!supports_pair(c, path, st, later, &other, &other_peer))
+            if (!request_group(c, path, state, later, &other) ||
+                !c->requests.supports(c->requests.ctx, &other, later))
                 return 0;
-            if (other == s && (c->kind != POWER_CLOCK || later->u.clock.vote == a->u.clock.vote)) {
+            if (other.states[state] == group.states[state] &&
+                (c->kind != POWER_CLOCK || later->u.clock.vote == a->u.clock.vote)) {
                 superseded = 1;
                 break;
             }
         }
-        if (!superseded && !c->requests.verify_final_pair(c->requests.ctx, &s->key, s->handle,
-                                                          &peer->key, peer->handle, a))
+        if (!superseded && !c->requests.verify_final(c->requests.ctx, &group, a))
             return 0;
     }
     return found;
@@ -161,8 +143,8 @@ int npa_graph_make_provider(npa_graph_ctx_t* c, npa_registry_t* reg, power_actio
 {
     if (!c || !reg || !ops || !provider || reg->active || reg->quarantined ||
         (kind != POWER_CLOCK && kind != POWER_ICB && kind != POWER_PMIC_REGULATOR) ||
-        !ops->supports_pair || !ops->read_pair || !ops->issue_pair || !ops->verify_pair ||
-        !ops->restore_pair || !ops->verify_restored_pair || !ops->verify_final_pair)
+        !ops->supports || !ops->read || !ops->issue || !ops->verify || !ops->restore ||
+        !ops->verify_restored || !ops->verify_final)
         return 0;
     memset(c, 0, sizeof(*c));
     memset(provider, 0, sizeof(*provider));

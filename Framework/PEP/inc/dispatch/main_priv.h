@@ -86,6 +86,7 @@ BOOLEAN pep_ufs_comp_desc_matches_graph(const char* path);
 int pep_native_owner_lock(void* ctx);
 void pep_native_owner_unlock(void* ctx);
 BOOLEAN pep_prepare_native_ufs_scope(pep_devnode_t* n, const char* path);
+BOOLEAN pep_node_d_state_declared(pep_devnode_t* n, ULONG target);
 power_result_t pep_run_node_d_state(pep_devnode_t* n, ULONG target);
 BOOLEAN pep_native_ufs_retire(pep_devnode_t* n, const UNICODE_STRING* dev_id);
 UCHAR __fastcall

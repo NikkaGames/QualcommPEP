@@ -33,18 +33,28 @@ static graph_dev_t* find_dev(res_graph_t* g, const char* path)
 /* provider admission/preflight MUST check the bounds again before walking Actions[] or
  * passing a sequence to a callback. */
 
+int graph_has_d_state(const graph_dev_t* d, uint32_t state)
+{
+    return d && state < POWER_DSTATE_COUNT && (d->d_state_mask & (uint8_t)(1u << state));
+}
+
 static int valid_dstate_sequence(const graph_dev_t* d, const power_sequence_t* sequence,
                                  uint32_t target)
 {
-    return d && sequence && valid_device_path(d->path) && valid_device_path(sequence->dev_path) &&
-           !strcmp(d->path, sequence->dev_path) && sequence->target_d_state == target &&
-           sequence->action_cnt > 0u && sequence->action_cnt <= POWER_MAX_ACTIONS;
+    return graph_has_d_state(d, target) && sequence && valid_device_path(d->path) &&
+           valid_device_path(sequence->dev_path) && !strcmp(d->path, sequence->dev_path) &&
+           sequence->target_d_state == target && sequence->action_cnt <= POWER_MAX_ACTIONS;
 }
 
 static int valid_dstate_sequences(const graph_dev_t* d)
 {
-    return d && d->has_d0 && d->has_d3 && valid_dstate_sequence(d, &d->d0, 0u) &&
-           valid_dstate_sequence(d, &d->d3, 3u);
+    uint32_t state;
+    if (!graph_has_d_state(d, 0u) || !graph_has_d_state(d, 3u) || (d->d_state_mask & ~0x0fu))
+        return 0;
+    for (state = 0u; state < POWER_DSTATE_COUNT; ++state)
+        if (graph_has_d_state(d, state) && !valid_dstate_sequence(d, &d->d_states[state], state))
+            return 0;
+    return 1;
 }
 
 static int valid_provider(const graph_provider_t* p)
@@ -140,27 +150,21 @@ int graph_add_sequence(res_graph_t* g, const power_sequence_t* p)
 {
     graph_dev_t* d;
     if (!g || g->sealed || g->retired || g->quiescing || g->dev_cnt > GRAPH_MAX_DEVICES || !p ||
-        !valid_device_path(p->dev_path) || (p->target_d_state != 0u && p->target_d_state != 3u) ||
-        !p->action_cnt || p->action_cnt > POWER_MAX_ACTIONS)
+        !valid_device_path(p->dev_path) || p->target_d_state >= POWER_DSTATE_COUNT ||
+        p->action_cnt > POWER_MAX_ACTIONS)
         return 0;
     d = find_dev(g, p->dev_path);
     if (!d) {
         if (g->dev_cnt == GRAPH_MAX_DEVICES)
             return 0;
         d = &g->devices[g->dev_cnt++];
+        d->last_nonempty_state = UINT32_MAX;
         memcpy(d->path, p->dev_path, strlen(p->dev_path) + 1u);
     }
-    if (p->target_d_state == 0u) {
-        if (d->has_d0)
-            return 0;
-        memcpy(&d->d0, p, sizeof(*p));
-        d->has_d0 = 1u;
-    } else {
-        if (d->has_d3)
-            return 0;
-        memcpy(&d->d3, p, sizeof(*p));
-        d->has_d3 = 1u;
-    }
+    if (graph_has_d_state(d, p->target_d_state))
+        return 0;
+    d->d_states[p->target_d_state] = *p;
+    d->d_state_mask |= (uint8_t)(1u << p->target_d_state);
     return 1;
 }
 
@@ -241,10 +245,12 @@ static int pins_exclusive(const res_graph_t* g)
         for (j = i + 1u; j < g->dev_cnt; ++j) {
             const graph_dev_t* da = &g->devices[i];
             const graph_dev_t* db = &g->devices[j];
-            for (sa = 0; sa < 2u; ++sa)
-                for (sb = 0; sb < 2u; ++sb) {
-                    const power_sequence_t* pa = sa ? &da->d3 : &da->d0;
-                    const power_sequence_t* pb = sb ? &db->d3 : &db->d0;
+            for (sa = 0; sa < POWER_DSTATE_COUNT; ++sa)
+                for (sb = 0; sb < POWER_DSTATE_COUNT; ++sb) {
+                    const power_sequence_t* pa = &da->d_states[sa];
+                    const power_sequence_t* pb = &db->d_states[sb];
+                    if (!graph_has_d_state(da, sa) || !graph_has_d_state(db, sb))
+                        continue;
                     for (a = 0; a < pa->action_cnt; ++a) {
                         const power_action_t* x = &pa->actions[a];
                         if (x->kind != POWER_TLMM_GPIO && x->kind != POWER_PMIC_GPIO)
@@ -306,6 +312,28 @@ static int supported(res_graph_t* g, graph_dev_t* d, const power_sequence_t* seq
             return 0;
     }
     return 1;
+}
+
+static int all_states_supported(res_graph_t* g, graph_dev_t* d)
+{
+    uint32_t state;
+    for (state = 0u; state < POWER_DSTATE_COUNT; ++state)
+        if (graph_has_d_state(d, state) && !supported(g, d, &d->d_states[state]))
+            return 0;
+    return 1;
+}
+
+int graph_d_state_declared(res_graph_t* g, const char* path, uint32_t state)
+{
+    graph_dev_t* d;
+    int declared;
+    if (!g || state >= POWER_DSTATE_COUNT || !g->acquire || !g->release || !g->acquire(g->lock_ctx))
+        return 0;
+    d = find_dev(g, path);
+    declared =
+        g->sealed && !g->retired && d && valid_dstate_sequences(d) && graph_has_d_state(d, state);
+    g->release(g->lock_ctx);
+    return declared;
 }
 
 int graph_retire(res_graph_t* g)
@@ -404,7 +432,7 @@ int graph_can_claim_held(res_graph_t* g, const char* path)
     return g && g->sealed && !g->retired && !g->quiescing && d && complete_comp_contract(g, d) &&
            valid_dstate_sequences(d) && !d->prepared && !d->provider_transaction_entered &&
            !d->state.quarantined && (!d->state.state_known || d->state.current_d_state == 3u) &&
-           supported(g, d, &d->d0) && supported(g, d, &d->d3);
+           all_states_supported(g, d);
 }
 
 int graph_can_claim(res_graph_t* g, const char* path)
@@ -530,7 +558,7 @@ int graph_prepare(res_graph_t* g, const char* path)
         g->release(g->lock_ctx);
         return 0;
     }
-    okay = supported(g, d, &d->d0) && supported(g, d, &d->d3);
+    okay = all_states_supported(g, d);
     if (okay)
         d->prepared = 1u;
     g->release(g->lock_ctx);
@@ -547,7 +575,7 @@ static uint16_t client_key(const graph_dev_t* d, const power_sequence_t* sequenc
 {
     if (sequence->actions[i].kind == POWER_FOOTSWITCH)
         return 0u;
-    return sequence->target_d_state == 0u ? d->d0_clients[i] : d->d3_clients[i];
+    return d->state_clients[sequence->target_d_state][i];
 }
 
 static int action_client(const graph_dev_t* d, const power_sequence_t* sequence,
@@ -595,6 +623,9 @@ static int run_lock(void* ctx)
 static void run_unlock(void* ctx)
 {
     run_ctx_t* r = (run_ctx_t*)ctx;
+    if (r->sequence->action_cnt && r->dev->state.state_known && !r->dev->state.quarantined &&
+        r->dev->state.current_d_state == r->sequence->target_d_state)
+        r->dev->last_nonempty_state = r->sequence->target_d_state;
     r->graph->release(r->graph->lock_ctx);
 }
 
@@ -662,6 +693,15 @@ static int run_verify_final(void* ctx, const power_sequence_t* sequence)
     power_sequence_t* group = &r->graph->provider_sequence;
     char identity[256];
     uint32_t i, j;
+    if (!sequence->action_cnt) {
+        uint32_t previous = r->dev->last_nonempty_state;
+        run_ctx_t prior = *r;
+        if (!r->dev->state.state_known || r->dev->state.quarantined ||
+            !graph_has_d_state(r->dev, previous) || !r->dev->d_states[previous].action_cnt)
+            return 0;
+        prior.sequence = &r->dev->d_states[previous];
+        return run_verify_final(&prior, prior.sequence);
+    }
     for (i = 0; i < sequence->action_cnt; ++i) {
         unsigned k = (unsigned)sequence->actions[i].kind;
         uint16_t key = client_key(r->dev, sequence, i);
@@ -700,11 +740,11 @@ int graph_verify_reviewed_ic_f0(res_graph_t* g, const char* path, uint32_t comp,
         valid_dstate_sequences(d)) {
         run.graph = g;
         run.dev = d;
-        run.sequence = &d->d0;
+        run.sequence = &d->d_states[0];
         /* read-only provider-owned final state verification; no f0 writes exist in the exact ACPI
          * desc. provider retirement and failed readback both refuse the PoFx completion. */
 
-        ok = run_verify_final(&run, &d->d0);
+        ok = run_verify_final(&run, &d->d_states[0]);
     }
     g->release(g->lock_ctx);
     return ok;
@@ -725,8 +765,8 @@ int graph_verify_native_ufs_d3(res_graph_t* g, const char* path, uint64_t epoch)
         d->state.current_d_state == 3u) {
         run.graph = g;
         run.dev = d;
-        run.sequence = &d->d3;
-        ok = run_verify_final(&run, &d->d3);
+        run.sequence = &d->d_states[3];
+        ok = run_verify_final(&run, &d->d_states[3]);
     }
     g->release(g->lock_ctx);
     return ok;
@@ -741,14 +781,14 @@ power_result_t graph_transition(res_graph_t* g, const char* path, uint32_t state
     if (!trace)
         return POWER_BAD_INPUT;
     memset(trace, 0, sizeof(*trace));
-    if (!d || !g->sealed || !d->prepared || !scratch || (state != 0u && state != 3u) ||
+    if (!d || !g->sealed || !d->prepared || !scratch || !graph_has_d_state(d, state) ||
         !valid_dstate_sequences(d)) {
         trace->result = POWER_UNSUPPORTED;
         return trace->result;
     }
     run.graph = g;
     run.dev = d;
-    run.sequence = state == 0u ? &d->d0 : &d->d3;
+    run.sequence = &d->d_states[state];
     memset(&backend, 0, sizeof(backend));
     backend.ctx = &run;
     backend.lock = run_lock;

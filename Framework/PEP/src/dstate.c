@@ -780,16 +780,13 @@ static __forceinline BOOLEAN pep_dev_power_state_dx_transition(_Inout_ pep_dev_p
         pep_dev_power_state_work(p);
         return TRUE;
     }
-    /* d1/d2 must be independently present and compiled for this runtime owner. System
-     * transitions remain firmware-owned and invalidate proof later. */
+    /* Each device state requires its own descriptor. System transitions remain
+     * firmware-owned and invalidate resource verification on completion. */
 
-    if (!p->system_transition && p->power_state != PowerDeviceD3 &&
-        (p->power_state != PowerDeviceD1 && p->power_state != PowerDeviceD2 ||
-         !n->runtime_dstate_scope ||
-         !(n->runtime_dstate_scope->program.idx.d_state_mask &
-           (uint8_t)(1u << ((ULONG)p->power_state - (ULONG)PowerDeviceD0))))) {
-        TraceEvents(TRACE_LEVEL_WARNING, TRACE_POWER,
-                    "dpm: intermediate state absent from descriptor");
+    if (!p->system_transition &&
+        !pep_node_d_state_declared(n, (ULONG)p->power_state - (ULONG)PowerDeviceD0)) {
+        TraceEvents(TRACE_LEVEL_WARNING, TRACE_POWER, "dpm: path=%wZ D%lu absent from descriptor",
+                    &n->instance_path, (ULONG)p->power_state - (ULONG)PowerDeviceD0);
         return FALSE;
     }
     if (!pep_dpm_begin_transition(n, p->power_state)) {

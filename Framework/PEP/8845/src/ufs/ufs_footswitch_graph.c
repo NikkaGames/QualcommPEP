@@ -9,9 +9,9 @@ static int supports_ufs_action(ufs_fs_graph_t* a, const char* path, uint32_t sta
 {
     if (!a || !a->bound || !a->res || !a->owner_epoch || !path || strcmp(path, k_path) != 0 ||
         !act || act->kind != POWER_FOOTSWITCH ||
-        strcmp(act->u.footswitch.name, clock_ufs_domain) != 0 || (state != 0u && state != 3u) ||
-        act->u.footswitch.action != (state == 0u ? 1u : 2u) || !a->res->bound ||
-        a->res->quarantined || !a->res->enable_client ||
+        strcmp(act->u.footswitch.name, clock_ufs_domain) != 0 || state >= POWER_DSTATE_COUNT ||
+        (act->u.footswitch.action != FS_ENABLE && act->u.footswitch.action != FS_DISABLE) ||
+        !a->res->bound || a->res->quarantined || !a->res->enable_client ||
         strcmp(a->res->name, clock_ufs_domain) != 0 || a->res->owner_epoch != a->owner_epoch)
         return 0;
     return fs_verify(a->res) == FS_OK;
@@ -92,17 +92,18 @@ static int verify_restored(void* v, const char* p, uint32_t s, const power_actio
 static int verify_final(void* v, const char* p, uint32_t s, const power_sequence_t* sequence)
 {
     ufs_fs_graph_t* g = v;
-    uint32_t i, found = 0;
+    uint32_t i, found = 0, action = 0;
     if (!sequence || !p || strcmp(p, k_path) != 0 || sequence->action_cnt > POWER_MAX_ACTIONS)
         return 0;
     for (i = 0; i < sequence->action_cnt; ++i)
         if (sequence->actions[i].kind == POWER_FOOTSWITCH) {
             if (!supports_ufs_action(g, p, s, &sequence->actions[i]))
                 return 0;
+            action = sequence->actions[i].u.footswitch.action;
             ++found;
         }
-    return found == 1u && g->res->normal_action == (s == 0u ? 1u : 2u) && g->verify_physical &&
-           g->verify_physical(g->res->io.ctx, clock_ufs_domain, s == 0u ? 1u : 2u, g->owner_epoch);
+    return found == 1u && g->res->normal_action == action && g->verify_physical &&
+           g->verify_physical(g->res->io.ctx, clock_ufs_domain, action, g->owner_epoch);
 }
 
 int ufs_fs_graph_bind_verified(res_graph_t* graph, ufs_fs_graph_t* adapter, fs_res_t* res,

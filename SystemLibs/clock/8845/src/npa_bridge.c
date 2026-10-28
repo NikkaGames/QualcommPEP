@@ -57,7 +57,7 @@ static int valid_scalar_resource_name(const char* value)
 
 static int valid_clock_key(const npa_key_t* key)
 {
-    return key && key->kind == POWER_CLOCK && (key->d_state == 0u || key->d_state == 3u) &&
+    return key && key->kind == POWER_CLOCK && key->d_state < POWER_DSTATE_COUNT &&
            bounded_nonempty(key->dev_path, sizeof(key->dev_path)) &&
            bounded_nonempty(key->res, sizeof(key->res));
 }
@@ -225,139 +225,155 @@ static int destroy(void* ctx, const npa_key_t* key, void* handle)
     return 1;
 }
 
-static int pair(void* ctx, const npa_key_t* k, void* h, const npa_key_t* peer, void* ph,
-                const power_action_t* a)
+static int group_clients(scalar_clock_bridge_t* bridge, const npa_req_group_t* group,
+                         scalar_clock_client_t* clients[POWER_DSTATE_COUNT])
 {
-    scalar_clock_client_t* c = client_for(ctx, h);
-    scalar_clock_client_t* p = client_for(ctx, ph);
-    clock_intent_t intent;
-    if (!decode_simple_clock_intent(a, &intent) || !valid_clock_key(k) || !valid_clock_key(peer) ||
-        k->d_state == peer->d_state || !equal_ci(k->res, peer->res) ||
-        strcmp(k->dev_path, peer->dev_path) != 0 ||
-        !(k->clock_mode_bits & (1u << a->u.clock.vote)) || !valid(ctx, k, h) ||
-        !valid(ctx, peer, ph) || !c || !p || c == p || c->res != p->res)
+    const npa_slot_t* target;
+    scalar_res_t* resource = NULL;
+    uint32_t i;
+    if (!bridge || !group || group->target >= POWER_DSTATE_COUNT ||
+        !(target = group->states[group->target]))
         return 0;
+    memset(clients, 0, POWER_DSTATE_COUNT * sizeof(*clients));
+    for (i = 0u; i < POWER_DSTATE_COUNT; ++i) {
+        const npa_slot_t* slot = group->states[i];
+        scalar_clock_client_t* client;
+        if (!slot)
+            continue;
+        if (slot->key.d_state != i || !npa_same_res_identity(&slot->key, &target->key) ||
+            !valid(bridge, &slot->key, slot->handle) ||
+            !(client = client_for(bridge, slot->handle)) || (resource && client->res != resource))
+            return 0;
+        resource = client->res;
+        clients[i] = client;
+    }
+    return clients[group->target] != NULL;
+}
+
+static int supports(void* ctx, const npa_req_group_t* group, const power_action_t* action)
+{
+    scalar_clock_client_t* clients[POWER_DSTATE_COUNT];
+    clock_intent_t intent;
+    return decode_simple_clock_intent(action, &intent) && group_clients(ctx, group, clients) &&
+           equal_ci(group->states[group->target]->key.res, action->u.clock.name) &&
+           (group->states[group->target]->key.clock_mode_bits & (1u << action->u.clock.vote));
+}
+
+static int read_group(void* ctx, const npa_req_group_t* group, power_snapshot_t* snapshot)
+{
+    scalar_clock_client_t* clients[POWER_DSTATE_COUNT];
+    scalar_res_t* resource;
+    uint32_t i, requests = 0u;
+    if (!snapshot || !group_clients(ctx, group, clients))
+        return 0;
+    resource = clients[group->target]->res;
+    memset(snapshot, 0, sizeof(*snapshot));
+    snapshot->opaque[0] = SNAP_MAGIC;
+    for (i = 0u; i < POWER_DSTATE_COUNT; ++i) {
+        const scalar_client_t* scalar;
+        if (!clients[i])
+            continue;
+        scalar = &resource->clients[clients[i]->scalar.slot];
+        if ((scalar->has_req && scalar->req != 1u) || (!scalar->has_req && scalar->req))
+            return 0;
+        snapshot->opaque[i + 1u] =
+            ((uint64_t)clients[i]->scalar.generation << 32) | clients[i]->scalar.slot;
+        if (scalar->has_req) {
+            snapshot->opaque[5] |= UINT64_C(1) << i;
+            ++requests;
+        }
+    }
+    if (requests > 1u)
+        return 0;
+    snapshot->opaque[6] = resource->effective;
+    snapshot->opaque[7] = resource->generation;
     return 1;
 }
 
-static int read_pair(void* ctx, const npa_key_t* k, void* h, const npa_key_t* pk, void* ph,
-                     power_snapshot_t* sn)
+static int snapshot_matches(scalar_clock_client_t* clients[POWER_DSTATE_COUNT],
+                            const npa_req_group_t* group, const power_snapshot_t* snapshot)
 {
-    scalar_clock_client_t *c = client_for(ctx, h), *p = client_for(ctx, ph);
-    const scalar_client_t *a, *b;
-    if (!sn || !valid(ctx, k, h) || !valid(ctx, pk, ph) || c->res != p->res || !physical(c->res))
+    uint32_t i;
+    if (!snapshot || snapshot->opaque[0] != SNAP_MAGIC || snapshot->opaque[5] > 0x0fu ||
+        (snapshot->opaque[5] && (snapshot->opaque[5] & (snapshot->opaque[5] - 1u))) ||
+        snapshot->opaque[6] > 1u || snapshot->opaque[7] != clients[group->target]->res->generation)
         return 0;
-    a = &c->res->clients[c->scalar.slot];
-    b = &p->res->clients[p->scalar.slot];
-    if (a->has_req && a->req != 1u)
-        return 0;
-    if (b->has_req && b->req != 1u)
-        return 0;
-    if (a->has_req && b->has_req)
-        return 0;
-    memset(sn, 0, sizeof(*sn));
-    sn->opaque[0] = SNAP_MAGIC;
-    sn->opaque[1] = ((uint64_t)c->scalar.generation << 32) | c->scalar.slot;
-    sn->opaque[2] = ((uint64_t)p->scalar.generation << 32) | p->scalar.slot;
-    sn->opaque[3] = a->req;
-    sn->opaque[4] = b->req;
-    sn->opaque[5] = (uint64_t)a->has_req | ((uint64_t)b->has_req << 1);
-    sn->opaque[6] = c->res->effective;
-    sn->opaque[7] = c->res->generation;
+    for (i = 0u; i < POWER_DSTATE_COUNT; ++i) {
+        if (!clients[i]) {
+            if (snapshot->opaque[i + 1u] || (snapshot->opaque[5] & (UINT64_C(1) << i)))
+                return 0;
+        } else if (snapshot->opaque[i + 1u] !=
+                   (((uint64_t)clients[i]->scalar.generation << 32) | clients[i]->scalar.slot))
+            return 0;
+    }
     return 1;
 }
 
-static int snapshot_matches_clients(scalar_clock_client_t* c, scalar_clock_client_t* p,
-                                    const power_snapshot_t* sn)
+static int group_matches(void* ctx, const npa_req_group_t* group, const power_action_t* action)
 {
-    return sn && sn->opaque[0] == SNAP_MAGIC &&
-           sn->opaque[1] == (((uint64_t)c->scalar.generation << 32) | c->scalar.slot) &&
-           sn->opaque[2] == (((uint64_t)p->scalar.generation << 32) | p->scalar.slot) &&
-           sn->opaque[5] <= 2u && sn->opaque[3] <= 1u && sn->opaque[4] <= 1u &&
-           sn->opaque[6] <= 1u && sn->opaque[7] == c->res->generation &&
-           ((sn->opaque[5] & 1u) == 0u || sn->opaque[3] == 1u) &&
-           ((sn->opaque[5] & 2u) == 0u || sn->opaque[4] == 1u);
-}
-
-static int pair_matches(void* ctx, const npa_key_t* k, void* h, const npa_key_t* pk, void* ph,
-                        const power_action_t* a)
-{
-    scalar_clock_client_t *c = client_for(ctx, h), *p = client_for(ctx, ph);
-    const scalar_client_t *cr, *pr;
+    scalar_clock_client_t* clients[POWER_DSTATE_COUNT];
     clock_intent_t intent;
-    if (!decode_simple_clock_intent(a, &intent) || !pair(ctx, k, h, pk, ph, a) || !physical(c->res))
+    uint32_t i;
+    if (!supports(ctx, group, action) || !decode_simple_clock_intent(action, &intent) ||
+        !group_clients(ctx, group, clients))
         return 0;
-    cr = &c->res->clients[c->scalar.slot];
-    pr = &p->res->clients[p->scalar.slot];
-    if (pr->has_req)
-        return 0;
-    return intent.effective_enabled ? (cr->has_req && cr->req == 1u) : !cr->has_req;
+    for (i = 0u; i < POWER_DSTATE_COUNT; ++i) {
+        const scalar_client_t* scalar;
+        int issued = i == group->target && intent.effective_enabled;
+        if (!clients[i])
+            continue;
+        scalar = &clients[i]->res->clients[clients[i]->scalar.slot];
+        if (issued ? (!scalar->has_req || scalar->req != 1u) : (scalar->has_req || scalar->req))
+            return 0;
+    }
+    return 1;
 }
 
-static int issue_pair(void* ctx, const npa_key_t* k, void* h, const npa_key_t* pk, void* ph,
-                      const power_action_t* a)
+static int issue_group(void* ctx, const npa_req_group_t* group, const power_action_t* action)
 {
-    scalar_clock_client_t *c = client_for(ctx, h), *p = client_for(ctx, ph);
+    scalar_clock_client_t* clients[POWER_DSTATE_COUNT];
+    scalar_clock_client_t* target;
     clock_intent_t intent;
-    if (!decode_simple_clock_intent(a, &intent) || !pair(ctx, k, h, pk, ph, a))
+    uint32_t i;
+    if (!supports(ctx, group, action) || !decode_simple_clock_intent(action, &intent) ||
+        !group_clients(ctx, group, clients))
         return 0;
-    /* graph owns rollback for a partially applied second operation (including this action). */
-
-    if (intent.effective_enabled && !scalar_issue(c->res, c->scalar, 1u))
+    target = clients[group->target];
+    /* Acquire the incoming vote before releasing any previous state's request. */
+    if (intent.effective_enabled && !scalar_issue(target->res, target->scalar, 1u))
         return 0;
-    if (!scalar_complete(p->res, p->scalar))
-        return 0;
-    if (!intent.effective_enabled && !scalar_complete(c->res, c->scalar))
-        return 0;
-    return pair_matches(ctx, k, h, pk, ph, a);
+    for (i = 0u; i < POWER_DSTATE_COUNT; ++i)
+        if (clients[i] && (i != group->target || !intent.effective_enabled) &&
+            !scalar_complete(clients[i]->res, clients[i]->scalar))
+            return 0;
+    return group_matches(ctx, group, action);
 }
 
-static int restore_pair(void* ctx, const npa_key_t* k, void* h, const npa_key_t* pk, void* ph,
-                        const power_snapshot_t* sn)
+static int restore_group(void* ctx, const npa_req_group_t* group, const power_snapshot_t* snapshot)
 {
-    scalar_clock_client_t *c = client_for(ctx, h), *p = client_for(ctx, ph);
-    if (!valid(ctx, k, h) || !valid(ctx, pk, ph) || c->res != p->res ||
-        !snapshot_matches_clients(c, p, sn))
+    scalar_clock_client_t* clients[POWER_DSTATE_COUNT];
+    scalar_res_t* resource;
+    uint32_t i;
+    if (!group_clients(ctx, group, clients) || !snapshot_matches(clients, group, snapshot))
         return 0;
-    /* re-enable the original winning client before withdrawing any changed vote, then verify
-     * the independent effective state after restoration. */
-
-    if ((sn->opaque[5] & 1u) && !scalar_issue(c->res, c->scalar, 1u))
-        return 0;
-    if ((sn->opaque[5] & 2u) && !scalar_issue(p->res, p->scalar, 1u))
-        return 0;
-    if (!(sn->opaque[5] & 1u) && !scalar_complete(c->res, c->scalar))
-        return 0;
-    if (!(sn->opaque[5] & 2u) && !scalar_complete(p->res, p->scalar))
-        return 0;
-    return physical(c->res) && c->res->effective == sn->opaque[6];
+    resource = clients[group->target]->res;
+    for (i = 0u; i < POWER_DSTATE_COUNT; ++i)
+        if (clients[i] && (snapshot->opaque[5] & (UINT64_C(1) << i)) &&
+            !scalar_issue(resource, clients[i]->scalar, 1u))
+            return 0;
+    for (i = 0u; i < POWER_DSTATE_COUNT; ++i)
+        if (clients[i] && !(snapshot->opaque[5] & (UINT64_C(1) << i)) &&
+            !scalar_complete(resource, clients[i]->scalar))
+            return 0;
+    return physical(resource) && resource->effective == snapshot->opaque[6];
 }
 
-static int verify_restored(void* ctx, const npa_key_t* k, void* h, const npa_key_t* pk, void* ph,
-                           const power_snapshot_t* sn)
+static int verify_restored(void* ctx, const npa_req_group_t* group,
+                           const power_snapshot_t* snapshot)
 {
-    scalar_clock_client_t *c = client_for(ctx, h), *p = client_for(ctx, ph);
-    const scalar_client_t *cr, *pr;
-    if (!valid(ctx, k, h) || !valid(ctx, pk, ph) || c->res != p->res ||
-        !snapshot_matches_clients(c, p, sn))
-        return 0;
-    cr = &c->res->clients[c->scalar.slot];
-    pr = &p->res->clients[p->scalar.slot];
-    return physical(c->res) && c->res->effective == sn->opaque[6] &&
-           cr->has_req == (sn->opaque[5] & 1u) && pr->has_req == ((sn->opaque[5] >> 1) & 1u) &&
-           cr->req == sn->opaque[3] && pr->req == sn->opaque[4];
-}
-
-static int supports(void* ctx, const npa_key_t* k, void* h, const npa_key_t* pk, void* ph,
-                    const power_action_t* a)
-{
-    return pair(ctx, k, h, pk, ph, a);
-}
-
-static int verify(void* ctx, const npa_key_t* k, void* h, const npa_key_t* pk, void* ph,
-                  const power_action_t* a)
-{
-    return pair_matches(ctx, k, h, pk, ph, a);
+    power_snapshot_t current;
+    return snapshot && read_group(ctx, group, &current) &&
+           !memcmp(snapshot, &current, sizeof(current));
 }
 
 void scalar_clock_lifecycle(scalar_clock_bridge_t* b, npa_callbacks_t* out)
@@ -383,11 +399,11 @@ void scalar_clock_requests(scalar_clock_bridge_t* b, npa_req_ops_t* out)
     if (!b)
         return;
     out->ctx = b;
-    out->supports_pair = supports;
-    out->read_pair = read_pair;
-    out->issue_pair = issue_pair;
-    out->verify_pair = verify;
-    out->restore_pair = restore_pair;
-    out->verify_restored_pair = verify_restored;
-    out->verify_final_pair = verify;
+    out->supports = supports;
+    out->read = read_group;
+    out->issue = issue_group;
+    out->verify = group_matches;
+    out->restore = restore_group;
+    out->verify_restored = verify_restored;
+    out->verify_final = group_matches;
 }
