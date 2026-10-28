@@ -49,8 +49,8 @@ typedef struct gcc_domain {
 #define GCC_KIND_BRANCH 1u
 #define GCC_KIND_VOTE 2u
 #define GCC_KIND_GDSC 3u
-/* hlos request registers expose a retained vote; CLK_OFF is downstream status and is not
- * the acknowledgement of this owner's request bit. */
+/* Request-only branches verify the retained enable bit. Downstream CLK_OFF can depend
+ * on a peripheral or another hardware owner. */
 #define GCC_KIND_REQ 4u
 
 typedef struct gcc_clock {

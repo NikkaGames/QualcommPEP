@@ -1,17 +1,18 @@
+#include "clock_target.h"
 #include "ufs_footswitch_graph.h"
 #include <string.h>
 
 static const char k_path[] = "\\_SB.UFS0";
-static const char k_domain[] = "gcc_ufs_phy_gdsc";
 
 static int supports_ufs_action(ufs_fs_graph_t* a, const char* path, uint32_t state,
                                const power_action_t* act)
 {
     if (!a || !a->bound || !a->res || !a->owner_epoch || !path || strcmp(path, k_path) != 0 ||
-        !act || act->kind != POWER_FOOTSWITCH || strcmp(act->u.footswitch.name, k_domain) != 0 ||
-        (state != 0u && state != 3u) || act->u.footswitch.action != (state == 0u ? 1u : 2u) ||
-        !a->res->bound || a->res->quarantined || !a->res->enable_client ||
-        strcmp(a->res->name, k_domain) != 0 || a->res->owner_epoch != a->owner_epoch)
+        !act || act->kind != POWER_FOOTSWITCH ||
+        strcmp(act->u.footswitch.name, clock_ufs_domain) != 0 || (state != 0u && state != 3u) ||
+        act->u.footswitch.action != (state == 0u ? 1u : 2u) || !a->res->bound ||
+        a->res->quarantined || !a->res->enable_client ||
+        strcmp(a->res->name, clock_ufs_domain) != 0 || a->res->owner_epoch != a->owner_epoch)
         return 0;
     return fs_verify(a->res) == FS_OK;
 }
@@ -32,7 +33,7 @@ static int snapshot(void* v, const char* p, uint32_t s, const power_action_t* a,
     out->opaque[1] = g->owner_epoch;
     if (g->read_physical) {
         uint32_t raw = 0u;
-        if (!g->read_physical(g->res->io.ctx, k_domain, g->owner_epoch, &raw) ||
+        if (!g->read_physical(g->res->io.ctx, clock_ufs_domain, g->owner_epoch, &raw) ||
             (raw != 1u && raw != 2u))
             return 0;
         out->opaque[2] = raw;
@@ -51,7 +52,8 @@ static int verify(void* v, const char* p, uint32_t s, const power_action_t* a)
     ufs_fs_graph_t* g = v;
     return supports(v, p, s, a) && g->res->normal_action == a->u.footswitch.action &&
            g->verify_physical &&
-           g->verify_physical(g->res->io.ctx, k_domain, a->u.footswitch.action, g->owner_epoch);
+           g->verify_physical(g->res->io.ctx, clock_ufs_domain, a->u.footswitch.action,
+                              g->owner_epoch);
 }
 
 static int restore(void* v, const char* p, uint32_t s, const power_action_t* a,
@@ -80,10 +82,11 @@ static int verify_restored(void* v, const char* p, uint32_t s, const power_actio
     if (g->read_physical) {
         uint32_t actual = 0u;
         return (snap->opaque[2] == 1u || snap->opaque[2] == 2u) &&
-               g->read_physical(g->res->io.ctx, k_domain, g->owner_epoch, &actual) &&
+               g->read_physical(g->res->io.ctx, clock_ufs_domain, g->owner_epoch, &actual) &&
                actual == snap->opaque[2];
     }
-    return g->verify_physical(g->res->io.ctx, k_domain, (uint32_t)snap->opaque[0], g->owner_epoch);
+    return g->verify_physical(g->res->io.ctx, clock_ufs_domain, (uint32_t)snap->opaque[0],
+                              g->owner_epoch);
 }
 
 static int verify_final(void* v, const char* p, uint32_t s, const power_sequence_t* sequence)
@@ -99,7 +102,7 @@ static int verify_final(void* v, const char* p, uint32_t s, const power_sequence
             ++found;
         }
     return found == 1u && g->res->normal_action == (s == 0u ? 1u : 2u) && g->verify_physical &&
-           g->verify_physical(g->res->io.ctx, k_domain, s == 0u ? 1u : 2u, g->owner_epoch);
+           g->verify_physical(g->res->io.ctx, clock_ufs_domain, s == 0u ? 1u : 2u, g->owner_epoch);
 }
 
 int ufs_fs_graph_bind_verified(res_graph_t* graph, ufs_fs_graph_t* adapter, fs_res_t* res,
@@ -110,7 +113,7 @@ int ufs_fs_graph_bind_verified(res_graph_t* graph, ufs_fs_graph_t* adapter, fs_r
     graph_provider_t p;
     ufs_fs_graph_t candidate;
     if (!graph || !adapter || !res || adapter->bound || !res->bound || res->quarantined ||
-        !res->owner_epoch || !res->enable_client || strcmp(res->name, k_domain) != 0 ||
+        !res->owner_epoch || !res->enable_client || strcmp(res->name, clock_ufs_domain) != 0 ||
         fs_verify(res) != FS_OK || !complete_normal || !verify_physical || graph->retired ||
         graph->quiescing || graph->providers_frozen)
         return 0;

@@ -9,7 +9,8 @@ static uint8_t active_mask(const rpmh_driver_config_t* c)
 static int init_scheduler(rpmh_scheduler_t* s, const rpmh_driver_config_t* c, void* ctx)
 {
     if (!s || !c || c->hw_drv != MOLOKAI_WIN_HW_DRV || c->tcs_offset != 0u ||
-        c->commands_per_tcs != TCS_BATCH_MAX ||
+        c->commands_per_tcs != TCS_BATCH_MAX || !c->active_cnt || c->active_cnt > 8u ||
+        !c->read_amcs || (c->read_amcs & (uint8_t)~active_mask(c)) ||
         !((c->total_tcs == MOLOKAI_WIN_TCS_TOTAL && c->active_cnt == MOLOKAI_WIN_AMC_CNT &&
            c->sleep_start == MOLOKAI_WIN_SLEEP_START && c->wake_start == MOLOKAI_WIN_WAKE_START) ||
           (c->total_tcs == MOLOKAI_UEFI_TCS_TOTAL && c->active_cnt == MOLOKAI_UEFI_AMC_CNT &&
@@ -169,11 +170,16 @@ int rpmh_scheduler_submit(rpmh_scheduler_t* s, uint8_t client, rpmh_set_t set,
     return 1;
 }
 
-static int select_amc(rpmh_scheduler_t* s)
+static int select_amc(rpmh_scheduler_t* s, const rpmh_job_t* job)
 {
     uint8_t i;
     uint8_t avail =
         (uint8_t)(s->execution_authorized & (uint8_t)~s->quarantined_mask & (uint8_t)~s->busy_mask);
+    for (i = 0u; i < job->cnt; ++i)
+        if (job->commands[i].read) {
+            avail &= s->driver.read_amcs;
+            break;
+        }
     for (i = 0; i < s->driver.active_cnt; ++i) {
         uint8_t slot = (uint8_t)((s->next_slot + i) % s->driver.active_cnt);
         if (avail & (1u << slot)) {
@@ -202,7 +208,7 @@ uint32_t rpmh_scheduler_pump(rpmh_scheduler_t* s)
                 oldest = j->id;
             }
         }
-        if (!job || (slot = select_amc(s)) < 0)
+        if (!job || (slot = select_amc(s, job)) < 0)
             break;
         job->slot = (uint8_t)slot;
         job->state = RPMH_JOB_EXECUTING;

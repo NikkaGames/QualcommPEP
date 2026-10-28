@@ -1,0 +1,28 @@
+#ifndef RPMH_TARGET_H
+#define RPMH_TARGET_H
+
+#include <stdint.h>
+
+#define HLOS_RSC_DRV2_PHYS UINT64_C(0x18920000)
+#define RSC_DRV2_BYTES 0x10000u
+
+#define MOLOKAI_UEFI_HW_DRV 2u
+#define MOLOKAI_UEFI_TCS_TOTAL 6u
+#define MOLOKAI_UEFI_AMC_CNT 3u
+#define MOLOKAI_UEFI_SLEEP_START 3u
+#define MOLOKAI_UEFI_WAKE_START 5u
+
+#define MOLOKAI_WIN_HW_DRV 2u
+#define MOLOKAI_WIN_TCS_TOTAL 8u
+#define MOLOKAI_WIN_AMC_CNT 3u
+#define MOLOKAI_WIN_SLEEP_START 3u
+#define MOLOKAI_WIN_SLEEP_CNT 2u
+#define MOLOKAI_WIN_WAKE_START 5u
+#define MOLOKAI_WIN_WAKE_CNT 2u
+#define MOLOKAI_WIN_RESERVED_START 7u
+#define MOLOKAI_WIN_RESERVED_CNT 1u
+#define MOLOKAI_WIN_AMC_MASK 0x07u
+/* only AMC0 response data has been verified on this target. */
+#define MOLOKAI_WIN_READ_AMC_MASK 0x01u
+
+#endif

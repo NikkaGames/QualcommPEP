@@ -273,6 +273,9 @@
     <ClCompile Include="..\SystemLibs\clock\8845\src\gcc.c">
       <Filter>SystemLibs\clock\8845\src</Filter>
     </ClCompile>
+    <ClCompile Include="..\SystemLibs\clock\8845\src\clock_target.c">
+      <Filter>SystemLibs\clock\8845\src</Filter>
+    </ClCompile>
     <ClCompile Include="..\SystemLibs\clock\8845\src\config.c">
       <Filter>SystemLibs\clock\8845\src</Filter>
     </ClCompile>
@@ -830,6 +833,9 @@
     <ClInclude Include="..\SystemLibs\clock\8845\inc\commit.h">
       <Filter>SystemLibs\clock\8845\inc</Filter>
     </ClInclude>
+    <ClInclude Include="..\SystemLibs\clock\8845\inc\clock_target.h">
+      <Filter>SystemLibs\clock\8845\inc</Filter>
+    </ClInclude>
     <ClInclude Include="..\SystemLibs\clock\8845\inc\config.h">
       <Filter>SystemLibs\clock\8845\inc</Filter>
     </ClInclude>
@@ -1089,6 +1095,9 @@
       <Filter>SystemLibs\RPMh\8845\inc</Filter>
     </ClInclude>
     <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_sync_deferred.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_target.h">
       <Filter>SystemLibs\RPMh\8845\inc</Filter>
     </ClInclude>
     <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_tcs.h">

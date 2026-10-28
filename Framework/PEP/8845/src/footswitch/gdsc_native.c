@@ -1,3 +1,4 @@
+#include "clock_target.h"
 #include "gdsc_native.h"
 #include "domains.h"
 #include <string.h>
@@ -39,7 +40,7 @@ static int rails_consistent(const fs_gdsc_driver_t* d)
 
 static int supports_hw_control(const fs_gdsc_driver_t* d)
 {
-    return d && !strcmp(d->domain, "gcc_ufs_phy_gdsc");
+    return d && !strcmp(d->domain, clock_ufs_domain);
 }
 
 static int verify_hw(fs_gdsc_driver_t* d, uint32_t action)
@@ -172,8 +173,8 @@ int fs_gdsc_init_window_with_rails(fs_gdsc_driver_t* d, const gcc_io_t* io, cons
         !io->stall_microseconds || !valid_identifier(domain, FS_NAME_BYTES) || !owns || !epoch ||
         !id || !owns(owner, domain, epoch) || !molokai_gdsc_location(domain, &location) ||
         (!rails || !rails->acquire_votes || !rails->verify_votes || !rails->release_votes ||
-         rails->rail_mask != (!strcmp(domain, "gcc_ufs_phy_gdsc") ? (RAIL_VDD_CX | RAIL_VDD_MX)
-                                                                  : (RAIL_VDD_MM | RAIL_VDD_MX)) ||
+         rails->rail_mask != (!strcmp(domain, clock_ufs_domain) ? (RAIL_VDD_CX | RAIL_VDD_MX)
+                                                                : (RAIL_VDD_MM | RAIL_VDD_MX)) ||
          !rails->verify_votes(rails->ctx, domain, epoch, 0u)) ||
         location.native_clock_id != id || location.controller_physical != window_phys ||
         location.controller_bytes != window_bytes ||

@@ -199,7 +199,7 @@ int npa_inventory(npa_registry_t* reg, const res_graph_t* graph)
                 if (!is_npa(a->kind)) {
                     /* non-NPA operations have no corresponding NPA client handle. */
 
-                    if (a->kind < POWER_TLMM_GPIO || a->kind > POWER_PSTATE_ADJUST)
+                    if (a->kind < POWER_TLMM_GPIO || a->kind > POWER_FOOTSWITCH)
                         goto fail;
                     ++reg->non_npa_operations;
                     continue;

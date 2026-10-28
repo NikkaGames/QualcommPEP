@@ -43,6 +43,8 @@ static int identity(runtime_comp_t* s, uint32_t lane, char out[256])
     uint32_t c = s->comp;
     if (c >= 32u || lane > 32u)
         return 0;
+    if (lane < 32u)
+        return power_set_identity(s->owner.idx.path, c, lane, out);
     while (n < 256u && s->owner.idx.path[n])
         ++n;
     if (!n || n > 245u)

@@ -1,4 +1,5 @@
 #include "action_opcode.h"
+#include "clock_target.h"
 #include <string.h>
 
 int decode_clock_opcode(const power_action_t* action, clock_opcode_t* decoded)
@@ -26,11 +27,9 @@ int decode_clock_opcode(const power_action_t* action, clock_opcode_t* decoded)
     }
 
     if (action->u.clock.vote == 9u && action->u.clock.extra_cnt == 1u &&
-        action->u.clock.extra[0] == 18u &&
-        strncmp(action->u.clock.name, "gcc_ufs_phy_ice_core_clk", sizeof(action->u.clock.name)) ==
-            0) {
+        clock_config_rule(action->u.clock.name, action->u.clock.extra[0])) {
         decoded->kind = CLOCK_OP_CFG;
-        decoded->parameter0 = 18u;
+        decoded->parameter0 = action->u.clock.extra[0];
         decoded->param_cnt = 1u;
         return 1;
     }

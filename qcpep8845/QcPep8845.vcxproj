@@ -85,7 +85,7 @@
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
     </DriverSign>
     <Inf>
-      <TimeStamp>700.32000.0.416</TimeStamp>
+      <TimeStamp>700.32000.0.418</TimeStamp>
     </Inf>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
@@ -105,7 +105,7 @@
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
     </DriverSign>
     <Inf>
-      <TimeStamp>700.32000.0.416</TimeStamp>
+      <TimeStamp>700.32000.0.418</TimeStamp>
     </Inf>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -187,6 +187,9 @@
     </ClCompile>
     <ClCompile Include="..\SystemLibs\clock\8845\src\gcc.c">
       <ObjectFileName>$(IntDir)gcc_c1b9943d.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\clock\8845\src\clock_target.c">
+      <ObjectFileName>$(IntDir)clock_target.obj</ObjectFileName>
     </ClCompile>
     <ClCompile Include="..\SystemLibs\clock\8845\src\config.c">
       <ObjectFileName>$(IntDir)config_a78fd91f.obj</ObjectFileName>
@@ -664,6 +667,7 @@
     <ClInclude Include="..\Framework\DeviceLib\inc\io_target.h" />
     <ClInclude Include="..\SystemLibs\clock\8845\inc\gcc.h" />
     <ClInclude Include="..\SystemLibs\clock\8845\inc\commit.h" />
+    <ClInclude Include="..\SystemLibs\clock\8845\inc\clock_target.h" />
     <ClInclude Include="..\SystemLibs\clock\8845\inc\config.h" />
     <ClInclude Include="..\Framework\PEP\8845\inc\gic_d0_map_win.h" />
     <ClInclude Include="..\Framework\PEP\8845\inc\gic_irq37_owned_win.h" />
@@ -751,6 +755,7 @@
     <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_oem_read_sequence.h" />
     <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_oem_work.h" />
     <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_sync_deferred.h" />
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_target.h" />
     <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_tcs.h" />
     <ClInclude Include="..\SystemLibs\RPMh\8845\inc\rpmh_vote_bridge.h" />
     <ClInclude Include="..\SystemLibs\RPMh\8845\inc\vrm.h" />

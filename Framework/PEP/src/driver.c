@@ -123,6 +123,7 @@ NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT driver_object, _In_ PUNICODE_STRING reg
 
     (VOID) etw_reg();
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "driver: build rev=416 worker-completion");
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER,
+                "driver: build rev=418 resource-state-ownership");
     return STATUS_SUCCESS;
 }

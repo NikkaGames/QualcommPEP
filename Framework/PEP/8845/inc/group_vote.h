@@ -52,6 +52,8 @@ int group_vote_bind(group_vote_t*, const group_vote_io_t*, const char* dev_path,
                     uint32_t set, uint64_t epoch);
 power_result_t group_vote_transition(group_vote_t*, const power_pstate_program_t*,
                                      power_execution_t*);
+/* caller holds the provider lock used by this group. */
+int group_vote_verify_held(group_vote_t*, const power_pstate_program_t*);
 int group_vote_close(group_vote_t*);
 
 #ifdef __cplusplus

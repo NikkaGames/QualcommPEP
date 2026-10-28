@@ -33,6 +33,7 @@ typedef struct rpmh_driver_config {
     uint8_t sleep_start;
     uint8_t wake_start;
     uint8_t commands_per_tcs;
+    uint8_t read_amcs;
 } rpmh_driver_config_t;
 
 typedef struct rpmh_client {

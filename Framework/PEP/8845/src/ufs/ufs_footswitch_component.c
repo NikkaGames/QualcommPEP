@@ -1,3 +1,4 @@
+#include "clock_target.h"
 #include "ufs_footswitch_component.h"
 #include "aeob_validate.h"
 #include <stdint.h>
@@ -20,7 +21,7 @@ typedef struct pstate_audit {
 
 static int exact_ufs_action(const aeob_action_t* action, uint32_t state)
 {
-    static const char name[] = "gcc_ufs_phy_gdsc";
+    const char* name = clock_ufs_domain;
     const uint8_t* b;
     uint32_t n, sz, off, pad, i;
     uint64_t scalar = 0u;
@@ -31,7 +32,7 @@ static int exact_ufs_action(const aeob_action_t* action, uint32_t state)
     if (n < 4u || read_u16(b) != 1u)
         return 0;
     sz = read_u16(b + 2u);
-    if (sz != sizeof(name) || n - 4u < sz || memcmp(b + 4u, name, sizeof(name)))
+    if (sz != strlen(name) + 1u || n - 4u < sz || memcmp(b + 4u, name, sz))
         return 0;
     pad = sz < 4u ? 4u : sz;
     if (n - 4u < pad)
@@ -91,7 +92,7 @@ fs_result_t ufs_fs_open(ufs_fs_comp_t* scope, const void* reviewed, size_t bytes
         !client_name || !provider || !validate_both(reviewed, bytes))
         return FS_INVALID;
     /* no NPA side effects occur before complete aeo_b validation. */
-    r = fs_registry_acquire(registry, owner_set, owner_idx, "gcc_ufs_phy_gdsc", client_name,
+    r = fs_registry_acquire(registry, owner_set, owner_idx, clock_ufs_domain, client_name,
                             FS_ENABLE, provider, &ticket);
     if (r != FS_OK) {
         if (registry->quarantined)

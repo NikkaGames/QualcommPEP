@@ -34,7 +34,6 @@ int group_vote_bind(group_vote_t* s, const group_vote_io_t* io, const char* path
 {
     size_t len;
     uint64_t actual = 0u;
-    unsigned n, values[2], field;
     if (!s || s->bound || s->quarantined || !io || !epoch || comp >= 32u || set >= 32u ||
         !valid_path(path, &len) || !io->lock || !io->unlock || !io->read_epoch || !io->supports ||
         !io->snapshot || !io->apply || !io->verify || !io->restore || !io->verify_restored ||
@@ -47,26 +46,8 @@ int group_vote_bind(group_vote_t* s, const group_vote_io_t* io, const char* path
     s->comp = comp;
     s->set = set;
     memcpy(s->dev_path, path, len + 1u);
-    memcpy(s->identity, path, len);
-    s->identity[len++] = '.';
-    s->identity[len++] = 'P';
-    s->identity[len++] = 'F';
-    values[0] = comp;
-    values[1] = set;
-    for (field = 0u; field < 2u; ++field) {
-        char digits[11];
-        unsigned cnt = 0u;
-        n = values[field];
-        do {
-            digits[cnt++] = (char)('0' + n % 10u);
-            n /= 10u;
-        } while (n);
-        while (cnt)
-            s->identity[len++] = digits[--cnt];
-        if (!field)
-            s->identity[len++] = '.';
-    }
-    s->identity[len] = 0;
+    if (!power_set_identity(path, comp, set, s->identity))
+        return 0;
     s->bound = 1u;
     return 1;
 }
@@ -197,6 +178,20 @@ done:
     s->io.unlock(s->io.ctx);
     s->busy = 0u;
     return fail(trace, result, trace->failure_idx);
+}
+
+int group_vote_verify_held(group_vote_t* s, const power_pstate_program_t* p)
+{
+    const power_sequence_t* final;
+    if (!s || !p || !live(s) || !s->state_known || s->state != p->state || s->comp != p->comp ||
+        s->set != p->set || strcmp(s->dev_path, p->resources.dev_path))
+        return 0;
+    final = &s->final_sequence;
+    return final->target_d_state == p->state && final->action_cnt <= POWER_MAX_ACTIONS &&
+           final->action_cnt == p->resources.action_cnt && !strcmp(final->dev_path, s->identity) &&
+           !memcmp(final->actions, p->resources.actions,
+                   final->action_cnt * sizeof(final->actions[0])) &&
+           s->io.verify_final(s->io.ctx, s->identity, p->state, final) && live(s);
 }
 
 int group_vote_close(group_vote_t* s)

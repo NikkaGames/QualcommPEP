@@ -6,11 +6,10 @@
  * TCS_AMC_MODE_IRQ_ENABLE/STATUS/CLEAR +0xD00 / */
 
 #include <stdint.h>
+#include "rpmh_target.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define HLOS_RSC_DRV2_PHYS UINT64_C(0x18920000)
-#define RSC_DRV2_BYTES 0x10000u
 #define RSC_ID_OFFSET 0x0u
 #define RSC_ID_MASK 0xFFFFFFu
 #define RSC_ID_POR 0x040300u
@@ -18,29 +17,6 @@ extern "C" {
 #define TCS_BASE 0xD00u
 #define TCS_STRIDE 0x2A0u
 #define TCS_CMD_STRIDE 0x18u
-/* boot.MXF Molokai UEFI RPMh DRV configuration (RpmhTargetLib): HLOS hardware DRV 2, 6
- * configured TCSs, AMC slots 0..2, sleep slots 3..4, wake slot 5, and 16 commands per TCS.
- * the hardware reports 8 avail TCSs. */
-
-#define MOLOKAI_UEFI_HW_DRV 2u
-#define MOLOKAI_UEFI_TCS_TOTAL 6u
-#define MOLOKAI_UEFI_AMC_CNT 3u
-#define MOLOKAI_UEFI_SLEEP_START 3u
-#define MOLOKAI_UEFI_WAKE_START 5u
-/* firmware configures three active, two sleep, two wake and one vendor TCS; the UEFI table
- * programs the first six slots. */
-
-#define MOLOKAI_WIN_HW_DRV 2u
-#define MOLOKAI_WIN_TCS_TOTAL 8u
-#define MOLOKAI_WIN_AMC_CNT 3u
-#define MOLOKAI_WIN_SLEEP_START 3u
-#define MOLOKAI_WIN_SLEEP_CNT 2u
-#define MOLOKAI_WIN_WAKE_START 5u
-#define MOLOKAI_WIN_WAKE_CNT 2u
-#define MOLOKAI_WIN_RESERVED_START 7u
-#define MOLOKAI_WIN_RESERVED_CNT 1u
-#define MOLOKAI_WIN_AMC_MASK 0x07u
-
 #define TCS_BATCH_MAX 16u
 #define TCS_IRQ_ENABLE 0xD00u
 #define TCS_IRQ_STATUS 0xD04u

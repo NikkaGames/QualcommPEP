@@ -1,3 +1,4 @@
+#include "clock_target.h"
 /* the res owners and their published client state share one teardown epoch. */
 
 #include "ufs_native_program.h"
@@ -137,9 +138,6 @@ typedef struct owners {
     rpmh_tcs_result_t ufs_arc_last_result;
     fs_gdsc_driver_t ufs_domain_owner;
     ufs_native_scope_t ufs_native;
-    pofx_fs_required_t ufs_fs_required;
-    pofx_required_catalog_t* ufs_fs_required_catalog;
-    pofx_required_owner_t ufs_fs_required_owner;
     group_vote_t* ufs_group_votes[2]; /* desc sets 1 and 2 */
     ufs_group_bridge_t* ufs_group_bridge;
     scalar_required_t* ufs_scalar_required;
@@ -1750,7 +1748,7 @@ static int win_io_rail_readback(void* ctx, const char* ppp_name, uint64_t* effec
 static int native_ufs_owns(void* ctx, const char* domain, uint64_t epoch)
 {
     owners_t* o = (owners_t*)ctx;
-    return o && domain && !strcmp(domain, "gcc_ufs_phy_gdsc") && epoch &&
+    return o && domain && !strcmp(domain, clock_ufs_domain) && epoch &&
            o->os_rsc_lease.owner_epoch == epoch &&
            InterlockedCompareExchange(&o->os_rsc_lease.active, 0, 0) == 1 && o->rpmh_live &&
            o->clocks_live && !o->rpmh_write_fence.quarantined && !o->ufs_owner_uncertain &&
@@ -1760,7 +1758,7 @@ static int native_ufs_owns(void* ctx, const char* domain, uint64_t epoch)
 static int native_ufs_epoch(void* ctx, uint64_t* epoch)
 {
     owners_t* o = (owners_t*)ctx;
-    if (!o || !epoch || !native_ufs_owns(o, "gcc_ufs_phy_gdsc", o->os_rsc_lease.owner_epoch))
+    if (!o || !epoch || !native_ufs_owns(o, clock_ufs_domain, o->os_rsc_lease.owner_epoch))
         return 0;
     *epoch = o->os_rsc_lease.owner_epoch;
     return 1;
@@ -1768,7 +1766,7 @@ static int native_ufs_epoch(void* ctx, uint64_t* epoch)
 
 static int native_arc_owns(void* ctx, uint64_t epoch)
 {
-    return native_ufs_owns(ctx, "gcc_ufs_phy_gdsc", epoch);
+    return native_ufs_owns(ctx, clock_ufs_domain, epoch);
 }
 
 static int native_arc_read(void* ctx, uint32_t address, uint32_t* response)
@@ -1922,15 +1920,23 @@ struct ufs_group_bridge {
     owners_t* owners;
     res_graph_t* graph;
     hw_backend_t leased;
-    uint64_t serial;
+    uint64_t owner_epoch;
     uint8_t lease;
 };
+
+static int native_group_bound(owners_t* o, uint64_t serial)
+{
+    ufs_group_bridge_t* b = o ? o->ufs_group_bridge : NULL;
+    return b && b->owners == o && b->graph && serial &&
+           b->graph->backend_binding_serial == serial && serial == hw_backend_verified_serial() &&
+           native_ufs_owns(o, clock_ufs_domain, b->owner_epoch);
+}
 
 static int group_win_epoch(void* c, uint64_t* epoch)
 {
     ufs_group_bridge_t* b = (ufs_group_bridge_t*)c;
-    return b && native_ufs_epoch(b->owners, epoch) && *epoch == b->serial &&
-           b->serial == hw_backend_verified_serial();
+    return b && b->graph && native_ufs_epoch(b->owners, epoch) && *epoch == b->owner_epoch &&
+           native_group_bound(b->owners, b->graph->backend_binding_serial);
 }
 
 static int group_win_lock(void* c)
@@ -1940,7 +1946,7 @@ static int group_win_lock(void* c)
     if (!b || b->lease || !b->graph || !b->graph->acquire || !b->graph->release ||
         !group_win_epoch(c, &epoch) || !b->graph->acquire(b->graph->lock_ctx))
         return 0;
-    if (!hw_backend_begin_bound(b->serial, &b->leased)) {
+    if (!hw_backend_begin_bound(b->graph->backend_binding_serial, &b->leased)) {
         b->graph->release(b->graph->lock_ctx);
         return 0;
     }
@@ -2029,7 +2035,7 @@ static int group_win_released(void* c, const char* id)
     hwio_win_ctx_t io = {0};
     uint32_t i, set = UINT32_MAX;
     if (!b || !b->lease || !b->owners || !b->graph || !b->graph->ufs_catalog.compiled || !id ||
-        !native_ufs_owns(b->owners, "gcc_ufs_phy_gdsc", b->serial))
+        !native_ufs_owns(b->owners, clock_ufs_domain, b->owner_epoch))
         return 0;
     io.owners = b->owners;
     for (i = 0u; i < 2u; ++i) {
@@ -2081,7 +2087,9 @@ static int native_ufs_group_open(owners_t* o, res_graph_t* graph, uint64_t epoch
     uint32_t i;
     ufs_group_bridge_t* b;
     if (!o || !graph || o->ufs_group_bridge || !epoch || !graph->ufs_catalog.compiled ||
-        epoch != hw_backend_verified_serial())
+        !graph->backend_binding_serial ||
+        graph->backend_binding_serial != hw_backend_verified_serial() ||
+        !native_ufs_owns(o, clock_ufs_domain, epoch))
         return 0;
     b = ExAllocatePool2(POOL_FLAG_NON_PAGED, sizeof(*b), POOL_TAG);
     if (!b)
@@ -2089,7 +2097,7 @@ static int native_ufs_group_open(owners_t* o, res_graph_t* graph, uint64_t epoch
     RtlZeroMemory(b, sizeof(*b));
     b->owners = o;
     b->graph = graph;
-    b->serial = epoch;
+    b->owner_epoch = epoch;
     o->ufs_group_bridge = b;
     io.ctx = b;
     io.lock = group_win_lock;
@@ -2163,7 +2171,7 @@ static NTSTATUS hw_backend_win_ufs_scalar_transition_locked(_In_z_ const char* p
         o->ufs_group_bridge->owners != o || !o->ufs_group_bridge->graph ||
         !o->ufs_group_bridge->graph->sealed || o->ufs_group_bridge->graph->retired ||
         o->ufs_group_bridge->graph->quiescing ||
-        !native_ufs_owns(o, "gcc_ufs_phy_gdsc", o->os_rsc_lease.owner_epoch))
+        !native_ufs_owns(o, clock_ufs_domain, o->os_rsc_lease.owner_epoch))
         goto done;
     program = ufs_catalog_get(&o->ufs_group_bridge->graph->ufs_catalog, comp, set, state);
     if (!program || strcmp(program->resources.dev_path, path)) {
@@ -2199,8 +2207,7 @@ NTSTATUS hw_backend_win_ufs_scalar_transition(_In_z_ const char* path, _In_ ULON
     return result;
 }
 
-/* complete required-client handoff while the graph lease retains RPMh/GCC and its NPA node. D-state
- * handles cannot replace it. */
+/* D-state and component transitions share the domain client under the graph lease. */
 static NTSTATUS hw_backend_win_ufs_fs_transition_locked(_In_z_ const char* path, _In_ ULONG comp,
                                                         _In_ ULONG state,
                                                         _In_ const power_dev_t* d0,
@@ -2209,13 +2216,9 @@ static NTSTATUS hw_backend_win_ufs_fs_transition_locked(_In_z_ const char* path,
     win_backend_instance_t* inst;
     owners_t* o;
     ufs_group_bridge_t* bridge;
-    pofx_required_owner_t* owner;
-    pofx_required_provider_t* provider;
-    pofx_required_catalog_t* catalog;
     const power_pstate_program_t* program;
-    uint32_t present = UINT32_MAX, other_present = UINT32_MAX, actual = 0u;
-    ULONG previous = state ^ 1u;
-    int valid = 0;
+    fs_res_t* res;
+    uint32_t actual;
     NTSTATUS status = STATUS_DEVICE_NOT_READY;
     if (KeGetCurrentIrql() != PASSIVE_LEVEL || !path || comp != 0u || state >= 2u || !d0 ||
         !d0->state_known || d0->quarantined || d0->current_d_state != 0u ||
@@ -2225,49 +2228,25 @@ static NTSTATUS hw_backend_win_ufs_fs_transition_locked(_In_z_ const char* path,
     inst = g_win_backend;
     o = inst ? inst->io.owners : NULL;
     bridge = o ? o->ufs_group_bridge : NULL;
-    if (!bridge || bridge->owners != o || !bridge->graph || !bridge->graph->sealed ||
-        bridge->graph->retired || bridge->graph->quiescing || !o->ufs_fs_required_catalog ||
-        !native_ufs_owns(o, "gcc_ufs_phy_gdsc", o->os_rsc_lease.owner_epoch))
-        goto done;
-    catalog = o->ufs_fs_required_catalog;
-    owner = &o->ufs_fs_required_owner;
-    if (!po_fx_required_ready(owner, o->os_rsc_lease.owner_epoch) || !owner->handles[state] ||
-        !owner->handles[previous] || catalog->cnt != 2u)
-        goto done;
+    if (!bridge || !bridge->graph || !bridge->graph->sealed || bridge->graph->retired ||
+        bridge->graph->quiescing || !native_group_bound(o, bridge->graph->backend_binding_serial))
+        return status;
     program = ufs_catalog_get(&bridge->graph->ufs_catalog, comp, 0u, state);
+    res = &o->ufs_native.factory.native;
     if (!program || strcmp(program->resources.dev_path, path) ||
         program->resources.action_cnt != 1u ||
         program->resources.actions[0].kind != POWER_FOOTSWITCH ||
-        memcmp(&program->resources.actions[0], &catalog->actions[state].action,
-               sizeof(power_action_t))) {
-        status = STATUS_NOT_SUPPORTED;
-        goto done;
-    }
+        strcmp(program->resources.actions[0].u.footswitch.name, res->name))
+        return STATUS_NOT_SUPPORTED;
     if (!group_win_lock(bridge))
-        goto done;
-    provider = &owner->provider;
-    if (!provider->read_client ||
-        !provider->read_client(provider->ctx, &catalog->actions[state], owner->handles[state],
-                               &present) ||
-        !provider->read_client(provider->ctx, &catalog->actions[previous], owner->handles[previous],
-                               &other_present) ||
-        present > 1u || other_present > 1u ||
-        !native_ufs_gdsc_physical(o, "gcc_ufs_phy_gdsc", o->os_rsc_lease.owner_epoch, &actual))
-        goto unlocked;
-    if (present && !other_present) {
-        valid = actual == catalog->actions[state].action.u.footswitch.action;
-    } else if (!present && !other_present) {
-        valid = po_fx_fs_required_issue(&o->ufs_fs_required, &catalog->actions[state],
-                                        owner->handles[state]);
-    } else if (!present && other_present) {
-        valid = po_fx_fs_required_handoff(&o->ufs_fs_required, &catalog->actions[previous],
-                                          owner->handles[previous], &catalog->actions[state],
-                                          owner->handles[state]);
-    }
-    status = valid ? STATUS_SUCCESS : STATUS_DEVICE_POWER_FAILURE;
-unlocked:
+        return status;
+    if (fs_issue(res, program->resources.actions[0].u.footswitch.action) == FS_OK &&
+        native_ufs_gdsc_physical(o, res->name, bridge->owner_epoch, &actual) &&
+        actual == program->resources.actions[0].u.footswitch.action)
+        status = STATUS_SUCCESS;
+    else
+        status = STATUS_DEVICE_POWER_FAILURE;
     group_win_unlock(bridge);
-done:
     return status;
 }
 
@@ -2324,7 +2303,7 @@ static int native_ufs_program_read_locked(owners_t* o, const power_sequence_t* s
     uint32_t cnt = 0u, i;
     if (!o || !sequence || !(bridge = o->ufs_group_bridge) || !bridge->graph ||
         !bridge->graph->sealed || bridge->graph->retired || bridge->graph->quiescing ||
-        !native_ufs_owns(o, "gcc_ufs_phy_gdsc", o->os_rsc_lease.owner_epoch) ||
+        !native_ufs_owns(o, clock_ufs_domain, o->os_rsc_lease.owner_epoch) ||
         !ufs_native_select_program(&bridge->graph->ufs_catalog, sequence, selected, &cnt) ||
         !group_win_lock(bridge))
         return 0;
@@ -2335,27 +2314,21 @@ static int native_ufs_program_read_locked(owners_t* o, const power_sequence_t* s
         if (!program)
             break;
         if (set == 0u) {
-            pofx_required_owner_t* owner = &o->ufs_fs_required_owner;
-            pofx_required_provider_t* prov = &owner->provider;
-            pofx_required_catalog_t* catalog = o->ufs_fs_required_catalog;
-            uint32_t yes = 0u, no = 0u, physical = 0u;
-            if (!catalog || catalog->cnt != 2u ||
-                !po_fx_required_ready(owner, o->os_rsc_lease.owner_epoch) ||
-                !owner->handles[state] || !owner->handles[state ^ 1u] || !prov->read_client ||
-                !prov->read_client(prov->ctx, &catalog->actions[state], owner->handles[state],
-                                   &yes) ||
-                !prov->read_client(prov->ctx, &catalog->actions[state ^ 1u],
-                                   owner->handles[state ^ 1u], &no) ||
-                yes != 1u || no != 0u ||
-                !native_ufs_gdsc_physical(o, "gcc_ufs_phy_gdsc", o->os_rsc_lease.owner_epoch,
-                                          &physical) ||
-                physical != catalog->actions[state].action.u.footswitch.action)
+            fs_res_t* res = &o->ufs_native.factory.native;
+            uint32_t physical;
+            if (program->resources.action_cnt != 1u ||
+                program->resources.actions[0].kind != POWER_FOOTSWITCH ||
+                strcmp(program->resources.actions[0].u.footswitch.name, res->name) ||
+                fs_verify(res) != FS_OK ||
+                res->normal_action != program->resources.actions[0].u.footswitch.action ||
+                !native_ufs_gdsc_physical(o, res->name, bridge->owner_epoch, &physical) ||
+                physical != res->normal_action)
                 break;
         } else {
             group_vote_t* vote = o->ufs_group_votes[set - 1u];
             if (!vote || !vote->bound || vote->quarantined || !vote->state_known ||
                 vote->state != state || vote->epoch != o->os_rsc_lease.owner_epoch ||
-                !group_win_final(bridge, vote->identity, state, &program->resources))
+                !group_vote_verify_held(vote, program))
                 break;
         }
     }
@@ -2379,17 +2352,10 @@ static int native_ufs_program_previous(owners_t* o, const ufs_native_selection_t
         return 1;
     }
     {
-        pofx_required_owner_t* owner = &o->ufs_fs_required_owner;
-        pofx_required_provider_t* provider = &owner->provider;
-        pofx_required_catalog_t* catalog = o->ufs_fs_required_catalog;
-        uint32_t on = 0u, off = 0u;
-        if (!catalog || catalog->cnt != 2u || !provider->read_client ||
-            !po_fx_required_ready(owner, o->os_rsc_lease.owner_epoch) ||
-            !provider->read_client(provider->ctx, &catalog->actions[0], owner->handles[0], &on) ||
-            !provider->read_client(provider->ctx, &catalog->actions[1], owner->handles[1], &off) ||
-            on > 1u || off > 1u || (on && off))
+        fs_res_t* res = &o->ufs_native.factory.native;
+        if (fs_verify(res) != FS_OK || res->normal_action > FS_DISABLE)
             return 0;
-        *previous = on ? 0u : off ? 1u : UINT32_MAX;
+        *previous = res->normal_action ? res->normal_action - 1u : UINT32_MAX;
         return 1;
     }
 }
@@ -2422,8 +2388,7 @@ power_result_t hw_backend_win_ufs_program_execute(const power_sequence_t* sequen
     (VOID) KeWaitForSingleObject(&g_win_lifecycle_lock, Executive, KernelMode, FALSE, NULL);
     inst = g_win_backend;
     o = inst ? inst->io.owners : NULL;
-    if (!o || !o->ufs_group_bridge || epoch != o->os_rsc_lease.owner_epoch ||
-        !native_ufs_owns(o, "gcc_ufs_phy_gdsc", epoch) ||
+    if (!native_group_bound(o, epoch) ||
         !ufs_native_select_program(&o->ufs_group_bridge->graph->ufs_catalog, sequence, selected,
                                    &cnt) ||
         !cnt)
@@ -2519,66 +2484,10 @@ int hw_backend_win_ufs_program_verify(const power_sequence_t* sequence, uint64_t
     (VOID) KeWaitForSingleObject(&g_win_lifecycle_lock, Executive, KernelMode, FALSE, NULL);
     inst = g_win_backend;
     o = inst ? inst->io.owners : NULL;
-    if (o && epoch == o->os_rsc_lease.owner_epoch && !o->ufs_owner_uncertain)
+    if (native_group_bound(o, epoch))
         result = native_ufs_program_read_locked(o, sequence);
     (VOID) KeReleaseMutex(&g_win_lifecycle_lock, FALSE);
     return result;
-}
-
-/* the two FS program states have different required-client identities. Do not substitute
- * the d0/d3 NPA pool cookie for either client. */
-static int native_ufs_fs_program_clients(owners_t* o, const res_graph_t* graph, uint64_t epoch)
-{
-    pofx_required_provider_t provider = {0};
-    pofx_required_catalog_t* catalog;
-    uint32_t state;
-    if (!o || !graph || !graph->ufs_catalog.compiled || !epoch || o->ufs_fs_required_catalog ||
-        o->ufs_fs_required_owner.live || !o->ufs_fs_required.bound)
-        return 0;
-    catalog = ExAllocatePool2(POOL_FLAG_NON_PAGED, sizeof(*catalog), POOL_TAG);
-    if (!catalog)
-        return 0;
-    RtlZeroMemory(catalog, sizeof(*catalog));
-    for (state = 0u; state < 2u; ++state) {
-        const power_pstate_program_t* program = ufs_catalog_get(&graph->ufs_catalog, 0u, 0u, state);
-        pofx_required_action_t* target = &catalog->actions[state];
-        if (!program || program->resources.action_cnt != 1u ||
-            program->resources.actions[0].kind != POWER_FOOTSWITCH ||
-            strcmp(program->resources.actions[0].u.footswitch.name, "gcc_ufs_phy_gdsc") ||
-            program->resources.actions[0].u.footswitch.action != state + 1u) {
-            ExFreePool(catalog);
-            return 0;
-        }
-        target->action = program->resources.actions[0];
-        target->program_class = (uint8_t)PROGRAM_P_STATE;
-        target->comp = 0u;
-        target->set = 0u;
-        target->state = state;
-    }
-    catalog->cnt = 2u;
-    catalog->bound = 1u;
-    o->ufs_fs_required_catalog = catalog;
-    po_fx_fs_required_provider(&o->ufs_fs_required, &provider);
-    if (!po_fx_required_open(&o->ufs_fs_required_owner, catalog, &provider, epoch))
-        return 0;
-    return po_fx_required_ready(&o->ufs_fs_required_owner, epoch);
-}
-
-/* do not free the pinned manifest until the last native client has actually closed; failed
- * teardown pins its owner, catalog, and physical providers. */
-static int native_ufs_fs_program_clients_close(owners_t* o, uint64_t epoch)
-{
-    if (!o)
-        return 0;
-    if (o->ufs_fs_required_catalog) {
-        if ((o->ufs_fs_required_owner.live || o->ufs_fs_required_owner.bound ||
-             o->ufs_fs_required_owner.quarantined) &&
-            !po_fx_required_close(&o->ufs_fs_required_owner, epoch))
-            return 0;
-        ExFreePool(o->ufs_fs_required_catalog);
-        o->ufs_fs_required_catalog = NULL;
-    }
-    return !o->ufs_fs_required.bound || po_fx_fs_required_unbind(&o->ufs_fs_required);
 }
 
 /* the device-path vote key cannot be shared between D- and F/P-states: the native
@@ -2594,14 +2503,14 @@ static int scalar_win_owns(void* ctx, const power_action_t* a)
     hwio_win_ctx_t io = {0};
     uint32_t force = 0u;
     if (!o || !a || o->ufs_owner_uncertain ||
-        !native_ufs_owns(o, "gcc_ufs_phy_gdsc", o->os_rsc_lease.owner_epoch))
+        !native_ufs_owns(o, clock_ufs_domain, o->os_rsc_lease.owner_epoch))
         return 0;
     io.owners = o;
     switch (a->kind) {
         case POWER_CLOCK:
             if (a->u.clock.vote == 9u)
-                return a->u.clock.extra_cnt == 1u && a->u.clock.extra[0] == 18u &&
-                       !strcmp(a->u.clock.name, "gcc_ufs_phy_ice_core_clk") &&
+                return a->u.clock.extra_cnt == 1u &&
+                       clock_config_rule(a->u.clock.name, a->u.clock.extra[0]) &&
                        win_io_clock_config_readback(&io, a->u.clock.name, &force);
             return (a->u.clock.vote == 1u || a->u.clock.vote == 2u || a->u.clock.vote == 3u ||
                     a->u.clock.vote == 8u) &&
@@ -2653,7 +2562,7 @@ static int scalar_win_read(void* ctx, const char* identity, const power_action_t
     clock_client_t* clock;
     LONG ci;
     if (!o || !identity || !a || !outstanding ||
-        !native_ufs_owns(o, "gcc_ufs_phy_gdsc", o->os_rsc_lease.owner_epoch) || !owners_lock(o))
+        !native_ufs_owns(o, clock_ufs_domain, o->os_rsc_lease.owner_epoch) || !owners_lock(o))
         return 0;
     switch (a->kind) {
         case POWER_CLOCK:
@@ -2737,7 +2646,7 @@ static int scalar_win_withdraw(void* ctx, const char* identity, const power_acti
     uint32_t actual = UINT32_MAX;
     int ok = 0;
     if (!o || !identity || !a || o->ufs_owner_uncertain ||
-        !native_ufs_owns(o, "gcc_ufs_phy_gdsc", o->os_rsc_lease.owner_epoch))
+        !native_ufs_owns(o, clock_ufs_domain, o->os_rsc_lease.owner_epoch))
         return 0;
     io.owners = o;
     switch (a->kind) {
@@ -2871,13 +2780,16 @@ static int native_ufs_scalar_program_clients(owners_t* o, const res_graph_t* gra
 static int native_ufs_owner_attest(void* ctx, uint64_t epoch)
 {
     owners_t* o = (owners_t*)ctx;
-    return o && epoch && native_ufs_owns(o, "gcc_ufs_phy_gdsc", epoch) && o->ufs_native.bound &&
-           o->ufs_rail_owner.bound && o->ufs_domain_owner.bound && o->ufs_fs_required_catalog &&
-           po_fx_required_ready(&o->ufs_fs_required_owner, epoch) && o->ufs_scalar_owner &&
-           po_fx_required_ready(o->ufs_scalar_owner, epoch) && o->ufs_group_bridge &&
-           o->ufs_group_votes[0] && o->ufs_group_votes[1] && o->ufs_group_votes[0]->bound &&
-           o->ufs_group_votes[1]->bound && o->ufs_group_votes[0]->epoch == epoch &&
-           o->ufs_group_votes[1]->epoch == epoch && !o->ufs_owner_uncertain;
+    uint64_t owner_epoch;
+    if (!native_group_bound(o, epoch))
+        return 0;
+    owner_epoch = o->ufs_group_bridge->owner_epoch;
+    return o->ufs_native.bound && o->ufs_rail_owner.bound && o->ufs_domain_owner.bound &&
+           fs_factory_verify(&o->ufs_native.factory) == FS_OK && o->ufs_scalar_owner &&
+           po_fx_required_ready(o->ufs_scalar_owner, owner_epoch) && o->ufs_group_votes[0] &&
+           o->ufs_group_votes[1] && o->ufs_group_votes[0]->bound && o->ufs_group_votes[1]->bound &&
+           o->ufs_group_votes[0]->epoch == owner_epoch &&
+           o->ufs_group_votes[1]->epoch == owner_epoch && !o->ufs_owner_uncertain;
 }
 
 static int native_ufs_arcs_retire(owners_t* o)
@@ -2918,19 +2830,10 @@ static int native_ufs_graph_bind(owners_t* o, res_graph_t* graph)
         !ufs_cx_mx_rail_provider(&o->ufs_rail_owner, &rails))
         goto failed;
     phase = 2u;
-    if (!fs_gdsc_init_window_with_rails(&o->ufs_domain_owner, &o->gcc_io, "gcc_ufs_phy_gdsc",
+    if (!fs_gdsc_init_window_with_rails(&o->ufs_domain_owner, &o->gcc_io, clock_ufs_domain,
                                         OEM_UFS_PHY_DOMAIN_ID, o->mmio.gcc.physical,
                                         o->mmio.gcc.bytes, o, native_ufs_owns, epoch, &rails) ||
         !fs_gdsc_provider(&o->ufs_domain_owner, &factory))
-        goto failed;
-    /* bind the FOOTSWITCH provider to the same epoch and readback path before publishing PoFx
-     * clients. */
-    phase = 3u;
-    if (!po_fx_fs_required_bind(&o->ufs_fs_required, &factory, "gcc_ufs_phy_gdsc", epoch, o,
-                                native_ufs_gdsc_physical))
-        goto failed;
-    phase = 4u;
-    if (!native_ufs_fs_program_clients(o, graph, epoch))
         goto failed;
     phase = 5u;
     if (!native_ufs_scalar_program_clients(o, graph, epoch))
@@ -2941,7 +2844,8 @@ static int native_ufs_graph_bind(owners_t* o, res_graph_t* graph)
     phase = 7u;
     if (ufs_native_provision(&o->ufs_native, graph, &factory, "ufs0", o,
                              native_ufs_gdsc_physical) != FS_OK ||
-        !graph_bind_native_ufs_owner(graph, epoch, o, native_ufs_owner_attest))
+        !graph_bind_native_ufs_owner(graph, graph->backend_binding_serial, o,
+                                     native_ufs_owner_attest))
         goto failed;
     return 1;
 failed:
@@ -2949,8 +2853,7 @@ failed:
                 "ufs: bind failed phase=%lu epoch=%llX ARC=%05lX raw=%08lX result=%d", phase,
                 (unsigned long long)epoch, o->ufs_arc_last_address, o->ufs_arc_last_response,
                 (int)o->ufs_arc_last_result);
-    if (!native_ufs_group_close(o) || !native_ufs_scalar_program_clients_close(o, epoch) ||
-        !native_ufs_fs_program_clients_close(o, epoch)) {
+    if (!native_ufs_group_close(o) || !native_ufs_scalar_program_clients_close(o, epoch)) {
         o->ufs_owner_uncertain = TRUE;
         return 0;
     }
@@ -3552,13 +3455,10 @@ static owners_t* owners_create(VOID)
     /* pipeline/epoch remain ZERO: no WDF ISR, GIC mask or AMC ownership. */
     o->rpmh.poll_limit = RPMH_POLL_LIMIT;
     {
-        rpmh_driver_config_t drv = {MOLOKAI_WIN_HW_DRV,
-                                    0u,
-                                    MOLOKAI_WIN_TCS_TOTAL,
-                                    MOLOKAI_WIN_AMC_CNT,
-                                    MOLOKAI_WIN_SLEEP_START,
-                                    MOLOKAI_WIN_WAKE_START,
-                                    TCS_BATCH_MAX};
+        rpmh_driver_config_t drv = {MOLOKAI_WIN_HW_DRV,      0u,
+                                    MOLOKAI_WIN_TCS_TOTAL,   MOLOKAI_WIN_AMC_CNT,
+                                    MOLOKAI_WIN_SLEEP_START, MOLOKAI_WIN_WAKE_START,
+                                    TCS_BATCH_MAX,           MOLOKAI_WIN_READ_AMC_MASK};
         uint8_t client;
         if (!rpmh_scheduler_init_result(&o->rpmh_scheduler, &drv, rpmh_execute_sync_slot, o) ||
             !rpmh_scheduler_add_client(&o->rpmh_scheduler, "BUSARB", 0u, &client) ||
@@ -3812,13 +3712,11 @@ NTSTATUS hw_backend_win_bind_deferred_completion(_In_ WDFDEVICE dev, _In_ ULONGL
     owners_t* o;
     win_backend_instance_t* instance;
     NTSTATUS status = STATUS_DEVICE_NOT_READY;
-    const rpmh_driver_config_t firmware_geometry = {MOLOKAI_WIN_HW_DRV,
-                                                    0u,
-                                                    MOLOKAI_WIN_TCS_TOTAL,
-                                                    MOLOKAI_WIN_AMC_CNT,
-                                                    MOLOKAI_WIN_SLEEP_START,
-                                                    MOLOKAI_WIN_WAKE_START,
-                                                    TCS_BATCH_MAX};
+    const rpmh_driver_config_t firmware_geometry = {
+        MOLOKAI_WIN_HW_DRV,      0u,
+        MOLOKAI_WIN_TCS_TOTAL,   MOLOKAI_WIN_AMC_CNT,
+        MOLOKAI_WIN_SLEEP_START, MOLOKAI_WIN_WAKE_START,
+        TCS_BATCH_MAX,           MOLOKAI_WIN_READ_AMC_MASK};
     uint32_t i;
     int idle = 1;
     int provisional_irq_lock = 0;
@@ -4992,7 +4890,6 @@ NTSTATUS hw_backend_win_d0_quiesce(_In_ WDFDEVICE dev)
                 (!g_published_graph || o->ufs_native.graph != g_published_graph ||
                  !graph_begin_drain(g_published_graph) || !native_ufs_group_close(o) ||
                  !native_ufs_scalar_program_clients_close(o, o->os_rsc_lease.owner_epoch) ||
-                 !native_ufs_fs_program_clients_close(o, o->os_rsc_lease.owner_epoch) ||
                  ufs_native_retire_verified(&o->ufs_native, &o->ufs_domain_owner,
                                             &o->ufs_rail_owner) != FS_OK ||
                  !native_ufs_arcs_retire(o))) {
@@ -5006,9 +4903,7 @@ NTSTATUS hw_backend_win_d0_quiesce(_In_ WDFDEVICE dev)
                 TraceEvents(TRACE_LEVEL_WARNING, TRACE_RPMH,
                             "rpmh: shutdown owner lock unavailable mappings=retained");
             } else {
-                if (ufs_native_retains_graph(&o->ufs_native) || o->ufs_fs_required.bound ||
-                    o->ufs_fs_required.quarantined || o->ufs_fs_required_catalog ||
-                    o->ufs_fs_required_owner.live || o->ufs_scalar_required ||
+                if (ufs_native_retains_graph(&o->ufs_native) || o->ufs_scalar_required ||
                     o->ufs_scalar_catalog || o->ufs_scalar_owner || o->ufs_group_bridge ||
                     o->ufs_group_votes[0] || o->ufs_group_votes[1] || o->ufs_ice_config.saved ||
                     o->ufs_rail_owner.held || o->ufs_owner_uncertain) {
@@ -5239,10 +5134,9 @@ NTSTATUS hw_backend_win_d0_unmap_rsc(_In_ WDFDEVICE dev)
     (VOID) KeWaitForSingleObject(&g_win_lifecycle_lock, Executive, KernelMode, FALSE, NULL);
     inst = g_win_backend;
     o = inst && inst->io.dev == dev ? inst->io.owners : NULL;
-    if (o && (ufs_native_retains_graph(&o->ufs_native) || o->ufs_fs_required.bound ||
-              o->ufs_fs_required.quarantined || o->ufs_fs_required_catalog ||
-              o->ufs_fs_required_owner.live || o->ufs_group_bridge || o->ufs_group_votes[0] ||
-              o->ufs_group_votes[1] || o->ufs_rail_owner.held || o->ufs_owner_uncertain)) {
+    if (o &&
+        (ufs_native_retains_graph(&o->ufs_native) || o->ufs_group_bridge || o->ufs_group_votes[0] ||
+         o->ufs_group_votes[1] || o->ufs_rail_owner.held || o->ufs_owner_uncertain)) {
         g_quarantined_rsc_owner = o;
         TraceEvents(TRACE_LEVEL_WARNING, TRACE_POWER,
                     "ufs: unmap rejected epoch=%llX client=%llX uncertain=%u",
@@ -5641,11 +5535,8 @@ static NTSTATUS hw_backend_win_try_publish_locked(_In_ WDFDEVICE dev)
 
 fail: {
     owners_t* owner = g_win_backend ? g_win_backend->io.owners : NULL;
-    BOOLEAN fs_retained =
-        owner && (ufs_native_retains_graph(&owner->ufs_native) || owner->ufs_fs_required.bound ||
-                  owner->ufs_fs_required.quarantined || owner->ufs_fs_required_catalog ||
-                  owner->ufs_fs_required_owner.live || owner->ufs_rail_owner.held ||
-                  owner->ufs_owner_uncertain);
+    BOOLEAN fs_retained = owner && (ufs_native_retains_graph(&owner->ufs_native) ||
+                                    owner->ufs_rail_owner.held || owner->ufs_owner_uncertain);
     BOOLEAN npa_retained = npa && npa_may_hold_clients && npa_needs_retention(npa);
 
     if (fs_retained) {

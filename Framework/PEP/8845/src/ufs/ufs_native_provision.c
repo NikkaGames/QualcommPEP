@@ -1,11 +1,9 @@
+#include "clock_target.h"
 #include "ufs_native_provision.h"
 #include "domains.h"
 #include "gdsc_native.h"
 #include "ufs_cxmx_owner.h"
 #include <string.h>
-
-static const char k_ufs_domain[] = "gcc_ufs_phy_gdsc";
-static const char k_normal_name[] = "/fs/gcc_ufs_phy_gdsc/enable";
 
 /* these callbacks never accept an arbitrary client pointer. */
 
@@ -13,9 +11,9 @@ static int fs_complete_normal(void* ctx, const char* domain, uint64_t handle)
 {
     ufs_native_scope_t* s = (ufs_native_scope_t*)ctx;
     fs_factory_t* f;
-    if (!s || !s->bound || s->quarantined || !s->factory.bound || strcmp(domain, k_ufs_domain) ||
-        s->epoch != s->factory.epoch || !s->factory.provider.complete_client ||
-        strcmp(s->factory.normal_res, k_normal_name))
+    if (!s || !s->bound || s->quarantined || !s->factory.bound ||
+        strcmp(domain, clock_ufs_domain) || s->epoch != s->factory.epoch ||
+        !s->factory.provider.complete_client || strcmp(s->factory.normal_res, clock_ufs_enable))
         return 0;
     f = &s->factory;
     if (handle != f->normal_handle || !f->normal_open)
@@ -28,10 +26,11 @@ static int fs_read_physical(void* ctx, const char* domain, uint64_t epoch, uint3
     ufs_native_scope_t* s = (ufs_native_scope_t*)ctx;
     uint64_t current = 0u;
     return s && s->bound && !s->quarantined && s->factory.bound && actual &&
-           !strcmp(domain, k_ufs_domain) && epoch == s->epoch && s->read_physical &&
-           s->factory.provider.owns_domain(s->factory.provider.ctx, k_ufs_domain) &&
-           s->factory.provider.read_owner_epoch(s->factory.provider.ctx, k_ufs_domain, &current) &&
-           current == epoch && s->read_physical(s->physical_ctx, k_ufs_domain, epoch, actual) &&
+           !strcmp(domain, clock_ufs_domain) && epoch == s->epoch && s->read_physical &&
+           s->factory.provider.owns_domain(s->factory.provider.ctx, clock_ufs_domain) &&
+           s->factory.provider.read_owner_epoch(s->factory.provider.ctx, clock_ufs_domain,
+                                                &current) &&
+           current == epoch && s->read_physical(s->physical_ctx, clock_ufs_domain, epoch, actual) &&
            (*actual == 1u || *actual == 2u);
 }
 
@@ -40,11 +39,12 @@ static int fs_verify_physical(void* ctx, const char* domain, uint32_t expected, 
     ufs_native_scope_t* s = (ufs_native_scope_t*)ctx;
     uint32_t actual = 0;
     if (!s || !s->bound || s->quarantined || !s->factory.bound || !s->read_physical || !s->graph ||
-        strcmp(domain, k_ufs_domain) || epoch != s->epoch || epoch != s->factory.epoch ||
+        strcmp(domain, clock_ufs_domain) || epoch != s->epoch || epoch != s->factory.epoch ||
         (expected != 0u && expected != 1u && expected != 2u) ||
-        !s->factory.provider.owns_domain(s->factory.provider.ctx, k_ufs_domain) ||
-        !s->factory.provider.read_owner_epoch(s->factory.provider.ctx, k_ufs_domain, &epoch) ||
-        epoch != s->epoch || !s->read_physical(s->physical_ctx, k_ufs_domain, s->epoch, &actual))
+        !s->factory.provider.owns_domain(s->factory.provider.ctx, clock_ufs_domain) ||
+        !s->factory.provider.read_owner_epoch(s->factory.provider.ctx, clock_ufs_domain, &epoch) ||
+        epoch != s->epoch ||
+        !s->read_physical(s->physical_ctx, clock_ufs_domain, s->epoch, &actual))
         return 0;
     return actual == expected;
 }
@@ -69,18 +69,18 @@ fs_result_t ufs_native_provision(ufs_native_scope_t* s, res_graph_t* g,
     {
         uint64_t ep = 0;
         if (!provider->owns_domain || !provider->read_owner_epoch || !provider->resolve_domain_id ||
-            !provider->resolve_domain_id(provider->ctx, k_ufs_domain, &domain_id) ||
+            !provider->resolve_domain_id(provider->ctx, clock_ufs_domain, &domain_id) ||
             domain_id != OEM_UFS_PHY_DOMAIN_ID ||
-            !provider->owns_domain(provider->ctx, k_ufs_domain) ||
-            !provider->read_owner_epoch(provider->ctx, k_ufs_domain, &ep) || !ep ||
-            !physical(physical_ctx, k_ufs_domain, ep, &baseline) ||
+            !provider->owns_domain(provider->ctx, clock_ufs_domain) ||
+            !provider->read_owner_epoch(provider->ctx, clock_ufs_domain, &ep) || !ep ||
+            !physical(physical_ctx, clock_ufs_domain, ep, &baseline) ||
             (baseline != 1u && baseline != 2u))
             return FS_OWNERSHIP_LOST;
     }
     s->physical_ctx = physical_ctx;
     s->read_physical = physical;
     s->graph = g;
-    r = fs_factory_open_for_action(&s->factory, k_ufs_domain, client_name, FS_ENABLE, provider);
+    r = fs_factory_open_for_action(&s->factory, clock_ufs_domain, client_name, FS_ENABLE, provider);
     if (r != FS_OK) {
         if (s->factory.quarantined || s->factory.normal_open || s->factory.normal_handle)
             s->quarantined = 1u;
@@ -210,7 +210,7 @@ fs_result_t ufs_native_retire_verified(ufs_native_scope_t* s, struct fs_gdsc_dri
     if (dev_proven != 1 || !s->read_physical || fs_factory_verify(&s->factory) != FS_OK ||
         (s->factory.native.normal_action != 0u && s->factory.native.normal_action != FS_DISABLE) ||
         s->factory.native.hw_ctl_action != 0u ||
-        !s->read_physical(s->physical_ctx, k_ufs_domain, s->epoch, &actual) ||
+        !s->read_physical(s->physical_ctx, clock_ufs_domain, s->epoch, &actual) ||
         (actual != 1u && actual != 2u) ||
         (s->factory.native.normal_action == FS_DISABLE && actual != 2u))
         goto done;

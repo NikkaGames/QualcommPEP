@@ -4,6 +4,7 @@
 #include "res_graph.h"
 #include "power_desc.h"
 #include "aeob_validate.h"
+#include "clock_target.h"
 #include <string.h>
 
 typedef struct fstate_kind_audit {
@@ -43,7 +44,7 @@ static int audit_ufs_gdsc(const aeob_action_t* a, uint32_t state)
     const uint8_t* b;
     uint32_t len, off = 0u, pad, i;
     uint64_t selector = 0u;
-    const char target[] = "gcc_ufs_phy_gdsc";
+    size_t target_bytes = strlen(clock_ufs_domain) + 1u;
     if (!a || !a->arguments || state > 1u)
         return 0;
     b = a->arguments;
@@ -51,7 +52,8 @@ static int audit_ufs_gdsc(const aeob_action_t* a, uint32_t state)
     if (len < 4u || audit_u16(b) != 1u)
         return 0;
     pad = audit_u16(b + 2u);
-    if (pad != sizeof(target) || len - 4u < pad || memcmp(b + 4u, target, sizeof(target)) != 0)
+    if (pad != target_bytes || len - 4u < pad ||
+        memcmp(b + 4u, clock_ufs_domain, target_bytes) != 0)
         return 0;
     off = 4u + (pad < 4u ? 4u : pad);
     if (off > len || len - off < 4u || audit_u16(b + off) != 0u)
@@ -79,6 +81,68 @@ static int audit_ufs_pstate_action(const aeob_action_t* a, void* ctx)
                   (!strcmp(kind, "CLOCK") || !strcmp(kind, "PMICVREGVOTE"))) ||
                  (audit->set_id == 2u && !strcmp(kind, "BUSARB"))))
         audit->unexpected = 1;
+    return 1;
+}
+
+static int resolve_pstate(const graph_desc_t* descriptors, uint32_t cnt, const char* path,
+                          uint32_t set, uint32_t state, power_pstate_program_t* program)
+{
+    uint32_t comp, i, found = 0u;
+    if (set >= 32u || state >= 32u)
+        return 0;
+    for (comp = 0u; comp < 32u; ++comp)
+        for (i = 0u; i < cnt; ++i) {
+            uint32_t actions = 0u;
+            aeob_status_t status =
+                aeo_b_visit_comp_p_state(descriptors[i].buf, descriptors[i].bytes, path, comp, set,
+                                         state, NULL, NULL, &actions);
+            if (status == AEO_B_NOT_FOUND)
+                continue;
+            if (status != AEO_B_OK || ++found != 1u ||
+                power_compile_aeo_bp_state(descriptors[i].buf, descriptors[i].bytes, path, comp,
+                                           set, state, program) != POWER_OK)
+                return 0;
+        }
+    return found == 1u;
+}
+
+static int expand_dstate(const graph_desc_t* descriptors, uint32_t cnt, power_sequence_t* sequence,
+                         power_sequence_t* expanded, power_pstate_program_t* program,
+                         uint16_t clients[POWER_MAX_ACTIONS])
+{
+    uint32_t i, j, delay = 0u;
+    memset(expanded, 0, sizeof(*expanded));
+    memcpy(expanded->dev_path, sequence->dev_path, sizeof(expanded->dev_path));
+    expanded->target_d_state = sequence->target_d_state;
+    for (i = 0u; i < sequence->action_cnt; ++i) {
+        const power_action_t* a = &sequence->actions[i];
+        const power_action_t* actions = a;
+        uint32_t actions_cnt = 1u;
+        uint16_t client = 0u;
+        if (a->kind == POWER_PSTATE_ADJUST) {
+            if (!resolve_pstate(descriptors, cnt, sequence->dev_path, a->u.pstate_adjust.fields[0],
+                                a->u.pstate_adjust.fields[1], program))
+                return 0;
+            actions = program->resources.actions;
+            actions_cnt = program->resources.action_cnt;
+            client = (uint16_t)(1u + program->comp * 32u + program->set);
+        }
+        if (actions_cnt > POWER_MAX_ACTIONS - expanded->action_cnt)
+            return 0;
+        for (j = 0u; j < actions_cnt; ++j) {
+            if (actions[j].kind == POWER_PSTATE_ADJUST)
+                return 0;
+            if (actions[j].kind == POWER_DELAY) {
+                uint32_t ms = actions[j].u.delay.ms;
+                if (ms > 5000u || delay > 10000u - ms)
+                    return 0;
+                delay += ms;
+            }
+            clients[expanded->action_cnt] = client;
+            expanded->actions[expanded->action_cnt++] = actions[j];
+        }
+    }
+    *sequence = *expanded;
     return 1;
 }
 
@@ -273,7 +337,14 @@ int graph_build_from_descriptors(res_graph_t* graph, const graph_desc_t* descrip
                 goto fail;
         }
     }
-    /* the flag must never be set on the direct AddPlan/Seal path. */
+    for (i = 0u; i < graph->dev_cnt; ++i)
+        if (!expand_dstate(descriptors, cnt, &graph->devices[i].d0, scratch, &workspace->program,
+                           graph->devices[i].d0_clients) ||
+            !expand_dstate(descriptors, cnt, &graph->devices[i].d3, scratch, &workspace->program,
+                           graph->devices[i].d3_clients))
+            goto fail;
+
+    /* inventory is valid only after all references resolve. */
 
     graph->comp_inventory_verified = 1u;
     if (graph_seal(graph))

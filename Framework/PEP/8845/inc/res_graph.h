@@ -54,6 +54,8 @@ typedef struct graph_dev {
 
     uint8_t verified_ic_empty_f0;
     power_dev_t state;
+    uint16_t d0_clients[POWER_MAX_ACTIONS];
+    uint16_t d3_clients[POWER_MAX_ACTIONS];
 } graph_dev_t;
 
 typedef struct res_graph {
@@ -95,6 +97,7 @@ typedef struct res_graph {
     graph_desc_t sources[GRAPH_SRC_MAX];
     uint32_t src_cnt;
     void (*release_src)(const void*);
+    power_sequence_t provider_sequence; /* serialized by the graph lock. */
 } res_graph_t;
 
 /* all graph allocations must be caller-owned NONPAGED memory; do not put res_graph_t on a
@@ -192,6 +195,7 @@ void graph_free_sources(res_graph_t*);
 typedef struct graph_build_workspace {
     char paths[GRAPH_MAX_DEVICES][256];
     char candidates[GRAPH_MAX_DEVICES][256];
+    power_pstate_program_t program;
 } graph_build_workspace_t;
 
 int graph_build_from_descriptors(res_graph_t* graph, const graph_desc_t* descriptors,

@@ -543,6 +543,29 @@ typedef struct run_ctx {
     const power_sequence_t* sequence;
 } run_ctx_t;
 
+static uint16_t client_key(const graph_dev_t* d, const power_sequence_t* sequence, uint32_t i)
+{
+    if (sequence->actions[i].kind == POWER_FOOTSWITCH)
+        return 0u;
+    return sequence->target_d_state == 0u ? d->d0_clients[i] : d->d3_clients[i];
+}
+
+static int action_client(const graph_dev_t* d, const power_sequence_t* sequence,
+                         const power_action_t* action, char identity[256])
+{
+    uint32_t i;
+    for (i = 0u; i < sequence->action_cnt; ++i)
+        if (action == &sequence->actions[i]) {
+            uint32_t client = client_key(d, sequence, i);
+            if (client)
+                return power_set_identity(d->path, (client - 1u) / 32u, (client - 1u) % 32u,
+                                          identity);
+            memcpy(identity, d->path, 256u);
+            return 1;
+        }
+    return 0;
+}
+
 static graph_provider_t* run_provider(run_ctx_t* r, const power_action_t* a)
 {
     return provider(r->graph, a);
@@ -578,8 +601,10 @@ static void run_unlock(void* ctx)
 static int run_supports(void* ctx, const power_action_t* a)
 {
     run_ctx_t* r = ctx;
+    char identity[256];
     graph_provider_t* p = run_provider(r, a);
-    return p && p->supports(p->ctx, r->dev->path, r->sequence->target_d_state, a);
+    return p && action_client(r->dev, r->sequence, a, identity) &&
+           p->supports(p->ctx, identity, r->sequence->target_d_state, a);
 }
 
 /* probe ownership immediately before every physical operation too. The sequence builder's locked
@@ -589,17 +614,21 @@ static int run_supports(void* ctx, const power_action_t* a)
 static int run_apply(void* ctx, const power_action_t* a)
 {
     run_ctx_t* r = ctx;
+    char identity[256];
     graph_provider_t* p = run_provider(r, a);
-    return p && p->supports(p->ctx, r->dev->path, r->sequence->target_d_state, a) &&
-           p->apply(p->ctx, r->dev->path, r->sequence->target_d_state, a);
+    return p && action_client(r->dev, r->sequence, a, identity) &&
+           p->supports(p->ctx, identity, r->sequence->target_d_state, a) &&
+           p->apply(p->ctx, identity, r->sequence->target_d_state, a);
 }
 
 static int run_verify(void* ctx, const power_action_t* a)
 {
     run_ctx_t* r = ctx;
+    char identity[256];
     graph_provider_t* p = run_provider(r, a);
-    return p && p->supports(p->ctx, r->dev->path, r->sequence->target_d_state, a) &&
-           p->verify(p->ctx, r->dev->path, r->sequence->target_d_state, a);
+    return p && action_client(r->dev, r->sequence, a, identity) &&
+           p->supports(p->ctx, identity, r->sequence->target_d_state, a) &&
+           p->verify(p->ctx, identity, r->sequence->target_d_state, a);
 }
 
 #undef RUN_FN
@@ -607,8 +636,10 @@ static int run_verify(void* ctx, const power_action_t* a)
     static int name(void* ctx, const power_action_t* a, type* s)                                   \
     {                                                                                              \
         run_ctx_t* r = ctx;                                                                        \
+        char identity[256];                                                                        \
         graph_provider_t* p = run_provider(r, a);                                                  \
-        return p && p->field(p->ctx, r->dev->path, r->sequence->target_d_state, a, s);             \
+        return p && action_client(r->dev, r->sequence, a, identity) &&                             \
+               p->field(p->ctx, identity, r->sequence->target_d_state, a, s);                      \
     }
 RUN_SNAPSHOT(run_snapshot, snapshot, power_snapshot_t)
 #undef RUN_SNAPSHOT
@@ -616,8 +647,10 @@ RUN_SNAPSHOT(run_snapshot, snapshot, power_snapshot_t)
     static int name(void* ctx, const power_action_t* a, const power_snapshot_t* s)                 \
     {                                                                                              \
         run_ctx_t* r = ctx;                                                                        \
+        char identity[256];                                                                        \
         graph_provider_t* p = run_provider(r, a);                                                  \
-        return p && p->field(p->ctx, r->dev->path, r->sequence->target_d_state, a, s);             \
+        return p && action_client(r->dev, r->sequence, a, identity) &&                             \
+               p->field(p->ctx, identity, r->sequence->target_d_state, a, s);                      \
     }
 RUN_RESTORE(run_restore, restore)
 RUN_RESTORE(run_verify_restored, verify_restored)
@@ -626,19 +659,29 @@ RUN_RESTORE(run_verify_restored, verify_restored)
 static int run_verify_final(void* ctx, const power_sequence_t* sequence)
 {
     run_ctx_t* r = ctx;
-    uint8_t seen[GRAPH_PROVIDER_CNT] = {0};
-    uint32_t i;
+    power_sequence_t* group = &r->graph->provider_sequence;
+    char identity[256];
+    uint32_t i, j;
     for (i = 0; i < sequence->action_cnt; ++i) {
         unsigned k = (unsigned)sequence->actions[i].kind;
+        uint16_t key = client_key(r->dev, sequence, i);
         graph_provider_t* p = run_provider(r, &sequence->actions[i]);
-        if (!p ||
-            !p->supports(p->ctx, r->dev->path, sequence->target_d_state, &sequence->actions[i]))
+        if (!p || !action_client(r->dev, sequence, &sequence->actions[i], identity) ||
+            !p->supports(p->ctx, identity, sequence->target_d_state, &sequence->actions[i]))
             return 0;
-        if (!seen[k]) {
-            if (!p->verify_final(p->ctx, r->dev->path, sequence->target_d_state, sequence))
-                return 0;
-            seen[k] = 1u;
-        }
+        for (j = 0u; j < i; ++j)
+            if ((unsigned)sequence->actions[j].kind == k && client_key(r->dev, sequence, j) == key)
+                break;
+        if (j != i)
+            continue;
+        memset(group, 0, sizeof(*group));
+        memcpy(group->dev_path, identity, sizeof(group->dev_path));
+        group->target_d_state = sequence->target_d_state;
+        for (j = 0u; j < sequence->action_cnt; ++j)
+            if ((unsigned)sequence->actions[j].kind == k && client_key(r->dev, sequence, j) == key)
+                group->actions[group->action_cnt++] = sequence->actions[j];
+        if (!p->verify_final(p->ctx, identity, sequence->target_d_state, group))
+            return 0;
     }
     return 1;
 }

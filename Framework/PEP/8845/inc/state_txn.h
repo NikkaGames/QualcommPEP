@@ -171,6 +171,8 @@ typedef struct power_pstate_program {
     power_sequence_t resources;
 } power_pstate_program_t;
 
+int power_set_identity(const char* path, uint32_t comp, uint32_t set, char out[256]);
+
 power_result_t power_compile_aeo_bp_state(const void* buf, size_t length, const char* dev_path,
                                           uint32_t comp, uint32_t set, uint32_t state,
                                           power_pstate_program_t* program);

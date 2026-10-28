@@ -2,6 +2,7 @@
  * outside transactions and must not block or fault. */
 
 #include "hw_win.h"
+#include "clock_target.h"
 #include <string.h>
 
 #define SNAP_MAGIC 0x57374B42u
@@ -17,16 +18,9 @@ enum {
     SN_VOTE0 = 4
 };
 
-static const char* const g_probe_clocks[] = {
-
-    "gcc_qupv3_wrap3_core_clk", "gcc_qupv3_wrap3_core_2x_clk", "gcc_qupv3_wrap_3_m_ahb_clk",
-    "gcc_qupv3_wrap_3_s_ahb_clk"};
-
 const char* win_backend_probe_clock_name(uint32_t key)
 {
-    if (key >= (uint32_t)(sizeof(g_probe_clocks) / sizeof(g_probe_clocks[0])))
-        return 0;
-    return g_probe_clocks[key];
+    return clock_probe_name(key);
 }
 
 static int valid_device_path(const char* p)
@@ -229,7 +223,7 @@ int win_backend_five_delegations_live(const win_backend_t* b)
 static int clock_mem_config(const power_action_t* a)
 {
     return a && a->kind == POWER_CLOCK && a->u.clock.vote == 9u && a->u.clock.extra_cnt == 1u &&
-           a->u.clock.extra[0] == 18u && strcmp(a->u.clock.name, "gcc_ufs_phy_ice_core_clk") == 0;
+           clock_config_rule(a->u.clock.name, a->u.clock.extra[0]);
 }
 
 static int validate_action(const power_action_t* a)
@@ -249,7 +243,7 @@ static int validate_action(const power_action_t* a)
             return valid_resource_name(a->u.pmic_regulator.name, POWER_NAME_BYTES,
                                        "PPP_RESOURCE_ID_");
         case POWER_CLOCK:
-            if (!valid_resource_name(a->u.clock.name, POWER_NAME_BYTES, "gcc_"))
+            if (!valid_resource_name(a->u.clock.name, POWER_NAME_BYTES, NULL))
                 return 0;
             if (clock_mem_config(a))
                 return 1;

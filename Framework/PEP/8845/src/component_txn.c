@@ -30,6 +30,29 @@ static int same_path(const char* a, const char* b, size_t cap)
     return 0;
 }
 
+int power_set_identity(const char* path, uint32_t comp, uint32_t set, char out[256])
+{
+    size_t n;
+    uint32_t values[2] = {comp, set}, i;
+    if (!out || !valid_path(path, 256u) || comp >= 32u || set >= 32u)
+        return 0;
+    n = strlen(path);
+    if (n > 247u)
+        return 0;
+    memcpy(out, path, n);
+    memcpy(out + n, ".PF", 3u);
+    n += 3u;
+    for (i = 0u; i < 2u; ++i) {
+        if (values[i] >= 10u)
+            out[n++] = (char)('0' + values[i] / 10u);
+        out[n++] = (char)('0' + values[i] % 10u);
+        if (!i)
+            out[n++] = '.';
+    }
+    out[n] = 0;
+    return 1;
+}
+
 power_result_t power_expand_comp_f_state(const power_sequence_t* fstate, uint32_t comp,
                                          const power_pstate_program_t* const* programs,
                                          uint32_t program_cnt, uint32_t set_cnt,

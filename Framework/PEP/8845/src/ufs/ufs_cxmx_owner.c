@@ -1,16 +1,16 @@
+#include "clock_target.h"
 #include "ufs_cxmx_owner.h"
 #include <string.h>
 
 static const char* const names[2] = {UFS_CX_NAME, UFS_MX_NAME};
 static const uint32_t floors[2] = {UFS_CX_LEVEL, UFS_MX_LEVEL};
-static const char domain[] = "gcc_ufs_phy_gdsc";
 
 static int live(const ufs_cxmx_owner_t* o)
 {
     uint64_t epoch = 0;
     return o && o->bound && !o->quarantined && o->epoch &&
-           o->io.owns_domain(o->io.ctx, domain, o->epoch) && o->io.owner_epoch(o->io.ctx, &epoch) &&
-           epoch == o->epoch;
+           o->io.owns_domain(o->io.ctx, clock_ufs_domain, o->epoch) &&
+           o->io.owner_epoch(o->io.ctx, &epoch) && epoch == o->epoch;
 }
 
 static int query(const ufs_cxmx_owner_t* o, unsigned i, int want)
@@ -31,7 +31,7 @@ static int query(const ufs_cxmx_owner_t* o, unsigned i, int want)
 static int verify_votes(void* ctx, const char* d, uint64_t epoch, uint32_t held)
 {
     ufs_cxmx_owner_t* o = (ufs_cxmx_owner_t*)ctx;
-    return d && !strcmp(d, domain) && o && epoch == o->epoch && held <= 1u && live(o) &&
+    return d && !strcmp(d, clock_ufs_domain) && o && epoch == o->epoch && held <= 1u && live(o) &&
            o->held == held && query(o, 0, held != 0u) && query(o, 1, held != 0u);
 }
 
@@ -39,7 +39,7 @@ static int acquire(void* ctx, const char* d, uint64_t epoch)
 {
     ufs_cxmx_owner_t* o = (ufs_cxmx_owner_t*)ctx;
     int first_changed = 0;
-    if (!d || strcmp(d, domain) || !o || epoch != o->epoch || !live(o))
+    if (!d || strcmp(d, clock_ufs_domain) || !o || epoch != o->epoch || !live(o))
         return 0;
     if (o->held)
         return verify_votes(o, d, epoch, 1);
@@ -76,7 +76,7 @@ rollback:
 static int release(void* ctx, const char* d, uint64_t epoch)
 {
     ufs_cxmx_owner_t* o = (ufs_cxmx_owner_t*)ctx;
-    if (!o || !d || strcmp(d, domain) || epoch != o->epoch || !live(o))
+    if (!o || !d || strcmp(d, clock_ufs_domain) || epoch != o->epoch || !live(o))
         return 0;
     if (!o->held)
         return verify_votes(o, d, epoch, 0);
@@ -129,7 +129,7 @@ int ufs_cx_mx_bind(ufs_cxmx_owner_t* o, const ufs_cxmx_io_t* io, uint64_t epoch)
 int ufs_cx_mx_rail_provider(ufs_cxmx_owner_t* o, fs_gdsc_rail_provider_t* p)
 {
     fs_gdsc_rail_provider_t next;
-    if (!o || !p || !live(o) || o->held || !verify_votes(o, domain, o->epoch, 0))
+    if (!o || !p || !live(o) || o->held || !verify_votes(o, clock_ufs_domain, o->epoch, 0))
         return 0;
     memset(&next, 0, sizeof(next));
     next.ctx = o;
@@ -143,7 +143,7 @@ int ufs_cx_mx_rail_provider(ufs_cxmx_owner_t* o, fs_gdsc_rail_provider_t* p)
 
 int ufs_cx_mx_retire(ufs_cxmx_owner_t* o)
 {
-    if (!o || !live(o) || o->held || !verify_votes(o, domain, o->epoch, 0))
+    if (!o || !live(o) || o->held || !verify_votes(o, clock_ufs_domain, o->epoch, 0))
         return 0;
     memset(o, 0, sizeof(*o));
     return 1;
