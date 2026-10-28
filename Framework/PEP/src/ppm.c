@@ -3,6 +3,11 @@
 #include "dcvs.h"
 #include "soc_transport.h"
 
+static ULONG frequency_mhz(ULONG frequency)
+{
+    return (ULONG)(((ULONGLONG)frequency + 500000u) / 1000000u);
+}
+
 BOOLEAN ppm_notify(PVOID handle, ULONG notify, PVOID data)
 {
     ULONG cpu = cpu_device_index(handle);
@@ -17,6 +22,12 @@ BOOLEAN ppm_notify(PVOID handle, ULONG notify, PVOID data)
     }
     if (notify == PEP_NOTIFY_PPM_PERF_CHECK_COMPLETE)
         return dcvs_ready();
+    if (notify == PEP_NOTIFY_PPM_QUERY_VETO_REASONS) {
+        if (!data)
+            return FALSE;
+        ((PPEP_PPM_QUERY_VETO_REASONS)data)->VetoReasonCount = 0u;
+        return TRUE;
+    }
     if (!data || cpu == MAXULONG || !dcvs_ready())
         return FALSE;
     count = dcvs_get_perf_level_cnt(cpu);
@@ -26,8 +37,31 @@ BOOLEAN ppm_notify(PVOID handle, ULONG notify, PVOID data)
         case PEP_NOTIFY_PPM_QUERY_CAPABILITIES: {
             PPEP_PPM_QUERY_CAPABILITIES caps = data;
             RtlZeroMemory(caps, sizeof(*caps));
+            caps->FeedbackCounterCount = 1u;
             caps->PerformanceStatesSupported = TRUE;
             caps->DiscretePerformanceStateCount = (UCHAR)count;
+            return TRUE;
+        }
+        case PEP_NOTIFY_PPM_QUERY_FEEDBACK_COUNTERS: {
+            PPEP_PPM_QUERY_FEEDBACK_COUNTERS query = data;
+            ULONG frequency = frequency_mhz(dcvs_get_nominal_freq_hz(cpu));
+            if (query->Count != 1u || !frequency)
+                return FALSE;
+            RtlZeroMemory(&query->Counters[0], sizeof(query->Counters[0]));
+            query->Counters[0].Type = PROCESSOR_FEEDBACK_TYPE_INSTANTANEOUS;
+            query->Counters[0].Counter = PROCESSOR_FEEDBACK_COUNTER_FREQUENCY;
+            query->Counters[0].NominalRate = frequency;
+            return TRUE;
+        }
+        case PEP_NOTIFY_PPM_FEEDBACK_READ: {
+            PPEP_PPM_FEEDBACK_READ query = data;
+            ULONG frequency;
+            if (query->CounterIndex != 0u)
+                return FALSE;
+            frequency = dcvs_get_current_freq_hz(cpu);
+            if (!frequency)
+                return FALSE;
+            query->InstantaneousValue = frequency_mhz(frequency);
             return TRUE;
         }
         case PEP_NOTIFY_PPM_QUERY_PERF_CAPABILITIES: {
@@ -57,7 +91,7 @@ BOOLEAN ppm_notify(PVOID handle, ULONG notify, PVOID data)
             for (ULONG i = 0u; i < count; ++i) {
                 ULONG frequency = dcvs_get_perf_freq_hz_by_perf_state_idx(cpu, i);
                 RtlZeroMemory(&query->States[i], sizeof(query->States[i]));
-                query->States[i].Frequency = (ULONG)(((ULONGLONG)frequency + 500000u) / 1000000u);
+                query->States[i].Frequency = frequency_mhz(frequency);
                 query->States[i].Performance = dcvs_get_cpu_normalized_performance(cpu, frequency);
                 if (!query->States[i].Performance ||
                     (i && query->States[i].Performance >= query->States[i - 1u].Performance))

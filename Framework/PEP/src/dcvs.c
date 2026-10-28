@@ -113,13 +113,13 @@ ULONG dcvs_get_worst_case_transition_overhead(ULONG cpu)
 ULONG dcvs_get_perf_level_cnt(ULONG cpu)
 {
     const molokai_domain_model_t* d = model(cpu);
-    return d ? d->level_cnt : 0u;
+    return d ? d->level_cnt - d->minimum_level : 0u;
 }
 
 ULONG dcvs_get_perf_freq_hz_by_perf_level(ULONG cpu, ULONG level)
 {
     const molokai_domain_model_t* d = model(cpu);
-    return d && level < d->level_cnt ? d->freq_hz[level] : 0u;
+    return d && level < d->level_cnt - d->minimum_level ? d->freq_hz[d->minimum_level + level] : 0u;
 }
 
 ULONG dcvs_get_perf_freq_hz_by_perf_state_idx(ULONG cpu, ULONG index)
@@ -157,18 +157,32 @@ ULONG dcvs_get_lowest_nonlinear_freq_hz(ULONG cpu)
 
 ULONG dcvs_get_current_perf_level(ULONG cpu)
 {
+    const molokai_domain_model_t* d;
     ULONG level = MAXULONG;
     if (!dcvs_enter())
         return level;
-    if (cpu < MOLOKAI_CPU_CNT)
-        (VOID) molokai_transport_get_level(molokai_domain_for_cpu(cpu), &level);
+    d = model(cpu);
+    if (!d || !NT_SUCCESS(molokai_transport_get_level(d->scmi_domain_id, &level)) ||
+        level < d->minimum_level || level >= d->level_cnt)
+        level = MAXULONG;
+    else
+        level -= d->minimum_level;
     dcvs_leave();
     return level;
 }
 
 ULONG dcvs_get_current_freq_hz(ULONG cpu)
 {
-    return dcvs_get_perf_freq_hz_by_perf_level(cpu, dcvs_get_current_perf_level(cpu));
+    const molokai_domain_model_t* d;
+    ULONG level, frequency = 0u;
+    if (!dcvs_enter())
+        return 0u;
+    d = model(cpu);
+    if (d && NT_SUCCESS(molokai_transport_get_level(d->scmi_domain_id, &level)) &&
+        level < d->level_cnt)
+        frequency = d->freq_hz[level];
+    dcvs_leave();
+    return frequency;
 }
 
 ULONG dcvs_get_cpu_normalized_performance(ULONG cpu, ULONG frequency)
@@ -188,7 +202,9 @@ NTSTATUS dcvs_perf_set_state_checked(ULONG cpu, ULONG minimum, ULONG maximum, UL
         return STATUS_DEVICE_NOT_READY;
     domain = molokai_domain_for_cpu(cpu);
     d = molokai_transport_domain(domain);
-    if (cpu >= MOLOKAI_CPU_CNT || !scmi_perf_select(d, minimum, maximum, desired, &level)) {
+    if (cpu >= MOLOKAI_CPU_CNT || minimum >= dcvs_get_perf_level_cnt(cpu) ||
+        maximum >= dcvs_get_perf_level_cnt(cpu) || desired >= dcvs_get_perf_level_cnt(cpu) ||
+        !scmi_perf_select(d, minimum, maximum, desired, &level)) {
         dcvs_leave();
         return STATUS_INVALID_PARAMETER;
     }
@@ -251,10 +267,13 @@ VOID dcvs_get_snapshot(dcvs_snapshot_t* snapshot)
     RtlCopyMemory(snapshot->cpus, requests, sizeof(requests));
     KeReleaseSpinLock(&requests_lock, irql);
     for (ULONG i = 0u; i < MOLOKAI_CPU_CNT; ++i) {
+        const molokai_domain_model_t* d = model(i);
         ULONG level = MAXULONG;
         (VOID) molokai_transport_get_level(molokai_domain_for_cpu(i), &level);
-        snapshot->cpus[i].current_perf_level = level;
-        snapshot->cpus[i].current_freq_hz = dcvs_get_perf_freq_hz_by_perf_level(i, level);
+        snapshot->cpus[i].current_perf_level =
+            d && level >= d->minimum_level && level < d->level_cnt ? level - d->minimum_level
+                                                                   : MAXULONG;
+        snapshot->cpus[i].current_freq_hz = d && level < d->level_cnt ? d->freq_hz[level] : 0u;
         snapshot->cpus[i].normalized_performance =
             dcvs_get_cpu_normalized_performance(i, snapshot->cpus[i].current_freq_hz);
     }

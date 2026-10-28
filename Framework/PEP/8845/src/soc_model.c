@@ -19,10 +19,16 @@ void molokai_model_reset(void)
 int molokai_model_bind(unsigned int domain, const scmi_perf_domain_t* firmware)
 {
     molokai_domain_model_t* model;
-    unsigned int i;
+    unsigned int i, minimum = 0u;
     if (domain >= MOLOKAI_DOMAIN_CNT || !firmware || !firmware->valid || firmware->id != domain ||
         firmware->level_count < 2u || firmware->level_count > MOLOKAI_MAX_LEVEL_CNT ||
         domains[domain].level_cnt)
+        return 0;
+    while (minimum < firmware->level_count &&
+           firmware->levels[minimum].frequency_hz < perf_target_minimum_hz(domain))
+        ++minimum;
+    if (minimum == firmware->level_count ||
+        firmware->levels[minimum].frequency_hz > firmware->sustained_hz)
         return 0;
     for (i = 0u; i < firmware->level_count; ++i) {
         uint64_t value =
@@ -40,6 +46,7 @@ int molokai_model_bind(unsigned int domain, const scmi_perf_domain_t* firmware)
     model = &domains[domain];
     model->scmi_domain_id = domain;
     model->level_cnt = firmware->level_count;
+    model->minimum_level = minimum;
     model->capacity_dmips_mhz = perf_target_capacity(domain);
     model->freq_hz = frequencies[domain];
     for (i = 0u; i < firmware->level_count; ++i) {
@@ -83,7 +90,7 @@ unsigned int molokai_core_for_cpu(unsigned int cpu)
 unsigned int molokai_level_from_win_state(unsigned int domain, unsigned int state)
 {
     const molokai_domain_model_t* d = molokai_domain(domain);
-    return d && state < d->level_cnt ? d->level_cnt - 1u - state : UINT32_MAX;
+    return d && state < d->level_cnt - d->minimum_level ? d->level_cnt - 1u - state : UINT32_MAX;
 }
 
 unsigned int molokai_freq_from_win_state(unsigned int domain, unsigned int state)

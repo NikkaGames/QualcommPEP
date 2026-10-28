@@ -11,11 +11,12 @@ extern "C" {
 #define MOLOKAI_DOMAIN_CNT 2u
 #define MOLOKAI_MAX_LEVEL_CNT SCMI_PERF_MAX_LEVELS
 
-/* the firmware owns voltage transitions; these values are NOT regulator votes. */
+/* Firmware operating points and platform policy limits. */
 typedef struct molokai_domain_model {
     unsigned int cpu_cnt;
     unsigned int scmi_domain_id;
     unsigned int level_cnt;
+    unsigned int minimum_level;
     unsigned int capacity_dmips_mhz;
     unsigned int non_boost_max_level;
     const unsigned int* freq_hz;

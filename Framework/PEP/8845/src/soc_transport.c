@@ -66,8 +66,12 @@ static VOID unmap_channels(VOID)
 static PVOID map_register(uint64_t address, ULONG bytes, BOOLEAN write)
 {
     PHYSICAL_ADDRESS physical;
-    if (!perf_target_channel(address, bytes, write))
+    if (!perf_target_channel(address, bytes, write)) {
+        TraceEvents(TRACE_LEVEL_WARNING, TRACE_PPM,
+                    "ppm: fast channel outside platform windows address=%I64x bytes=%lu write=%u",
+                    address, bytes, write);
         return NULL;
+    }
     physical.QuadPart = (LONGLONG)address;
     return MmMapIoSpaceEx(physical, bytes, (write ? PAGE_READWRITE : PAGE_READONLY) | PAGE_NOCACHE);
 }

@@ -124,6 +124,6 @@ NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT driver_object, _In_ PUNICODE_STRING reg
     (VOID) etw_reg();
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER,
-                "driver: build rev=420 firmware-cpu-performance");
+                "driver: build rev=421 processor-performance-registration");
     return STATUS_SUCCESS;
 }

@@ -83,6 +83,19 @@ ULONG cpu_device_index(PVOID handle)
                : MAXULONG;
 }
 
+static BOOLEAN registration_valid(PPEP_DEVICE_REGISTER registration)
+{
+    PPEP_COMPONENT component;
+    if (!registration || registration->ComponentCount > 1u)
+        return FALSE;
+    if (!registration->ComponentCount)
+        return TRUE;
+    /* The processor driver registers an F0 component with PoFx. */
+    component = registration->Components[0];
+    return component && !component->Flags && !component->DeepestWakeableIdleState &&
+           component->IdleStateCount == 1u && component->IdleStates;
+}
+
 BOOLEAN cpu_device_notify(ULONG notify, PVOID data, BOOLEAN* result)
 {
     cpu_device_t* cpu = NULL;
@@ -118,8 +131,7 @@ BOOLEAN cpu_device_notify(ULONG notify, PVOID data, BOOLEAN* result)
                 return FALSE;
             request->DeviceAccepted = PepDeviceNotAccepted;
             request->DeviceHandle = NULL;
-            if (dcvs_ready() && request->KernelHandle && request->Register &&
-                request->Register->ComponentCount == 0u &&
+            if (dcvs_ready() && request->KernelHandle && registration_valid(request->Register) &&
                 InterlockedCompareExchange(&cpu->prepared, 0, 0) &&
                 InterlockedCompareExchange(&cpu->registered, 1, 0) == 0) {
                 request->DeviceHandle = (PEPHANDLE)cpu;
