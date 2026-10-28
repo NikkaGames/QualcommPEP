@@ -20,11 +20,7 @@ extern "C" {
 #define TLMM_CFG_EGPIO_ENABLE 0x1000u
 #define TLMM_CTL(pin) ((uint32_t)(pin) * TLMM_PIN_STRIDE)
 #define TLMM_IO(pin) (TLMM_CTL(pin) + 4u)
-#define SPI5_GPIO_FIRST 48u
-#define SPI5_GPIO_LAST 51u
-
-/* provider ownership remains mandatory for each pin; this allowlist does not confer
- * ownership. */
+/* Configuration bounds do not grant pin ownership. */
 
 typedef struct tlmm_gpio {
     uint32_t pin;

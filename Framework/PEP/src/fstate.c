@@ -37,15 +37,12 @@ ULONG_PTR pep_notify_comp_idle_state(_Inout_opt_ PVOID data);
 ULONG_PTR pep_dev_idle_constraints(_Inout_opt_ PVOID data);
 ULONG_PTR pep_comp_idle_constraints(_Inout_opt_ PVOID data);
 
-/* malformed PoFx idle notifications are not kernel invariants. The handler must also fail
- * admission if the device is no longer registered. */
+/* Both phases are valid for every declared F-state. */
 static __forceinline BOOLEAN pep_idle_fields_valid(_In_opt_ const pep_notify_comp_idle_state_t* s,
                                                    _In_opt_ const pep_devnode_t* n)
 {
-    return s && n && s->comp < n->comp_cnt &&
-           (s->driver_notified == 0u || s->driver_notified == 1u) &&
-           ((s->driver_notified == 0u && s->idle_state == 0u) ||
-            (s->driver_notified == 1u && s->idle_state != 0u));
+    return s && n && s->comp < n->comp_cnt && s->idle_state < 32u &&
+           s->driver_notified <= 1u;
 }
 
 /* checked fixed-buf path equality: never pass a malformed or missing terminator to strcmp
@@ -230,17 +227,14 @@ VOID pep_notify_comp_idle_state_work(_Inout_ pep_notify_comp_idle_state_t* s,
     s->completed = 0;
     n = (pep_devnode_t*)s->dev_handle;
     if (!pep_idle_fields_valid(s, n)) {
-        /* return a completion without changing cached F-state or programming hardware. */
-
         pep_log_write(PEPLOG_EVT_IDLE, 0x80u, STATUS_INVALID_PARAMETER, 0u, s->comp,
                       s->driver_notified, s->idle_state);
-        if (wi) {
-            wi->work_type = PepWorkCompleteIdleState;
-            wi->u1.active_complete.dev_handle = s->dev_handle;
-            wi->u1.active_complete.comp = s->comp;
-        }
         return;
     }
+    /* Restore resources before F0; release them after the driver enters an idle state. */
+    if ((s->idle_state == 0u && s->driver_notified) ||
+        (s->idle_state != 0u && !s->driver_notified))
+        goto complete;
     /* never mutate current_f_state or report completion before the entire physical F-state
      * program has committed and verified. */
 
@@ -271,18 +265,16 @@ VOID pep_notify_comp_idle_state_work(_Inout_ pep_notify_comp_idle_state_t* s,
         if (g_enable_pep_ocd_test > 1)
             pep_display_ocd_test(n);
     }
-    if (wi) {
+complete:
+    if (wi && n->kernel_handle) {
         wi->work_type = PepWorkCompleteIdleState;
-        wi->u1.active_complete.dev_handle = n->kernel_handle;
-        wi->u1.active_complete.comp = s->comp;
-    } else
+        wi->u1.complete_idle_state.dev_handle = n->kernel_handle;
+        wi->u1.complete_idle_state.comp = s->comp;
+    } else if (!wi)
         s->completed = 1;
 }
 
-/* a synchronous component F-state notify is a hardware transaction, just like d0/Dx:
- * acquire a node rundown claim BEFORE field validation or execution. The wait lock in
- * SyncDpmBegin requires PASSIVE_LEVEL and protects against interpreting a stale arbitrary
- * dev_handle as a live node. */
+/* Hardware operations run at PASSIVE_LEVEL under device rundown. */
 ULONG_PTR pep_notify_comp_idle_state(_Inout_opt_ PVOID data)
 {
     pep_notify_comp_idle_state_t* s = (pep_notify_comp_idle_state_t*)data;
@@ -293,9 +285,11 @@ ULONG_PTR pep_notify_comp_idle_state(_Inout_opt_ PVOID data)
         return 0;
     __try {
         s->completed = 0;
-        /* no device-list wait lock, no node dereference, and no work item at DISPATCH_LEVEL. */
-
-        if (KeGetCurrentIrql() == PASSIVE_LEVEL) {
+        if (KeGetCurrentIrql() != PASSIVE_LEVEL) {
+            if (s->dev_handle && s->comp < 32u && s->idle_state < 32u &&
+                s->driver_notified <= 1u)
+                result = pep_enqueue_work(PEP_WORKPAYLOAD_NOTIFYIDLESTATE, s, FALSE) ? 1u : 0u;
+        } else {
             n = (pep_devnode_t*)s->dev_handle;
             if (pep_sync_dpm_begin(n)) {
                 admitted = TRUE;

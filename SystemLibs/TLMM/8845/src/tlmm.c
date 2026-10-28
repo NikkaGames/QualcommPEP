@@ -1,33 +1,10 @@
 #include "tlmm.h"
 #include "state_txn.h"
 
-static int supported_pin(uint32_t p)
-{
-    if (p >= SPI5_GPIO_FIRST && p <= SPI5_GPIO_LAST)
-        return 1;
-    switch (p) {
-        case 52u:
-        case 53u:
-        case 55u:
-        case 64u:
-        case 65u:
-        case 68u:
-        case 69u:
-        case 86u:
-        case 129u:
-        case 161u:
-        case 164u:
-            return 1;
-        default:
-            return 0;
-    }
-}
-
 static int valid_config(const tlmm_gpio_t* c)
 {
-    return c && supported_pin(c->pin) && c->pin < TLMM_PIN_CNT && c->state <= 1u &&
-           c->function <= 15u && c->direction <= 1u && c->pull <= 3u && c->drive <= 7u &&
-           TLMM_IO(c->pin) < TLMM_BYTES;
+    return c && c->pin < TLMM_PIN_CNT && c->state <= 1u && c->function <= 15u &&
+           c->direction <= 1u && c->pull <= 3u && c->drive <= 7u && TLMM_IO(c->pin) < TLMM_BYTES;
 }
 
 int tlmm_decode_dsd_t_fields(const uint32_t fields[6], tlmm_gpio_t* config)

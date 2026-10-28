@@ -391,6 +391,15 @@ BOOLEAN pep_enqueue_work(_In_ ULONG work_type, _In_ PVOID data, _In_ BOOLEAN add
         item->data_owned = 0;
     }
     pep_capture_deferred_dev(item);
+    if (work_type == PEP_WORKPAYLOAD_NOTIFYIDLESTATE &&
+        (!item->data_owned || !item->deferred_dev || !item->deferred_generation ||
+         !item->original_kernel_handle)) {
+        if (item->data_owned && item->data)
+            ExFreePool(item->data);
+        ExFreeToNPagedLookasideList(&g_pep_work_lookaside, item);
+        pep_work_leave();
+        return FALSE;
+    }
 
     const ULONG_PTR payload_log_identity = (ULONG_PTR)item->data;
     KIRQL irql;
@@ -720,20 +729,17 @@ ULONG_PTR pep_work(_Inout_opt_ PVOID data)
             w->work_information->u1.complete_perf_state.succeeded = succeeded ? 1 : 0;
         }
     } else if (item->work_type == PEP_WORKPAYLOAD_NOTIFYIDLESTATE && item->data) {
-        need_work = 1;
         pep_notify_comp_idle_state_t* s = (pep_notify_comp_idle_state_t*)item->data;
         if (pep_deferred_dev_begin(item)) {
             pep_notify_comp_idle_state_work(s, (w && w->work_information) ? w->work_information
                                                                           : NULL);
             pep_deferred_dev_end(item);
-        } else if (w && w->work_information) {
-            /* complete the queued notify without applying any F-state transition or provider vote.
-             */
-
-            w->work_information->work_type = PepWorkCompleteIdleState;
-            w->work_information->u1.active_complete.dev_handle = item->original_kernel_handle;
-            w->work_information->u1.active_complete.comp = s->comp;
         }
+        /* A failed or retired transition has no completion record for PoFx. */
+        need_work = w->work_information &&
+                    w->work_information->work_type == PepWorkCompleteIdleState &&
+                    w->work_information->u1.complete_idle_state.dev_handle ==
+                        item->original_kernel_handle && item->original_kernel_handle != NULL;
     } else if (item->work_type == PEP_WORKPAYLOAD_PASSIVECALLBACK && item->data) {
         pep_passive_callback_t* cb = (pep_passive_callback_t*)item->data;
         if (cb->callback)
