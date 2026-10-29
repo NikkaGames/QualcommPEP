@@ -16,6 +16,10 @@
 VOID hw_backend_win_lifecycle_init(VOID);
 /* Requires exclusive LPI producer admission; no waiting, register writes or WDF calls. */
 BOOLEAN hw_backend_win_idle_quiescent(VOID);
+NTSTATUS hw_backend_win_sleep_bind(WDFDEVICE dev);
+/* Called with LPI producer admission and backend rundown closed; no waits or allocations. */
+BOOLEAN hw_backend_win_sleep_enter(VOID);
+BOOLEAN hw_backend_win_sleep_exit(VOID);
 /* call only after verified WDF ISR, completion-work ownership and RSC ledger ownership.
  * Promotes the existing production scheduler in place, retaining
  * BUSARB/PMIC/READBACK/PROBE clients. */
@@ -110,6 +114,7 @@ int hw_backend_win_clock_read(uint64_t serial, const char* name, uint64_t* out);
 typedef enum bus_request_op {
     BUS_REQUEST_QUERY,
     BUS_REQUEST_UPDATE,
+    BUS_REQUEST_UPDATE_ACTIVE_ONLY,
     BUS_REQUEST_RELEASE
 } bus_request_op_t;
 

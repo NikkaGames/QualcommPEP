@@ -22,6 +22,9 @@
 #define MOLOKAI_WIN_RESERVED_START 7u
 #define MOLOKAI_WIN_RESERVED_CNT 1u
 #define MOLOKAI_WIN_AMC_MASK 0x07u
+#define MOLOKAI_WIN_SET_MASK \
+    ((((1u << MOLOKAI_WIN_SLEEP_CNT) - 1u) << MOLOKAI_WIN_SLEEP_START) | \
+     (((1u << MOLOKAI_WIN_WAKE_CNT) - 1u) << MOLOKAI_WIN_WAKE_START))
 /* only AMC0 response data has been verified on this target. */
 #define MOLOKAI_WIN_READ_AMC_MASK 0x01u
 

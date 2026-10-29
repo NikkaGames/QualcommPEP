@@ -19,6 +19,7 @@
 #include "pmic_rail.h"
 #include "platform_resources.h"
 #include "rpmh_tcs.h"
+#include "sleep.h"
 #include "rpmh_oem_read_sequence.h"
 #include "rpmh_write_fence.h"
 #include "rpmh_busy_arbitration.h"
@@ -97,6 +98,7 @@ typedef struct owners {
         uint64_t owner_epoch;
         uint64_t pnp_generation;
         uint8_t granted_amcs;
+        uint8_t granted_sets;
         uint8_t pre_enabled_amc_irq_mask;
         volatile LONG active;
     } os_rsc_lease;
@@ -125,12 +127,14 @@ typedef struct owners {
     FAST_MUTEX tlmm_lock; /* tlmm-only, never nests the WDF IRQ wait lock. */
     KMUTEX rpmh_lock;     /* shared TCS/ISR/ACK serialization. */
     KMUTEX rpmh_scheduler_lock;
+    KSPIN_LOCK sleep_lock;
     KEVENT rpmh_completion_event;
     rpmh_sync_deferred_t rpmh_wait;
     rpmh_deferred_scheduler_t deferred_scheduler;
     gcc_io_t gcc_io;
     tlmm_io_t tlmm_io;
     rpmh_tcs_t rpmh;
+    rpmh_sleep_t sleep;
     rpmh_scheduler_t rpmh_scheduler;
     rsc_completion_t rsc_completion;
     icb_bus_t bus;
@@ -851,6 +855,14 @@ static rpmh_tcs_result_t rpmh_submit_active(owners_t* o, uint8_t client,
                     "rpmh: completion uncertain client=%u result=%u epoch=%llX votes=quarantined",
                     (unsigned)client, (unsigned)r, (unsigned long long)epoch);
     }
+    if (r == TCS_OK) {
+        KIRQL irql;
+        /* Only cache metadata is protected here; transport I/O has already completed. */
+        KeAcquireSpinLock(&o->sleep_lock, &irql);
+        if (!rpmh_sleep_record(&o->sleep, commands, cnt))
+            o->sleep.cache_invalid = 1u;
+        KeReleaseSpinLock(&o->sleep_lock, irql);
+    }
     return r;
 }
 
@@ -904,10 +916,53 @@ BOOLEAN hw_backend_win_idle_quiescent(VOID)
         if (owner->rsc_completion.amc[i].state != RSC_AMC_VACANT ||
             !rpmh_read(owner, TCS_STATUS(i), &value) || !(value & TCS_STATUS_IDLE))
             return FALSE;
-    /* Keep required clock/rail votes and firmware-owned sleep/wake TCS images intact.
-     * The current providers issue ACTIVE commands only. Explicit staged sets need
-     * their own image owner before they can participate in platform entry. */
     return TRUE;
+}
+
+static int sleep_authorized(void* context, uint64_t epoch, uint32_t generation)
+{
+    owners_t* owner = context;
+    win_backend_instance_t* instance = g_win_backend;
+    return owner && instance && instance->io.owners == owner &&
+           instance->core.owner_epoch == epoch && owner->os_rsc_lease.owner_epoch == epoch &&
+           InterlockedCompareExchange(&owner->os_rsc_lease.active, 0, 0) == 1 &&
+           owner->rsc_completion.epoch == generation &&
+           owner->os_rsc_lease.dev == instance->io.dev && owner->os_rsc_lease.interrupt &&
+           owner->os_rsc_lease.granted_sets == MOLOKAI_WIN_SET_MASK &&
+           owner->os_rsc_lease.pnp_generation == owner->d0_rsc.pnp_generation &&
+           owner->d0_rsc.base && owner->mmio.rsc.base == owner->d0_rsc.base &&
+           owner->mmio.rsc.physical == HLOS_RSC_DRV2_PHYS &&
+           owner->mmio.rsc.bytes == RSC_DRV2_BYTES &&
+           rpmh_write_fence_live(&owner->rpmh_write_fence, epoch);
+}
+
+static int sleep_quiescent(void* context)
+{
+    win_backend_instance_t* instance = g_win_backend;
+    return instance && instance->io.owners == context && hw_backend_win_idle_quiescent();
+}
+
+BOOLEAN hw_backend_win_sleep_enter(VOID)
+{
+    win_backend_instance_t* instance = g_win_backend;
+    return lpi_io_exclusive() && !hw_backend_ready() && instance && instance->io.owners &&
+           rpmh_sleep_enter(&instance->io.owners->sleep);
+}
+
+BOOLEAN hw_backend_win_sleep_exit(VOID)
+{
+    win_backend_instance_t* instance = g_win_backend;
+    owners_t* owner = instance ? instance->io.owners : NULL;
+    if (!lpi_io_exclusive() || hw_backend_ready() || !owner || !owner->sleep.frozen)
+        return FALSE;
+    if (rpmh_sleep_exit(&owner->sleep))
+        return TRUE;
+    /* A changed wake image cannot establish which votes firmware restored. Keep the
+     * last ACTIVE completion intact; sleep diagnostics describe this failure. */
+    owner->rpmh_write_fence.quarantined = 1u;
+    owner->rpmh_live = FALSE;
+    owner->probe &= ~PROBE_RPMH;
+    return FALSE;
 }
 
 /* the PRE-lock rpmh_live/clock/TLMM checks are only a fast rejection. D0Quiesce must close
@@ -927,6 +982,36 @@ static int owners_lock_live(owners_t* o, unsigned required)
         return 0;
     }
     return 1;
+}
+
+NTSTATUS hw_backend_win_sleep_bind(WDFDEVICE dev)
+{
+    win_backend_instance_t* instance;
+    owners_t* owner;
+    NTSTATUS status = STATUS_DEVICE_NOT_READY;
+    if (!dev || KeGetCurrentIrql() != PASSIVE_LEVEL)
+        return STATUS_INVALID_PARAMETER;
+    lpi_mutex_acquire(&g_win_lifecycle_lock);
+    instance = g_win_backend;
+    owner = instance && instance->io.dev == dev ? instance->io.owners : NULL;
+    if (owner && owners_lock_live(owner, LIVE_RPMH)) {
+        if (rpmh_sleep_bind(&owner->sleep)) {
+            status = STATUS_SUCCESS;
+            TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_RPMH,
+                        "rpmh: sleep/wake banks bound generation=%lu sleep-first=%u sleep-count=%u "
+                        "wake-first=%u wake-count=%u",
+                        (ULONG)owner->sleep.generation, (unsigned)owner->sleep.layout.sleep_first,
+                        (unsigned)owner->sleep.layout.sleep_count,
+                        (unsigned)owner->sleep.layout.wake_first,
+                        (unsigned)owner->sleep.layout.wake_count);
+        } else
+            TraceEvents(TRACE_LEVEL_WARNING, TRACE_RPMH,
+                        "rpmh: sleep/wake banks unavailable result=%u",
+                        (unsigned)owner->sleep.last_result);
+        owners_unlock(owner);
+    }
+    lpi_mutex_release(&g_win_lifecycle_lock);
+    return status;
 }
 
 static owners_t* owners_of(void* ctx)
@@ -1488,11 +1573,15 @@ int hw_backend_win_clock_dfs_catalog(uint64_t serial, const char* name, gcc_dfs_
     return ok;
 }
 
+static int bus_sleep_policy(const char* client, const power_action_t* action, int* active_only,
+                            int update);
+
 int hw_backend_win_bus_requests(uint64_t serial, const char* client, const power_action_t* actions,
                                 uint32_t count, bus_request_op_t op)
 {
     hw_backend_t lease;
     power_snapshot_t snapshots[2];
+    int sleep_policies[2] = {0};
     res_graph_t* graph;
     uint32_t attempted = 0u;
     int ok = 0;
@@ -1518,12 +1607,15 @@ int hw_backend_win_bus_requests(uint64_t serial, const char* client, const power
             for (uint32_t i = 0u; i < count && ok; ++i)
                 ok = lease.supports(lease.ctx, client, 0u, &actions[i]) &&
                      (op == BUS_REQUEST_QUERY ||
-                      lease.snapshot(lease.ctx, client, 0u, &actions[i], &snapshots[i]));
-            if (ok && op == BUS_REQUEST_UPDATE) {
+                      (lease.snapshot(lease.ctx, client, 0u, &actions[i], &snapshots[i]) &&
+                       bus_sleep_policy(client, &actions[i], &sleep_policies[i], 0)));
+            if (ok && op != BUS_REQUEST_QUERY) {
                 for (uint32_t i = 0u; i < count && ok; ++i) {
+                    int active_only = op == BUS_REQUEST_UPDATE_ACTIVE_ONLY;
                     attempted = i + 1u;
                     ok = lease.apply(lease.ctx, client, 0u, &actions[i]) &&
-                         lease.verify(lease.ctx, client, 0u, &actions[i]);
+                         lease.verify(lease.ctx, client, 0u, &actions[i]) &&
+                         bus_sleep_policy(client, &actions[i], &active_only, 1);
                 }
                 if (!ok)
                     while (attempted) {
@@ -1532,6 +1624,8 @@ int hw_backend_win_bus_requests(uint64_t serial, const char* client, const power
                                           &snapshots[attempted]))
                             (void)lease.verify_restored(lease.ctx, client, 0u, &actions[attempted],
                                                         &snapshots[attempted]);
+                        (void)bus_sleep_policy(client, &actions[attempted],
+                                                &sleep_policies[attempted], 1);
                     }
             }
         }
@@ -1540,6 +1634,58 @@ int hw_backend_win_bus_requests(uint64_t serial, const char* client, const power
     graph->release(graph->lock_ctx);
 done:
     lpi_mutex_release(&g_win_lifecycle_lock);
+    return ok;
+}
+
+static void bus_sleep_route(owners_t* owner, const char* master, const char* slave)
+{
+    icb_command_t commands[ICB_MAX_COMMANDS];
+    uint32_t count;
+    KIRQL irql;
+    if (owner->sleep.cache_invalid || owner->sleep.faulted)
+        return;
+    if (!icb_route_sleep_commands(&owner->bus, master, slave, commands, ICB_MAX_COMMANDS, &count)) {
+        owner->sleep.cache_invalid = 1u;
+        return;
+    }
+    KeAcquireSpinLock(&owner->sleep_lock, &irql);
+    for (uint32_t i = 0u; i < count; ++i) {
+        uint32_t b;
+        if (!rpmh_sleep_has_active(&owner->sleep, commands[i].address))
+            continue;
+        for (b = 0u; b < owner->bus.bcm_cnt; ++b)
+            if (owner->bus.bcms[b].address_known &&
+                owner->bus.bcms[b].address == commands[i].address)
+                break;
+        if (b == owner->bus.bcm_cnt ||
+            !rpmh_sleep_vote(&owner->sleep, commands[i].address, commands[i].data, 1,
+                             owner->bus.bcms[b].clk_id)) {
+            owner->sleep.cache_invalid = 1u;
+            break;
+        }
+    }
+    KeReleaseSpinLock(&owner->sleep_lock, irql);
+}
+
+static int bus_sleep_policy(const char* client, const power_action_t* action, int* active_only,
+                            int update)
+{
+    win_backend_instance_t* instance = g_win_backend;
+    owners_t* owner = instance ? instance->io.owners : NULL;
+    int ok = 1;
+    if (!owner || !action || !active_only || !owners_lock_live(owner, LIVE_RPMH))
+        return 0;
+    if (update) {
+        int previous =
+            icb_client_active_only(&owner->bus, client, action->u.icb.master, action->u.icb.slave);
+        ok = icb_set_client_active_only(&owner->bus, client, action->u.icb.master,
+                                        action->u.icb.slave, *active_only);
+        if (ok && previous != (*active_only != 0))
+            bus_sleep_route(owner, action->u.icb.master, action->u.icb.slave);
+    } else
+        *active_only =
+            icb_client_active_only(&owner->bus, client, action->u.icb.master, action->u.icb.slave);
+    owners_unlock(owner);
     return ok;
 }
 
@@ -1563,6 +1709,7 @@ static int bus_commit_route(owners_t* o, const char* master, const char* slave)
                     "icb: %s->%s commands=%lu commit failed result=%d", master, slave, n, (int)r);
         return 0;
     }
+    bus_sleep_route(o, master, slave);
     return 1;
 }
 
@@ -3456,7 +3603,8 @@ skip_catalog_probe:
 static int rsc_d0_mapping_can_close(const owners_t* o)
 {
     uint32_t i;
-    if (!o || !o->rpmh_irq_pipeline.initialized || o->rpmh_irq_pipeline.bound ||
+    if (!o || o->sleep.bound || o->sleep.frozen || o->sleep.faulted ||
+        !o->rpmh_irq_pipeline.initialized || o->rpmh_irq_pipeline.bound ||
         o->rpmh_irq_pipeline.faulted || o->rpmh_irq_pipeline.pending.active ||
         o->rpmh_irq_pipeline.pending.epoch || o->rpmh_irq_pipeline.unmask_finalizing.active ||
         o->rpmh_irq_pipeline.unmask_finalizing.epoch || o->rpmh_dpc_tracker.phase ||
@@ -3497,7 +3645,8 @@ static VOID owners_destroy(owners_t* o)
     /* the WDF/PnP owner has not yet supplied a complete worker/ISR teardown proof. Never
      * release bound storage. */
 
-    if (ufs_native_retains_graph(&o->ufs_native) || o->ufs_group_bridge || o->ufs_group_votes[0] ||
+    if (o->sleep.bound || o->sleep.frozen || o->sleep.faulted ||
+        ufs_native_retains_graph(&o->ufs_native) || o->ufs_group_bridge || o->ufs_group_votes[0] ||
         o->ufs_group_votes[1] || o->ufs_rail_owner.held || o->ufs_owner_uncertain ||
         o->rpmh_irq_pipeline.bound || o->rpmh_irq_pipeline.faulted ||
         o->rpmh_irq_pipeline.pending.active || o->rpmh_irq_pipeline.unmask_finalizing.active ||
@@ -3590,6 +3739,7 @@ static owners_t* owners_create(VOID)
     ExInitializeFastMutex(&o->tlmm_lock);
     KeInitializeMutex(&o->rpmh_lock, 0);
     KeInitializeMutex(&o->rpmh_scheduler_lock, 0);
+    KeInitializeSpinLock(&o->sleep_lock);
     KeInitializeEvent(&o->rpmh_completion_event, NotificationEvent, FALSE);
     /* initialize an owner-retained pipeline BEFORE any PnP/d0 callback can publish a bridge.
      * It stays unbound, with no GIC/RSC/MMIO authority, until the same d0 owner establishes
@@ -4523,6 +4673,9 @@ NTSTATUS hw_backend_win_d0_acquire_firmware_configured_rpmh(_In_ WDFDEVICE dev,
     o->os_rsc_lease.owner_epoch = epoch;
     o->os_rsc_lease.pnp_generation = pnp_generation;
     o->os_rsc_lease.granted_amcs = MOLOKAI_WIN_AMC_MASK;
+    /* The target assignment reserves separate SLEEP/WAKE banks in this HLOS DRV.
+     * Their programmer remains unbound until the ACPI firmware initialization completes. */
+    o->os_rsc_lease.granted_sets = MOLOKAI_WIN_SET_MASK;
     o->os_rsc_lease.pre_enabled_amc_irq_mask = (uint8_t)(irq_enable_b & MOLOKAI_WIN_AMC_MASK);
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_RPMH, "rpmh: IRQ baseline enable=%08lX inherited=%02X",
                 irq_enable_b, (ULONG)o->os_rsc_lease.pre_enabled_amc_irq_mask);
@@ -4576,6 +4729,11 @@ NTSTATUS hw_backend_win_d0_acquire_firmware_configured_rpmh(_In_ WDFDEVICE dev,
                     "rpmh: deferred binding rejected status=%08X rollback=unpublished-owner",
                     result);
             if (NT_SUCCESS(result)) {
+                rpmh_sleep_io_t sleep_io = {
+                    o, rpmh_read, rpmh_write, io_barrier, sleep_authorized, sleep_quiescent
+                };
+                if (!rpmh_sleep_init(&o->sleep, &sleep_io, &rpmh_sleep_target, epoch, ledger_epoch))
+                    o->sleep.cache_invalid = 1u;
                 TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_RPMH,
                             "rpmh: DRV2 owner published epoch=%llu", (unsigned long long)epoch);
                 return STATUS_SUCCESS;
@@ -5134,6 +5292,13 @@ NTSTATUS hw_backend_win_d0_quiesce(_In_ WDFDEVICE dev)
                     TraceEvents(TRACE_LEVEL_WARNING, TRACE_RESOURCE,
                                 "fs: quiesce blocked epoch=%llX client=retained",
                                 (unsigned long long)o->os_rsc_lease.owner_epoch);
+                } else if (!rpmh_sleep_restore(&o->sleep)) {
+                    if (o->sleep.faulted)
+                        g_quarantined_rsc_owner = o;
+                    status = STATUS_DEVICE_BUSY;
+                    TraceEvents(TRACE_LEVEL_WARNING, TRACE_RPMH,
+                                "rpmh: sleep/wake restore failed result=%u owner=retained",
+                                (unsigned)o->sleep.last_result);
                 } else if (!native_pre_disable_amcs_idle(o, dev, inst->core.owner_epoch)) {
                     status = STATUS_DEVICE_BUSY;
                     TraceEvents(TRACE_LEVEL_WARNING, TRACE_RPMH,
@@ -5199,7 +5364,8 @@ NTSTATUS hw_backend_win_d0_retire_published_owner(_In_ WDFDEVICE dev)
         o->deferred_scheduler.epoch != inst->core.owner_epoch ||
         o->deferred_scheduler.ledger_epoch != o->rsc_completion.epoch ||
         !o->rpmh_irq_pipeline.bound || o->rpmh_irq_pipeline.epoch != inst->core.owner_epoch ||
-        !o->d0_rsc.base || !o->d0_gic.base) {
+        !o->d0_rsc.base || !o->d0_gic.base || o->sleep.bound || o->sleep.frozen ||
+        o->sleep.faulted) {
         TraceEvents(TRACE_LEVEL_WARNING, TRACE_RPMH,
                     "rpmh: retirement rejected owner-epoch=%llu GIC-epoch=%llu active=%u "
                     "scheduler=%u pipeline=%u RSC=%u GIC=%u",

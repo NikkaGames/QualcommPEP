@@ -41,6 +41,7 @@ typedef struct lpi_catalog {
 static volatile LONG enabled;
 static volatile LONG advertised;
 static volatile LONG firmware_ready;
+static volatile LONG firmware_initialized;
 static KMUTEX configuration_lock;
 static volatile LONG io_users;
 static volatile LONG64 sessions;
@@ -72,6 +73,11 @@ BOOLEAN lpi_io_enter(VOID)
 VOID lpi_io_leave(VOID)
 {
     InterlockedDecrement(&io_users);
+}
+
+BOOLEAN lpi_io_exclusive(VOID)
+{
+    return InterlockedCompareExchange(&io_users, 0, 0) == LPI_IO_CLOSED;
 }
 
 VOID lpi_io_acquire(VOID)
@@ -116,10 +122,23 @@ NTSTATUS lpi_firmware_init(WDFDEVICE device)
         return STATUS_DEVICE_NOT_READY;
     status = acpi_lpi_init(device);
     if (NT_SUCCESS(status)) {
-        InterlockedExchange(&firmware_ready, 1);
+        InterlockedExchange(&firmware_initialized, 1);
         TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_PPM, "lpi: firmware initialization acknowledged");
+        status = hw_backend_win_sleep_bind(device);
+        if (NT_SUCCESS(status))
+            InterlockedExchange(&firmware_ready, 1);
     }
     return status;
+}
+
+VOID lpi_firmware_resume(WDFDEVICE device)
+{
+    if (InterlockedCompareExchange(&firmware_initialized, 0, 0)) {
+        NTSTATUS status = lpi_firmware_init(device);
+        if (!NT_SUCCESS(status))
+            TraceEvents(TRACE_LEVEL_WARNING, TRACE_PPM,
+                        "lpi: D0 initialization failed status=%08X", status);
+    }
 }
 
 static BOOLEAN read_enter(VOID)
@@ -316,6 +335,11 @@ static NTSTATUS prepare(PPEP_PPM_LPI_PRE_EXECUTE request)
             status = STATUS_DEVICE_BUSY;
             goto rollback;
         }
+        if (!hw_backend_win_sleep_enter()) {
+            molokai_transport_idle_end();
+            status = STATUS_DEVICE_BUSY;
+            goto rollback;
+        }
     }
     for (ULONG i = 0u; i < catalog->count; ++i) {
         if (!(mask & (1u << i)))
@@ -364,9 +388,11 @@ static VOID complete(PPEP_PPM_LPI_COMPLETE request)
             continue;
         }
         if (state->owns_io) {
+            BOOLEAN restored = hw_backend_win_sleep_exit();
+            BOOLEAN quiescent = hw_backend_win_idle_quiescent();
+            BOOLEAN reopened = hw_backend_idle_end(state->backend_serial) != 0;
             molokai_transport_idle_end();
-            if (!hw_backend_win_idle_quiescent() ||
-                !hw_backend_idle_end(state->backend_serial)) {
+            if (!restored || !quiescent || !reopened) {
                 InterlockedIncrement(&resume_failures);
                 InterlockedExchange(&enabled, 0);
             }
@@ -435,6 +461,7 @@ VOID lpi_stop(VOID)
 {
     InterlockedExchange(&enabled, 0);
     InterlockedExchange(&firmware_ready, 0);
+    InterlockedExchange(&firmware_initialized, 0);
     /* Active firmware transitions retain their resident catalog until completion. */
     if (InterlockedCompareExchange64(&sessions, LPI_CONFIG, 0) == 0) {
         lpi_catalog_t* previous = catalog;

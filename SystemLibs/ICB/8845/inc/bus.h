@@ -69,6 +69,7 @@ typedef struct icb_bcm {
 
 typedef struct icb_client {
     uint8_t in_use;
+    uint8_t active_only;
     char dev_path[ICB_PATH_BYTES];
     uint32_t master_id, slave_id;
     uint64_t ab, ib;
@@ -107,11 +108,18 @@ int icb_set_client_vote(icb_bus_t* bus, const char* dev_path, const char* master
                         const char* slave_symbol, uint64_t ab, uint64_t ib);
 int icb_get_client_vote(const icb_bus_t* bus, const char* dev_path, const char* master_symbol,
                         const char* slave_symbol, uint64_t* ab, uint64_t* ib);
+int icb_client_active_only(const icb_bus_t* bus, const char* path, const char* master,
+                            const char* slave);
+int icb_set_client_active_only(icb_bus_t* bus, const char* path, const char* master,
+                                const char* slave, int active_only);
 
 /* commands for the BCMs of a route, from the aggregate of all recorded client votes. */
 
 int icb_route_commands(const icb_bus_t* bus, const char* master_symbol, const char* slave_symbol,
                        icb_command_t* out, uint32_t capacity, uint32_t* cnt);
+/* Required clients retain their votes; active-only clients and active keepalives are omitted. */
+int icb_route_sleep_commands(const icb_bus_t* bus, const char* master, const char* slave,
+                              icb_command_t* out, uint32_t capacity, uint32_t* count);
 
 int icb_single_req_commands(const icb_bus_t* bus, const char* master_symbol,
                             const char* slave_symbol, uint64_t ab, uint64_t ib, icb_command_t* out,

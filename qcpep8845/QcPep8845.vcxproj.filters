@@ -408,6 +408,15 @@
     <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_tcs.c">
       <Filter>SystemLibs\RPMh\8845\src</Filter>
     </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\sleep.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\sleep_target.c">
+      <Filter>SystemLibs\RPMh\8845\src</Filter>
+    </ClCompile>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\sleep.h">
+      <Filter>SystemLibs\RPMh\8845\inc</Filter>
+    </ClInclude>
     <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_deferred.c">
       <Filter>SystemLibs\RPMh\8845\src</Filter>
     </ClCompile>

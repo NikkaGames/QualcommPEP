@@ -253,12 +253,38 @@ int icb_get_client_vote(const icb_bus_t* bus, const char* dev_path, const char* 
     return 1;
 }
 
+int icb_client_active_only(const icb_bus_t* bus, const char* path, const char* master,
+                           const char* slave)
+{
+    const icb_node_t* m = icb_find_master(master);
+    const icb_node_t* s = icb_find_slave(slave);
+    icb_client_t* client;
+    if (!bus || !path || !m || !s)
+        return 0;
+    client = find_client((icb_bus_t*)bus, path, m->id, s->id, 0);
+    return client && client->active_only;
+}
+
+int icb_set_client_active_only(icb_bus_t* bus, const char* path, const char* master,
+                               const char* slave, int active_only)
+{
+    const icb_node_t* m = icb_find_master(master);
+    const icb_node_t* s = icb_find_slave(slave);
+    icb_client_t* client;
+    if (!bus || !bus->initialized || !path || !m || !s)
+        return 0;
+    client = find_client(bus, path, m->id, s->id, 0);
+    if (client)
+        client->active_only = active_only != 0;
+    return 1;
+}
+
 /* ab is summed and ib maximized over every request whose route crosses the endpoint
  * (ul_int.c update_sw_bandwidth_state). `only`, when set, replaces the recorded client
  * table with that single request. */
 
 static void node_state(const icb_bus_t* bus, const icb_node_t* node, const icb_client_t* only,
-                       uint64_t* ab, uint64_t* ib)
+                       int sleep, uint64_t* ab, uint64_t* ib)
 {
     const icb_node_t* nodes[ICB_MAX_ROUTE_NODES];
     uint32_t i, j, n;
@@ -266,7 +292,7 @@ static void node_state(const icb_bus_t* bus, const icb_node_t* node, const icb_c
     *ib = 0u;
     for (i = 0; i < ICB_MAX_CLIENTS; ++i) {
         const icb_client_t* c = only ? only : &bus->clients[i];
-        if (!c->in_use || (c->ab == 0u && c->ib == 0u)) {
+        if (!c->in_use || (sleep && c->active_only) || (c->ab == 0u && c->ib == 0u)) {
             if (only)
                 break;
             continue;
@@ -313,7 +339,7 @@ uint32_t icb_encode_vote(uint64_t scaled_ib, uint64_t scaled_ab)
     return v;
 }
 
-static int bcm_active(const icb_bus_t* bus, uint32_t idx, const icb_client_t* only)
+static int bcm_active(const icb_bus_t* bus, uint32_t idx, const icb_client_t* only, int sleep)
 {
     const icb_node_t* tables[2] = {icb_master_nodes, icb_slave_nodes};
     unsigned counts[2] = {icb_master_node_cnt, icb_slave_node_cnt};
@@ -324,7 +350,7 @@ static int bcm_active(const icb_bus_t* bus, uint32_t idx, const icb_client_t* on
             const icb_node_t* ep = &tables[t][i];
             if (!node_votes_bcm(ep, idx))
                 continue;
-            node_state(bus, ep, only, &ab, &ib);
+            node_state(bus, ep, only, sleep, &ab, &ib);
             if (ab || ib)
                 return 1;
         }
@@ -332,7 +358,7 @@ static int bcm_active(const icb_bus_t* bus, uint32_t idx, const icb_client_t* on
 }
 
 /* the 32-bit word for one BCM node, per its kind. */
-static uint32_t bcm_vote(const icb_bus_t* bus, uint32_t idx, const icb_client_t* only)
+static uint32_t bcm_vote(const icb_bus_t* bus, uint32_t idx, const icb_client_t* only, int sleep)
 {
     const icb_bcm_node_t* node = &icb_bcm_nodes[idx];
     const icb_bcm_t* b = &bus->bcms[idx];
@@ -344,13 +370,15 @@ static uint32_t bcm_vote(const icb_bus_t* bus, uint32_t idx, const icb_client_t*
 
     if (node->kind == BCM_KIND_VECTOR) {
 
-        val = (node->keep_alive || bcm_active(bus, idx, only)) ? node->output : 0u;
+        val = ((!sleep && node->keep_alive) || bcm_active(bus, idx, only, sleep)) ?
+              node->output : 0u;
         if (node->relative_first <= icb_bcm_relative_cnt &&
             node->relative_cnt <= icb_bcm_relative_cnt - node->relative_first) {
             for (r = 0; r < node->relative_cnt; ++r) {
                 uint32_t rel = icb_bcm_relatives[node->relative_first + r];
                 if (rel < icb_bcm_node_cnt &&
-                    (icb_bcm_nodes[rel].keep_alive || bcm_active(bus, rel, only)))
+                    ((!sleep && icb_bcm_nodes[rel].keep_alive) ||
+                     bcm_active(bus, rel, only, sleep)))
                     val |= icb_bcm_nodes[rel].output;
             }
         }
@@ -366,7 +394,7 @@ static uint32_t bcm_vote(const icb_bus_t* bus, uint32_t idx, const icb_client_t*
             const icb_node_t* ep = &tables[t][i];
             if (!node_votes_bcm(ep, idx) || ep->width_bytes == 0u)
                 continue;
-            node_state(bus, ep, only, &nab, &nib);
+            node_state(bus, ep, only, sleep, &nab, &nib);
             if (nab == 0u && nib == 0u)
                 continue;
             sib = ceil_scale(nib, b->width, ep->width_bytes);
@@ -384,13 +412,14 @@ static uint32_t bcm_vote(const icb_bus_t* bus, uint32_t idx, const icb_client_t*
     qab = ab / b->unit + ((ab % b->unit) ? 1u : 0u);
     /* molokai's active keepalive is a 1/1 idle vote, not a clamp on each dimension of an
      * existing client vote. */
-    if (node->keep_alive && qib == 0u && qab == 0u)
+    if (!sleep && node->keep_alive && qib == 0u && qab == 0u)
         qib = qab = 1u;
     return icb_encode_vote(qib, qab);
 }
 
 static int route_commands(const icb_bus_t* bus, const char* ms, const char* ss,
-                          const icb_client_t* only, icb_command_t* out, uint32_t cap, uint32_t* cnt)
+                          const icb_client_t* only, int sleep, icb_command_t* out,
+                          uint32_t cap, uint32_t* cnt)
 {
     const icb_node_t* nodes[ICB_MAX_ROUTE_NODES];
     uint32_t list[ICB_MAX_BCMS];
@@ -438,7 +467,7 @@ static int route_commands(const icb_bus_t* bus, const char* ms, const char* ss,
     }
     for (i = 0; i < used; ++i) {
         out[i].address = bus->bcms[list[i]].address;
-        out[i].data = bcm_vote(bus, list[i], only);
+        out[i].data = bcm_vote(bus, list[i], only, sleep);
         out[i].completion = 1u;
         if (i + 1u == used || bus->bcms[list[i + 1]].clk_id != bus->bcms[list[i]].clk_id)
             out[i].data |= BCM_COMMIT;
@@ -450,7 +479,13 @@ static int route_commands(const icb_bus_t* bus, const char* ms, const char* ss,
 int icb_route_commands(const icb_bus_t* bus, const char* master_symbol, const char* slave_symbol,
                        icb_command_t* out, uint32_t capacity, uint32_t* cnt)
 {
-    return route_commands(bus, master_symbol, slave_symbol, 0, out, capacity, cnt);
+    return route_commands(bus, master_symbol, slave_symbol, 0, 0, out, capacity, cnt);
+}
+
+int icb_route_sleep_commands(const icb_bus_t* bus, const char* master, const char* slave,
+                             icb_command_t* out, uint32_t capacity, uint32_t* count)
+{
+    return route_commands(bus, master, slave, 0, 1, out, capacity, count);
 }
 
 int icb_single_req_commands(const icb_bus_t* bus, const char* master_symbol,
@@ -471,5 +506,5 @@ int icb_single_req_commands(const icb_bus_t* bus, const char* master_symbol,
     only.slave_id = s->id;
     only.ab = ab;
     only.ib = ib;
-    return route_commands(bus, master_symbol, slave_symbol, &only, out, capacity, cnt);
+    return route_commands(bus, master_symbol, slave_symbol, &only, 0, out, capacity, cnt);
 }

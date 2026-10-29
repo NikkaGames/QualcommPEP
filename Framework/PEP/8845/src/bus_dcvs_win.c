@@ -159,7 +159,8 @@ static int monitor_request(monitor_native_t* m, const bwmon_target_t* target, ui
     }
     if (op == BUS_REQUEST_UPDATE)
         m->vote_held = TRUE;
-    ok = hw_backend_win_bus_requests(m->owner->epoch, target->client, actions, count, op);
+    ok = hw_backend_win_bus_requests(m->owner->epoch, target->client, actions, count,
+                                      op == BUS_REQUEST_UPDATE ? BUS_REQUEST_UPDATE_ACTIVE_ONLY : op);
     if (ok && op == BUS_REQUEST_UPDATE) {
         m->monitor.average = requests[0].average;
         m->monitor.peak = requests[0].peak;

@@ -44,6 +44,10 @@ Match processor affinities to the ACPI topology and firmware performance domains
 
 Idle support depends on the firmware's ACPI LPI descriptions, initialization calls and wake routing. Resource transactions must finish before platform entry, and their state must be restored on wake. Idle callbacks must remain resident and nonblocking.
 
+RPMh bank assignments are defined in `SystemLibs/RPMh/<SoC>/src/sleep_target.c`. Keep active, sleep, wake and fast-path slots separate. The sleep programmer preserves inherited commands and never triggers a sleep or wake bank from software; firmware runs those banks during platform entry and exit. A port must confirm that firmware uses the selected banks.
+
+Interconnect requests remain required during sleep unless their producer explicitly marks them active-only. Bandwidth monitor votes use that policy; ACPI device votes retain their declared requirements. Rails without a separate sleep request retain their active setting. Command sets that exceed the assigned bank capacity prevent platform entry rather than using reserved slots.
+
 Use the target's Windows and firmware interfaces. Preserve API layouts and calling conventions, shared-resource ownership and failure handling when adapting the code.
 
 ## Submitting a port

@@ -85,7 +85,7 @@
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
     </DriverSign>
     <Inf>
-      <TimeStamp>700.32000.0.428</TimeStamp>
+      <TimeStamp>700.32000.0.429</TimeStamp>
     </Inf>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
@@ -105,7 +105,7 @@
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
     </DriverSign>
     <Inf>
-      <TimeStamp>700.32000.0.428</TimeStamp>
+      <TimeStamp>700.32000.0.429</TimeStamp>
     </Inf>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -123,6 +123,13 @@
       <ObjectFileName>$(IntDir)lpi.obj</ObjectFileName>
       <WppEnabled>true</WppEnabled>
     </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\sleep.c">
+      <ObjectFileName>$(IntDir)rpmh_sleep.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\RPMh\8845\src\sleep_target.c">
+      <ObjectFileName>$(IntDir)rpmh_sleep_target.obj</ObjectFileName>
+    </ClCompile>
+    <ClInclude Include="..\SystemLibs\RPMh\8845\inc\sleep.h" />
     <ClCompile Include="..\Framework\PEP\src\driver.c">
       <ObjectFileName>$(IntDir)driver_cddce7a9.obj</ObjectFileName>
       <WppEnabled>true</WppEnabled>

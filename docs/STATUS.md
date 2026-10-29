@@ -17,10 +17,6 @@ Support on SM8845 (Molokai), using Windows ARM64 build 26100. Device support als
 | Peripheral resources | Clock, GPIO, regulator and interconnect control work for the devices tested so far. |
 | Tracing | WPP and IFR are available in Debug and Release builds. |
 
-## Known issues
-
-- **RPMh sleep/wake sets:** device power changes use active commands. Firmware-owned sleep and wake sets are preserved; programming separate sets from the driver is not implemented.
-
 ## Needs testing
 
 Cluster and platform idle support is implemented, but full deep sleep/DRIPS residency and power consumption are unconfirmed. Long sleep/wake cycles, additional wake sources and hibernate need testing.
@@ -28,5 +24,7 @@ Cluster and platform idle support is implemented, but full deep sleep/DRIPS resi
 GPU/display power management, PCIe, thermal limits and the remaining peripherals also need testing. Support for every device power state and performance setting is still being worked through. Performance and power tuning are ongoing.
 
 Bus DCVS uses interrupt-driven LLCC and DDR bandwidth monitors, with LAGG request counters for CPU activity. Hardware testing is needed for bandwidth scaling, idle power and resume.
+
+RPMh sleep and wake commands are staged before platform idle. Active-only bandwidth votes are removed for sleep; required client votes are retained. Hardware testing is needed for firmware execution of the command sets and restoration on wake.
 
 ADSP audio and CDSP compute operation need testing beyond subsystem startup.

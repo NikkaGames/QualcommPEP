@@ -613,7 +613,7 @@ NTSTATUS evt_dev_self_managed_io_init(_In_ WDFDEVICE dev)
     /* Expose the firmware LPI descriptions before this device completes its first start. */
     status = lpi_firmware_init(dev);
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_WARNING, TRACE_ACPI, "acpi: _DSM initialization failed status=%08X",
+        TraceEvents(TRACE_LEVEL_WARNING, TRACE_ACPI, "lpi: initialization failed status=%08X",
                     status);
         if (registry_query_u_long(L"MolokaiAcpiStrictLpiInit", 0) != 0)
             return status;
@@ -1009,6 +1009,7 @@ NTSTATUS evt_dev_d0_entry_post_interrupts_enabled(_In_ WDFDEVICE dev,
     }
     if (NT_SUCCESS(hw_backend_win_d0_revalidate(dev))) {
         (VOID) hw_backend_win_try_publish(dev);
+        lpi_firmware_resume(dev);
         bus_dcvs_start(dev);
     }
     return STATUS_SUCCESS;
