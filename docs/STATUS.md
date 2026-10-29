@@ -19,10 +19,7 @@ Support on SM8845 (Molokai), using Windows ARM64 build 26100. Device support als
 
 ## Known issues
 
-- **ADSP companion devices:** some audio child devices lack matching drivers.
 - **Boot and Bluetooth:** intermittent boot stalls and missing Bluetooth radio have been reported; the cause is still under investigation.
-- **UFS power management:** the D3 transition correction awaits hardware testing.
-- **Bluetooth power management:** the current runtime description lacks D3.
 - **Bus DCVS:** bandwidth-monitor DCVS and LAGG monitoring are disabled.
 - **RPMh sleep/wake sets:** explicit command-set handling remains incomplete.
 - **Preload resources:** nonempty resource programs still depend on provider support.
