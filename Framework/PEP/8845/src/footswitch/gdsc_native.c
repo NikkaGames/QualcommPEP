@@ -32,30 +32,47 @@ static int rails_consistent(const fs_gdsc_driver_t* d)
                                                                  d->rails_held ? 1u : 0u)));
 }
 
-/* do not treat PWR_ON remaining set after a collapse request as proof the local GDSC vote
- * failed: an independent hardware/firmware voter may hold the domain. SW_COLLAPSE is the
- * local software request readback. */
-
-/* this is verified for the UFS PHY only. */
-
 static int supports_hw_control(const fs_gdsc_driver_t* d)
 {
     return d && !strcmp(d->domain, clock_ufs_domain);
 }
 
+static uint32_t decode_action(uint32_t value, uint32_t family)
+{
+    if (family)
+        return (value & GDSCR_HW_CONTROL) ? FS_ENABLE_HW_CTL : FS_DISABLE_HW_CTL;
+    if (value & GDSCR_SW_COLLAPSE)
+        return FS_DISABLE;
+    return (value & GDSCR_PWR_ON) ? FS_ENABLE : 0u;
+}
+
+static int read_hw(fs_gdsc_driver_t* d, uint32_t family, uint32_t* action)
+{
+    uint32_t a, b, observed;
+    if (!action || family > 1u || !owned(d) || !d->clock || !d->io.read32 ||
+        (family && !supports_hw_control(d)) ||
+        !d->io.read32(d->io.ctx, d->clock->gdscr_offset, &a) ||
+        !d->io.read32(d->io.ctx, d->clock->gdscr_offset, &b) || a == UINT32_MAX ||
+        b == UINT32_MAX || ((a ^ b) & (GDSCR_SW_COLLAPSE | GDSCR_HW_CONTROL)) || !owned(d))
+        return 0;
+    /* power status may change after the collapse request is accepted. */
+    observed = decode_action(a, family);
+    if (!observed || observed != decode_action(b, family))
+        return 0;
+    *action = observed;
+    return 1;
+}
+
 static int verify_hw(fs_gdsc_driver_t* d, uint32_t action)
 {
-    uint32_t v = 0u, w = 0u;
-    if (!owned(d) || !d->io.read32 || !d->io.read32(d->io.ctx, d->clock->gdscr_offset, &v) ||
-        !d->io.read32(d->io.ctx, d->clock->gdscr_offset, &w) || v != w || !owned(d))
-        return 0;
-    if (action == 1u)
-        return !(v & GDSCR_SW_COLLAPSE) && (v & GDSCR_PWR_ON);
-    if (action == 2u)
-        return (v & GDSCR_SW_COLLAPSE) != 0u;
-    if ((action == 3u || action == 4u) && supports_hw_control(d))
-        return !!(v & GDSCR_HW_CONTROL) == (action == 3u);
-    return 0;
+    uint32_t observed;
+    return action >= FS_ENABLE && action <= FS_DISABLE_HW_CTL &&
+           read_hw(d, action > FS_DISABLE, &observed) && observed == action;
+}
+
+int fs_gdsc_read(fs_gdsc_driver_t* d, uint32_t family, uint32_t* action)
+{
+    return read_hw(d, family, action);
 }
 
 static int check_hw(fs_gdsc_driver_t* d)
@@ -98,21 +115,8 @@ static int node_read(void* ctx, const char* domain, uint64_t epoch, uint32_t fam
                      uint32_t* action)
 {
     fs_gdsc_driver_t* d = (fs_gdsc_driver_t*)ctx;
-    uint32_t a, b;
-    if (!d || !action || !node_owns(d, domain, d->domain_id, epoch) || family > 1u ||
-        (family && !supports_hw_control(d)) || !rails_consistent(d) ||
-        !d->io.read32(d->io.ctx, d->clock->gdscr_offset, &a) ||
-        !d->io.read32(d->io.ctx, d->clock->gdscr_offset, &b) || a != b || !owned(d))
-        return 0;
-    if (family)
-        *action = (a & GDSCR_HW_CONTROL) ? 3u : 4u;
-    else if (a & GDSCR_SW_COLLAPSE)
-        *action = 2u;
-    else if (a & GDSCR_PWR_ON)
-        *action = 1u;
-    else
-        return 0;
-    return 1;
+    return d && node_owns(d, domain, d->domain_id, epoch) && rails_consistent(d) &&
+           fs_gdsc_read(d, family, action);
 }
 
 static int node_apply(void* ctx, const char* domain, uint64_t epoch, uint32_t action)

@@ -2255,17 +2255,8 @@ static int native_ufs_withdraw(void* ctx, const char* client, const char* name)
 static int native_ufs_gdsc_physical(void* ctx, const char* domain, uint64_t epoch, uint32_t* state)
 {
     owners_t* o = (owners_t*)ctx;
-    uint32_t a = 0, b = 0;
-    if (!state || !native_ufs_owns(o, domain, epoch) || !gcc_read(o, 0x77004u, &a) ||
-        !gcc_read(o, 0x77004u, &b) || a != b || !native_ufs_owns(o, domain, epoch))
-        return 0;
-    if (a & GDSCR_SW_COLLAPSE)
-        *state = 2u;
-    else if (a & GDSCR_PWR_ON)
-        *state = 1u;
-    else
-        return 0;
-    return 1;
+    return state && native_ufs_owns(o, domain, epoch) &&
+           fs_gdsc_read(&o->ufs_domain_owner, 0u, state) && native_ufs_owns(o, domain, epoch);
 }
 
 /* both scalar P-state programs are executed through one graph lock and a checked backend
@@ -2572,7 +2563,9 @@ static NTSTATUS hw_backend_win_ufs_fs_transition_locked(_In_z_ const char* path,
     ufs_group_bridge_t* bridge;
     const power_pstate_program_t* program;
     fs_res_t* res;
-    uint32_t actual;
+    fs_result_t issued;
+    uint32_t actual = UINT32_MAX;
+    int observed = 0;
     NTSTATUS status = STATUS_DEVICE_NOT_READY;
     if (KeGetCurrentIrql() != PASSIVE_LEVEL || !path || comp != 0u || state >= 2u || !d0 ||
         !d0->state_known || d0->quarantined || d0->current_d_state != 0u ||
@@ -2594,12 +2587,18 @@ static NTSTATUS hw_backend_win_ufs_fs_transition_locked(_In_z_ const char* path,
         return STATUS_NOT_SUPPORTED;
     if (!group_win_lock(bridge))
         return status;
-    if (fs_issue(res, program->resources.actions[0].u.footswitch.action) == FS_OK &&
-        native_ufs_gdsc_physical(o, res->name, bridge->owner_epoch, &actual) &&
-        actual == program->resources.actions[0].u.footswitch.action)
+    issued = fs_issue(res, program->resources.actions[0].u.footswitch.action);
+    if (issued == FS_OK)
+        observed = native_ufs_gdsc_physical(o, res->name, bridge->owner_epoch, &actual);
+    if (issued == FS_OK && observed && actual == program->resources.actions[0].u.footswitch.action)
         status = STATUS_SUCCESS;
-    else
+    else {
         status = STATUS_DEVICE_POWER_FAILURE;
+        TraceEvents(TRACE_LEVEL_WARNING, TRACE_POWER,
+                    "ufs: domain action=%lu result=%u readback=%u observed=%08lX epoch=%llX",
+                    (ULONG)program->resources.actions[0].u.footswitch.action, (unsigned)issued,
+                    (unsigned)observed, (ULONG)actual, (unsigned long long)bridge->owner_epoch);
+    }
     group_win_unlock(bridge);
     return status;
 }
@@ -2726,8 +2725,9 @@ power_result_t hw_backend_win_ufs_program_execute(const power_sequence_t* sequen
     owners_t* o;
     ufs_native_selection_t selected[UFS_PSTATE_SETS];
     uint32_t old[UFS_PSTATE_SETS] = {UINT32_MAX, UINT32_MAX, UINT32_MAX};
-    uint32_t cnt = 0u, i = 0u, changed = 0u;
-    uint32_t changed_indices[UFS_PSTATE_SETS] = {0u};
+    uint32_t cnt = 0u, i = 0u, attempts = 0u;
+    uint32_t attempted[UFS_PSTATE_SETS] = {0u};
+    int recovered = 1;
     power_result_t result = POWER_UNSUPPORTED;
     if (trace) {
         RtlZeroMemory(trace, sizeof(*trace));
@@ -2780,10 +2780,13 @@ power_result_t hw_backend_win_ufs_program_execute(const power_sequence_t* sequen
              * program. */
             if (!native_ufs_program_read_locked(o, &one->resources)) {
                 result = POWER_STATE_DRIFT;
+                recovered = 0;
                 break;
             }
             continue;
         }
+        /* a failed issue can already have changed this set, including the power domain. */
+        attempted[attempts++] = i;
         if (selected[i].set == 0u)
             st = hw_backend_win_ufs_fs_transition_locked(sequence->dev_path, 0u, selected[i].state,
                                                          d0, current_f);
@@ -2791,37 +2794,57 @@ power_result_t hw_backend_win_ufs_program_execute(const power_sequence_t* sequen
             st = hw_backend_win_ufs_scalar_transition_locked(
                 sequence->dev_path, 0u, selected[i].set, selected[i].state, d0, current_f);
         if (!NT_SUCCESS(st)) {
-            result = POWER_ROLLBACK_FAILED;
+            result = POWER_APPLY_FAILED;
             break;
         }
-        changed_indices[changed++] = i;
+        trace->applied += one->resources.action_cnt;
     }
     if (i == cnt && native_ufs_program_read_locked(o, sequence)) {
         trace->applied = sequence->action_cnt;
         result = POWER_OK;
         goto done;
     }
-    /* reverse all dispatched identities. An initially unowned set cannot be restored without
-     * an explicit provider-verified no-vote operation. */
-    result = POWER_ROLLBACK_FAILED;
-    while (changed) {
-        uint32_t j = changed_indices[--changed];
-        NTSTATUS st;
-        if (old[j] == UINT32_MAX)
-            break;
-        if (selected[j].set == 0u)
-            st = hw_backend_win_ufs_fs_transition_locked(sequence->dev_path, 0u, old[j], d0,
-                                                         current_f);
-        else
-            st = hw_backend_win_ufs_scalar_transition_locked(
-                sequence->dev_path, 0u, selected[j].set, old[j], d0, current_f);
-        if (!NT_SUCCESS(st))
-            break;
-        ++trace->restored;
-    }
-    if (result == POWER_ROLLBACK_FAILED)
-        o->ufs_owner_uncertain = TRUE;
+    if (i == cnt)
+        result = POWER_FINAL_STATE_FAILED;
     trace->failure_idx = i;
+    /* restore the failed set first. Clocks cannot be restored through a collapsed domain. */
+    while (attempts && recovered) {
+        uint32_t j = attempted[--attempts];
+        const power_pstate_program_t* prior;
+        NTSTATUS st;
+        if (old[j] == UINT32_MAX ||
+            !(prior = ufs_catalog_get(&o->ufs_group_bridge->graph->ufs_catalog, 0u, selected[j].set,
+                                      old[j]))) {
+            recovered = 0;
+            break;
+        }
+        if (!native_ufs_program_read_locked(o, &prior->resources)) {
+            if (selected[j].set == 0u)
+                st = hw_backend_win_ufs_fs_transition_locked(sequence->dev_path, 0u, old[j], d0,
+                                                             current_f);
+            else
+                st = hw_backend_win_ufs_scalar_transition_locked(
+                    sequence->dev_path, 0u, selected[j].set, old[j], d0, current_f);
+            if (!NT_SUCCESS(st) || !native_ufs_program_read_locked(o, &prior->resources)) {
+                recovered = 0;
+                break;
+            }
+        }
+        trace->restored += prior->resources.action_cnt;
+    }
+    for (i = 0u; recovered && i < cnt; ++i) {
+        const power_pstate_program_t* prior;
+        if (old[i] == UINT32_MAX)
+            continue;
+        prior =
+            ufs_catalog_get(&o->ufs_group_bridge->graph->ufs_catalog, 0u, selected[i].set, old[i]);
+        if (!prior || !native_ufs_program_read_locked(o, &prior->resources))
+            recovered = 0;
+    }
+    if (!recovered) {
+        o->ufs_owner_uncertain = TRUE;
+        result = POWER_ROLLBACK_FAILED;
+    }
 done:
     trace->result = result;
     lpi_mutex_release(&g_win_lifecycle_lock);

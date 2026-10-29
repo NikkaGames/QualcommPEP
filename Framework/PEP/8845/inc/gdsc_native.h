@@ -70,6 +70,7 @@ int fs_gdsc_init_window_with_rails(fs_gdsc_driver_t* driver, const gcc_io_t* io,
                                    int (*owns)(void*, const char*, uint64_t), uint64_t epoch,
                                    const fs_gdsc_rail_provider_t* rails);
 int fs_gdsc_provider(fs_gdsc_driver_t* driver, fs_factory_provider_t* provider);
+int fs_gdsc_read(fs_gdsc_driver_t* driver, uint32_t family, uint32_t* action);
 #ifdef __cplusplus
 }
 #endif

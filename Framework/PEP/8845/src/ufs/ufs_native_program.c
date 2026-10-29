@@ -36,8 +36,6 @@ static void descend(search_t* s, uint32_t offset, uint32_t used, uint32_t cnt)
         uint32_t i;
         if (!cnt)
             return;
-        if (s->program->target_d_state == 1u && cnt != UFS_PSTATE_SETS)
-            return;
         ++s->solutions;
         s->found_cnt = cnt;
         for (i = 0u; i < cnt; ++i)
@@ -49,8 +47,6 @@ static void descend(search_t* s, uint32_t offset, uint32_t used, uint32_t cnt)
             continue;
         for (state = 0u; state < UFS_STATES_PER_SET; ++state) {
             const power_pstate_program_t* p = ufs_catalog_get(s->catalog, 0u, set, state);
-            if (s->program->target_d_state == 1u && state != 1u)
-                continue;
             if (!matches(s->program, offset, p))
                 continue;
             s->work[cnt].set = set;
