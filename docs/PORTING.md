@@ -20,6 +20,8 @@ Start with the target's DSDT and SSDTs. Match the PEP device, processor identiti
 
 Review the PEP node's objects and their consumers, including `STND`, `PREL`, `G0MD` for GPU resources and `PEMC` for PCIe where present. Their contents and calling conventions depend on the platform.
 
+`PREL` is an optional list of startup resource programs. It is absent from the current SM8845 tables. The driver validates and retains nonempty preload descriptions but does not execute them; a port that supplies them needs a startup owner separate from device D-state handling.
+
 Device handling should follow the ACPI descriptions. Preserve declared D0-D3 states, component F states and performance sets. New devices should use the same resource handling as existing devices without adding name-based exceptions. UFS must follow these rules as well.
 
 ## Hardware data
@@ -28,6 +30,7 @@ The SM8845 tables need to be replaced or checked against the target hardware:
 
 - **Clocks:** controller addresses, parents, rate tables, dividers, branch votes and power domains. Include GPU and display controllers where required.
 - **Interconnect:** ICB routes, BCM groups, bus widths, units, command DB data and minimum bandwidth votes. Shared votes must survive individual devices entering idle.
+- **Bus DCVS:** bandwidth-monitor register revisions, MMIO windows, PnP interrupts, timer rates, counter units and bus limits. The LAGG counter layout and CPU index mapping are target-specific. Keep these in `bwmon_target.c`; do not reuse another SoC's register assignments.
 - **RPMh:** RSC version, DRV assignment, TCS groups, command slots and interrupt routing. Active, sleep and wake command sets need the correct allocation and completion handling.
 - **Regulators and GPIO:** PMIC model, resource names, voltage and mode settings, TLMM tiles, pin functions and sequencing.
 - **Storage and power domains:** UFS dependencies, ARC levels, required clients, clocks and rails.

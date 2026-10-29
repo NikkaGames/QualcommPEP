@@ -1488,6 +1488,41 @@ int hw_backend_win_clock_dfs_catalog(uint64_t serial, const char* name, gcc_dfs_
     return ok;
 }
 
+int hw_backend_win_bus_request(uint64_t serial, const char* client, const power_action_t* action,
+                               bus_request_op_t op)
+{
+    hw_backend_t lease;
+    power_snapshot_t snapshot;
+    res_graph_t* graph;
+    int ok = 0;
+    if (!serial || !client || !action || action->kind != POWER_ICB || op > BUS_REQUEST_RELEASE ||
+        KeGetCurrentIrql() != PASSIVE_LEVEL)
+        return 0;
+    lpi_mutex_acquire(&g_win_lifecycle_lock);
+    graph = g_published_graph;
+    if (!graph || graph->backend_binding_serial != serial || !graph->acquire || !graph->release ||
+        !graph->acquire(graph->lock_ctx))
+        goto done;
+    if (!graph->quiescing && hw_backend_begin_bound(serial, &lease)) {
+        if (op == BUS_REQUEST_QUERY)
+            ok = lease.supports(lease.ctx, client, 0u, action);
+        else if (op == BUS_REQUEST_RELEASE)
+            ok = lease.release && lease.release(lease.ctx, client, action);
+        else if (lease.supports(lease.ctx, client, 0u, action) &&
+                 lease.snapshot(lease.ctx, client, 0u, action, &snapshot)) {
+            ok = lease.apply(lease.ctx, client, 0u, action) &&
+                 lease.verify(lease.ctx, client, 0u, action);
+            if (!ok && lease.restore(lease.ctx, client, 0u, action, &snapshot))
+                (void)lease.verify_restored(lease.ctx, client, 0u, action, &snapshot);
+        }
+        hw_backend_end_bound();
+    }
+    graph->release(graph->lock_ctx);
+done:
+    lpi_mutex_release(&g_win_lifecycle_lock);
+    return ok;
+}
+
 static int bus_commit_route(owners_t* o, const char* master, const char* slave)
 {
     icb_command_t cmds[ICB_MAX_COMMANDS];

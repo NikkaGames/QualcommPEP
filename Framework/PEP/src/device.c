@@ -17,6 +17,7 @@
 #include "rpmh_oem_pnp_win.h"
 #include "oem_wdf_irq_create.h"
 #include "hw_backend_windows_wdf.h"
+#include "bus_dcvs_win.h"
 #include <sddl.h>
 #include "trace.h"
 #include "device.tmh"
@@ -513,6 +514,11 @@ NTSTATUS evt_dev_prepare_hardware(_In_ WDFDEVICE dev, _In_ WDFCMRESLIST resource
 
     (VOID) hw_backend_win_attach(dev);
 
+    status = bus_dcvs_prepare(dev, resources_raw, resources_translated);
+    if (!NT_SUCCESS(status))
+        TraceEvents(TRACE_LEVEL_WARNING, TRACE_RESOURCE,
+                    "bus: monitor initialization unavailable status=%08X", status);
+
     (VOID) wmi_init(dev);
     (VOID) interrupt_init(dev);
     (VOID) etw_reg();
@@ -525,6 +531,10 @@ NTSTATUS evt_dev_release_hardware(_In_ WDFDEVICE dev, _In_ WDFCMRESLIST resource
 {
     UNREFERENCED_PARAMETER(resources_translated);
     p_dev_ctx_t ctx = get_dev_ctx(dev);
+
+    NTSTATUS bus_status = bus_dcvs_release(dev);
+    if (!NT_SUCCESS(bus_status))
+        return bus_status;
 
     /* keep the DRV2 WDFINTERRUPT handle and d0 identity intact until the native owner has
      * physically retired its ISR/DPC/AMC work. */
@@ -669,6 +679,7 @@ NTSTATUS evt_dev_self_managed_io_init(_In_ WDFDEVICE dev)
             }
         }
     }
+    bus_dcvs_start(dev);
     return STATUS_SUCCESS;
 }
 
@@ -686,6 +697,11 @@ VOID evt_dev_self_managed_io_cleanup(_In_ WDFDEVICE dev)
 VOID evt_dev_surprise_removal(_In_ WDFDEVICE dev)
 {
     p_dev_ctx_t ctx = get_dev_ctx(dev);
+    if (!NT_SUCCESS(bus_dcvs_stop(dev))) {
+        TraceEvents(TRACE_LEVEL_WARNING, TRACE_RESOURCE,
+                    "bus: surprise removal monitor owner retained");
+        return;
+    }
     /* stop the legacy interrupt path, but preserve the DRV2 worker and PnP identity if native
      * RSC/GIC controller rundown fails. Surprise removal cannot claim hardware votes were
      * completed. */
@@ -991,8 +1007,10 @@ NTSTATUS evt_dev_d0_entry_post_interrupts_enabled(_In_ WDFDEVICE dev,
                     "rpmh: IRQ37 connection unverified D0=rejected");
         return STATUS_DEVICE_NOT_READY;
     }
-    if (NT_SUCCESS(hw_backend_win_d0_revalidate(dev)))
+    if (NT_SUCCESS(hw_backend_win_d0_revalidate(dev))) {
         (VOID) hw_backend_win_try_publish(dev);
+        bus_dcvs_start(dev);
+    }
     return STATUS_SUCCESS;
 }
 
@@ -1075,6 +1093,14 @@ NTSTATUS evt_dev_d0_exit_pre_interrupts_disabled(_In_ WDFDEVICE dev,
      * the transition can still touch. */
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_DEVICE, "device: D0 interrupts disabling");
+    {
+        NTSTATUS bus_status = bus_dcvs_stop(dev);
+        if (!NT_SUCCESS(bus_status)) {
+            TraceEvents(TRACE_LEVEL_WARNING, TRACE_RESOURCE,
+                        "bus: monitor shutdown failed status=%08X", bus_status);
+            return bus_status;
+        }
+    }
     {
         NTSTATUS perf_status = pep_native_perf_quiesce_gate();
         if (!NT_SUCCESS(perf_status)) {

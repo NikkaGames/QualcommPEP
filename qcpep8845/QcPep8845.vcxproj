@@ -85,7 +85,7 @@
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
     </DriverSign>
     <Inf>
-      <TimeStamp>700.32000.0.426</TimeStamp>
+      <TimeStamp>700.32000.0.427</TimeStamp>
     </Inf>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
@@ -105,7 +105,7 @@
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
     </DriverSign>
     <Inf>
-      <TimeStamp>700.32000.0.426</TimeStamp>
+      <TimeStamp>700.32000.0.427</TimeStamp>
     </Inf>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -913,5 +913,19 @@
     <ClInclude Include="..\SystemLibs\SCMI\8845\inc\perf_target.h" />
     <ClInclude Include="..\Framework\PEP\inc\cpu_device.h" />
     <ClInclude Include="..\Framework\PEP\inc\cpu_topology.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Framework\PEP\8845\src\bus_dcvs_win.c">
+      <ObjectFileName>$(IntDir)bus_dcvs_win.obj</ObjectFileName>
+      <WppEnabled>true</WppEnabled>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\ICB\8845\src\bwmon.c">
+      <ObjectFileName>$(IntDir)bwmon.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\ICB\8845\src\bwmon_target.c">
+      <ObjectFileName>$(IntDir)bwmon_target.obj</ObjectFileName>
+    </ClCompile>
+    <ClInclude Include="..\Framework\PEP\8845\inc\bus_dcvs_win.h" />
+    <ClInclude Include="..\SystemLibs\ICB\8845\inc\bwmon.h" />
   </ItemGroup>
 </Project>

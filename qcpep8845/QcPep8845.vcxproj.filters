@@ -1425,4 +1425,21 @@
       <Filter>Framework\PEP\inc</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Framework\PEP\8845\src\bus_dcvs_win.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\ICB\8845\src\bwmon.c">
+      <Filter>SystemLibs\ICB\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\ICB\8845\src\bwmon_target.c">
+      <Filter>SystemLibs\ICB\8845\src</Filter>
+    </ClCompile>
+    <ClInclude Include="..\Framework\PEP\8845\inc\bus_dcvs_win.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\ICB\8845\inc\bwmon.h">
+      <Filter>SystemLibs\ICB\8845\inc</Filter>
+    </ClInclude>
+  </ItemGroup>
 </Project>

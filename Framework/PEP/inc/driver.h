@@ -26,6 +26,7 @@ typedef struct dev_ctx {
     BOOLEAN is_first_boot;
 
     BOOLEAN first_boot_idle_reference_held;
+    PVOID bus_dcvs;
     ULONG port_id;
     UNICODE_STRING hid;
     PVOID po_fx_ctx;

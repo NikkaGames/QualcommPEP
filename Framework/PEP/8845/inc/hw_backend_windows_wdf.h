@@ -106,6 +106,15 @@ NTSTATUS hw_backend_win_bcm_commands(_In_z_ const char* master, _In_z_ const cha
                                      _In_ ULONG capacity, _Out_ ULONG* cnt);
 
 int hw_backend_win_clock_read(uint64_t serial, const char* name, uint64_t* out);
+
+typedef enum bus_request_op {
+    BUS_REQUEST_QUERY,
+    BUS_REQUEST_UPDATE,
+    BUS_REQUEST_RELEASE
+} bus_request_op_t;
+
+int hw_backend_win_bus_request(uint64_t serial, const char* client, const power_action_t* action,
+                               bus_request_op_t op);
 int hw_backend_win_clock_dfs_catalog(uint64_t serial, const char* name, gcc_dfs_catalog_t* out);
 
 #endif
