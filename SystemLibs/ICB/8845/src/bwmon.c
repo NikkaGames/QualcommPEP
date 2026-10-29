@@ -78,6 +78,7 @@ static int local_irq(bwmon_t* m, uint32_t enabled)
 
 static int clear(bwmon_t* m, uint32_t counters)
 {
+    uint32_t pending;
     uint32_t irq_mask = m->target->revision == 4u ? 0xf0u : 0xfu;
     if (!write_reg(m, REG_CLEAR, counters, 0) ||
         (m->target->revision == 5u && !write_reg(m, REG_CLEAR, 0u, 1)) ||
@@ -89,7 +90,19 @@ static int clear(bwmon_t* m, uint32_t counters)
             return 0;
         m->io.barrier(m->io.ctx);
     }
-    return 1;
+    for (uint32_t i = 0u; i < 8u; ++i) {
+        if (!read_reg(m, REG_STATUS, &pending))
+            return 0;
+        if (pending & irq_mask)
+            continue;
+        if (!m->target->global_base)
+            return 1;
+        if (!m->io.read(m->io.ctx, 1u, 0x100u, &pending))
+            return 0;
+        if (!(pending & (1u << m->target->port)))
+            return 1;
+    }
+    return 0;
 }
 
 static uint32_t threshold(const bwmon_t* m, uint64_t bytes_sec)
@@ -138,6 +151,8 @@ int bwmon_rearm(bwmon_t* m, uint64_t peak)
     if (!live(m) || m->faulted || !m->saved_count || peak > m->target->maximum_bytes_sec ||
         !read_reg(m, REG_ENABLE, &enable))
         return 0;
+    if (peak < m->target->minimum_bytes_sec)
+        peak = m->target->minimum_bytes_sec;
     high = threshold(m, peak);
     if (high < 2u)
         high = 2u;
@@ -146,7 +161,7 @@ int bwmon_rearm(bwmon_t* m, uint64_t peak)
         medium = 1u;
     if (medium >= high)
         medium = high - 1u;
-    irq = peak ? 0xbu : 8u;
+    irq = !m->average && peak <= m->target->minimum_bytes_sec ? 8u : 0xbu;
     if (peak == m->target->maximum_bytes_sec)
         irq = 3u;
     if (m->target->revision == 4u)
@@ -266,9 +281,54 @@ int bwmon_select(const bwmon_t* m, const bwmon_sample_t* sample, int lagg_active
         selected = 0u;
     if (selected < m->target->count_unit * 1000u / m->target->window_ms && !measured)
         selected = 0u;
+    if (selected < m->target->minimum_bytes_sec)
+        selected = m->target->minimum_bytes_sec;
     *average = measured;
     *peak = selected;
     return 1;
+}
+
+uint32_t bwmon_requests(const bwmon_target_t* target, uint64_t average, uint64_t peak,
+                        bwmon_request_t out[BWMON_MAX_REQUESTS])
+{
+    const bwmon_link_t* link;
+    uint32_t chosen = 0u;
+    if (!target || !out || !target->master || !target->slave || !target->maximum_bytes_sec ||
+        target->minimum_bytes_sec > target->maximum_bytes_sec)
+        return 0u;
+    memset(out, 0, BWMON_MAX_REQUESTS * sizeof(*out));
+    if (average > target->maximum_bytes_sec)
+        average = target->maximum_bytes_sec;
+    if (peak < average)
+        peak = average;
+    if (peak < target->minimum_bytes_sec)
+        peak = target->minimum_bytes_sec;
+    if (peak > target->maximum_bytes_sec)
+        peak = target->maximum_bytes_sec;
+    out[0].master = target->master;
+    out[0].slave = target->slave;
+    out[0].average = average;
+    out[0].peak = peak;
+    link = target->link;
+    if (!link)
+        return 1u;
+    if (!link->master || !link->slave || !link->rates || !link->count || link->count > 64u)
+        return 0u;
+    if (!strcmp(link->master, target->master) && !strcmp(link->slave, target->slave))
+        return 0u;
+    for (uint32_t i = 0u; i < link->count; ++i) {
+        if (!link->rates[i].source || !link->rates[i].destination ||
+            (i && (link->rates[i].source <= link->rates[i - 1u].source ||
+                   link->rates[i].destination < link->rates[i - 1u].destination)))
+            return 0u;
+    }
+    while (chosen + 1u < link->count && link->rates[chosen].source < peak)
+        ++chosen;
+    out[1].master = link->master;
+    out[1].slave = link->slave;
+    /* DDR bandwidth is measured independently; this link supplies its frequency floor. */
+    out[1].peak = link->rates[chosen].destination;
+    return 2u;
 }
 
 int bwmon_stop(bwmon_t* m)

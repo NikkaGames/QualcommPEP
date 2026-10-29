@@ -2,6 +2,7 @@
 #include "bwmon.h"
 #include "hw_backend.h"
 #include "hw_backend_windows_wdf.h"
+#include "lpi.h"
 #include "trace.h"
 #include "bus_dcvs_win.tmh"
 
@@ -38,7 +39,6 @@ typedef struct monitor_work_context {
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(monitor_work_context_t, monitor_work_context)
 
 struct bus_dcvs {
-    WDFDEVICE dev;
     WDFWORKITEM work;
     WDFDPC dpc;
     monitor_native_t monitors[BWMON_COUNT];
@@ -133,16 +133,39 @@ static int lagg_write(void* ctx, unsigned region, uint32_t offset, uint32_t valu
     return 1;
 }
 
-static VOID make_vote(power_action_t* action, const bwmon_target_t* target, uint64_t average,
-                      uint64_t peak)
+static int monitor_request(monitor_native_t* m, const bwmon_target_t* target, uint64_t average,
+                           uint64_t peak, bus_request_op_t op)
 {
-    RtlZeroMemory(action, sizeof(*action));
-    action->kind = POWER_ICB;
-    RtlStringCchCopyA(action->u.icb.master, RTL_NUMBER_OF(action->u.icb.master), target->master);
-    RtlStringCchCopyA(action->u.icb.slave, RTL_NUMBER_OF(action->u.icb.slave), target->slave);
-    action->u.icb.average = average;
-    action->u.icb.peak =
-        peak && peak < target->minimum_bytes_sec ? target->minimum_bytes_sec : peak;
+    bwmon_request_t requests[BWMON_MAX_REQUESTS];
+    power_action_t actions[BWMON_MAX_REQUESTS];
+    uint32_t count = bwmon_requests(target, average, peak, requests);
+    int raising = average > m->monitor.average || peak > m->monitor.peak;
+    int ok;
+    if (!count)
+        return 0;
+    RtlZeroMemory(actions, sizeof(actions));
+    for (uint32_t i = 0u; i < count; ++i) {
+        /* Raise the dependent DDR floor first; lower the LLCC request first. */
+        uint32_t index = op == BUS_REQUEST_UPDATE && raising ? count - i - 1u : i;
+        power_action_t* action = &actions[i];
+        action->kind = POWER_ICB;
+        if (!NT_SUCCESS(RtlStringCchCopyA(action->u.icb.master, RTL_NUMBER_OF(action->u.icb.master),
+                                          requests[index].master)) ||
+            !NT_SUCCESS(RtlStringCchCopyA(action->u.icb.slave, RTL_NUMBER_OF(action->u.icb.slave),
+                                          requests[index].slave)))
+            return 0;
+        action->u.icb.average = requests[index].average;
+        action->u.icb.peak = requests[index].peak;
+    }
+    if (op == BUS_REQUEST_UPDATE)
+        m->vote_held = TRUE;
+    ok = hw_backend_win_bus_requests(m->owner->epoch, target->client, actions, count, op);
+    if (ok && op == BUS_REQUEST_UPDATE) {
+        m->monitor.average = requests[0].average;
+        m->monitor.peak = requests[0].peak;
+    } else if (ok && op == BUS_REQUEST_RELEASE)
+        m->vote_held = FALSE;
+    return ok;
 }
 
 static VOID monitor_update(bus_dcvs_t* owner, ULONG mask)
@@ -159,35 +182,30 @@ static VOID monitor_update(bus_dcvs_t* owner, ULONG mask)
         monitor_native_t* m = &owner->monitors[i];
         const bwmon_target_t* target = &bwmon_targets[i];
         uint64_t average, peak;
-        power_action_t action;
-        int ok;
+        int ok, restored = 1;
         if (!(mask & (1u << i)) || !m->available)
             continue;
         ok =
             !m->monitor.faulted && bwmon_select(&m->monitor, &m->sample,
                                                 (active & target->cpu_mask) != 0u, &average, &peak);
         if (ok && (average != m->monitor.average || peak != m->monitor.peak)) {
-            make_vote(&action, target, average, peak);
-            m->vote_held = TRUE;
-            ok = hw_backend_win_bus_request(owner->epoch, target->client, &action,
-                                            BUS_REQUEST_UPDATE);
-            if (ok) {
-                m->monitor.average = average;
-                m->monitor.peak = peak;
-            }
+            ok = monitor_request(m, target, average, peak, BUS_REQUEST_UPDATE);
         }
         WdfInterruptAcquireLock(owner->groups[m->group].interrupt);
         if (ok && InterlockedCompareExchange(&owner->running, 0, 0))
             ok = bwmon_rearm(&m->monitor, m->monitor.peak);
         if (!ok) {
-            (void)bwmon_stop(&m->monitor);
+            restored = bwmon_stop(&m->monitor);
             m->available = FALSE;
         }
         WdfInterruptReleaseLock(owner->groups[m->group].interrupt);
+        if (!ok && m->vote_held)
+            (void)monitor_request(m, target, 0u, 0u, BUS_REQUEST_RELEASE);
         if (!ok && !m->reported) {
             m->reported = TRUE;
             TraceEvents(TRACE_LEVEL_WARNING, TRACE_RESOURCE,
-                        "bus: monitor=%s update failed; monitor stopped", target->name);
+                        "bus: monitor=%s update failed registers-restored=%d votes-released=%d",
+                        target->name, restored, !m->vote_held);
         }
     }
 }
@@ -198,7 +216,9 @@ static VOID monitor_work(WDFWORKITEM item)
     for (;;) {
         ULONG mask = (ULONG)InterlockedExchange(&owner->pending, 0);
         if (mask && InterlockedCompareExchange(&owner->running, 0, 0)) {
+            lpi_io_acquire();
             monitor_update(owner, mask);
+            lpi_io_leave();
             continue;
         }
         InterlockedExchange(&owner->work_queued, 0);
@@ -259,7 +279,6 @@ NTSTATUS bus_dcvs_prepare(WDFDEVICE dev, WDFCMRESLIST raw, WDFCMRESLIST translat
     owner = ExAllocatePool2(POOL_FLAG_NON_PAGED, sizeof(*owner), POOL_TAG);
     if (!owner)
         return STATUS_INSUFFICIENT_RESOURCES;
-    owner->dev = dev;
     ctx->bus_dcvs = owner;
     WDF_WORKITEM_CONFIG_INIT(&work_config, monitor_work);
     work_config.AutomaticSerialization = FALSE;
@@ -353,18 +372,18 @@ VOID bus_dcvs_start(WDFDEVICE dev)
     PHYSICAL_ADDRESS address;
     bwmon_io_t io;
     ULONG started = 0u;
-    if (!owner || InterlockedCompareExchange(&owner->running, 0, 0) || owner->epoch ||
-        !hw_backend_ready())
+    if (!owner || InterlockedCompareExchange(&owner->running, 0, 0) || owner->epoch)
         return;
+    lpi_io_acquire();
     owner->epoch = hw_backend_verified_serial();
-    if (!owner->epoch)
+    if (!owner->epoch) {
+        lpi_io_leave();
         return;
+    }
     for (ULONG i = 0u; i < BWMON_COUNT; ++i) {
         monitor_native_t* m = &owner->monitors[i];
         const bwmon_target_t* target = &bwmon_targets[i];
-        power_action_t action;
-        make_vote(&action, target, 0u, 0u);
-        if (!hw_backend_win_bus_request(owner->epoch, target->client, &action, BUS_REQUEST_QUERY))
+        if (!monitor_request(m, target, 0u, 0u, BUS_REQUEST_QUERY))
             continue;
         address.QuadPart = target->global_base ? target->global_base : target->base;
         m->local_offset = target->global_base ? (ULONG)(target->base - target->global_base) : 0u;
@@ -386,6 +405,15 @@ VOID bus_dcvs_start(WDFDEVICE dev)
         } else
             (void)bwmon_stop(&m->monitor);
         WdfInterruptReleaseLock(owner->groups[m->group].interrupt);
+        if (m->available &&
+            !monitor_request(m, target, 0u, target->minimum_bytes_sec, BUS_REQUEST_UPDATE)) {
+            WdfInterruptAcquireLock(owner->groups[m->group].interrupt);
+            (void)bwmon_stop(&m->monitor);
+            m->available = FALSE;
+            WdfInterruptReleaseLock(owner->groups[m->group].interrupt);
+            (void)monitor_request(m, target, 0u, 0u, BUS_REQUEST_RELEASE);
+            --started;
+        }
     }
     if (started && setting(dev, L"EnableLaggBwmon", 1u)) {
         address.QuadPart = lagg_base;
@@ -408,17 +436,20 @@ VOID bus_dcvs_start(WDFDEVICE dev)
         if (!m->available)
             continue;
         WdfInterruptAcquireLock(owner->groups[m->group].interrupt);
-        if (!bwmon_rearm(&m->monitor, 0u)) {
+        if (!bwmon_rearm(&m->monitor, m->monitor.peak)) {
             (void)bwmon_stop(&m->monitor);
             m->available = FALSE;
             --started;
         }
         WdfInterruptReleaseLock(owner->groups[m->group].interrupt);
+        if (!m->available && m->vote_held)
+            (void)monitor_request(m, &bwmon_targets[i], 0u, 0u, BUS_REQUEST_RELEASE);
     }
     if (!started)
         (void)bus_dcvs_stop(dev);
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_RESOURCE, "bus: bandwidth monitors=%lu LAGG=%u",
                 started, (unsigned)owner->lagg_enabled);
+    lpi_io_leave();
 }
 
 NTSTATUS bus_dcvs_stop(WDFDEVICE dev)
@@ -428,6 +459,7 @@ NTSTATUS bus_dcvs_stop(WDFDEVICE dev)
     BOOLEAN released = TRUE;
     if (!owner)
         return STATUS_SUCCESS;
+    lpi_io_acquire();
     InterlockedExchange(&owner->running, 0);
     for (ULONG i = 0u; i < BWMON_COUNT; ++i) {
         monitor_native_t* m = &owner->monitors[i];
@@ -458,19 +490,15 @@ NTSTATUS bus_dcvs_stop(WDFDEVICE dev)
     for (ULONG i = 0u; i < BWMON_COUNT; ++i) {
         monitor_native_t* m = &owner->monitors[i];
         if (m->vote_held) {
-            power_action_t action;
-            make_vote(&action, &bwmon_targets[i], 0u, 0u);
-            if (!hw_backend_win_bus_request(owner->epoch, bwmon_targets[i].client, &action,
-                                            BUS_REQUEST_RELEASE))
+            if (!monitor_request(m, &bwmon_targets[i], 0u, 0u, BUS_REQUEST_RELEASE))
                 released = FALSE;
-            else
-                m->vote_held = FALSE;
         }
     }
     if (released) {
         owner->epoch = 0u;
         owner->lagg_enabled = FALSE;
     }
+    lpi_io_leave();
     return released ? STATUS_SUCCESS : STATUS_DEVICE_BUSY;
 }
 

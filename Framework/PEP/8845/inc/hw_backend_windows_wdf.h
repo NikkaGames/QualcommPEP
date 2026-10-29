@@ -113,8 +113,8 @@ typedef enum bus_request_op {
     BUS_REQUEST_RELEASE
 } bus_request_op_t;
 
-int hw_backend_win_bus_request(uint64_t serial, const char* client, const power_action_t* action,
-                               bus_request_op_t op);
+int hw_backend_win_bus_requests(uint64_t serial, const char* client, const power_action_t* actions,
+                                uint32_t count, bus_request_op_t op);
 int hw_backend_win_clock_dfs_catalog(uint64_t serial, const char* name, gcc_dfs_catalog_t* out);
 
 #endif

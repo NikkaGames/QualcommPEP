@@ -7,6 +7,26 @@
 #define BWMON_COUNT 3u
 #define BWMON_SAVED_REGS 12u
 #define LAGG_CPUS 8u
+#define BWMON_MAX_REQUESTS 2u
+
+typedef struct bwmon_rate {
+    uint64_t source;
+    uint64_t destination;
+} bwmon_rate_t;
+
+typedef struct bwmon_link {
+    const char* master;
+    const char* slave;
+    const bwmon_rate_t* rates;
+    uint32_t count;
+} bwmon_link_t;
+
+typedef struct bwmon_request {
+    const char* master;
+    const char* slave;
+    uint64_t average;
+    uint64_t peak;
+} bwmon_request_t;
 
 typedef struct bwmon_target {
     const char* name;
@@ -24,6 +44,7 @@ typedef struct bwmon_target {
     uint32_t cpu_mask;
     uint8_t revision;
     uint8_t port;
+    const bwmon_link_t* link;
 } bwmon_target_t;
 
 extern const bwmon_target_t bwmon_targets[BWMON_COUNT];
@@ -74,6 +95,8 @@ int bwmon_pause(bwmon_t*);
 int bwmon_stop(bwmon_t*);
 int bwmon_select(const bwmon_t*, const bwmon_sample_t*, int lagg_active, uint64_t* average,
                  uint64_t* peak);
+uint32_t bwmon_requests(const bwmon_target_t*, uint64_t average, uint64_t peak,
+                        bwmon_request_t out[BWMON_MAX_REQUESTS]);
 int lagg_start(lagg_t*, const bwmon_io_t*, uint64_t epoch);
 int lagg_sample(lagg_t*, uint32_t* active_cpus);
 int lagg_stop(lagg_t*);

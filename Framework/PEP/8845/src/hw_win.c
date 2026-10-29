@@ -1488,32 +1488,52 @@ int hw_backend_win_clock_dfs_catalog(uint64_t serial, const char* name, gcc_dfs_
     return ok;
 }
 
-int hw_backend_win_bus_request(uint64_t serial, const char* client, const power_action_t* action,
-                               bus_request_op_t op)
+int hw_backend_win_bus_requests(uint64_t serial, const char* client, const power_action_t* actions,
+                                uint32_t count, bus_request_op_t op)
 {
     hw_backend_t lease;
-    power_snapshot_t snapshot;
+    power_snapshot_t snapshots[2];
     res_graph_t* graph;
+    uint32_t attempted = 0u;
     int ok = 0;
-    if (!serial || !client || !action || action->kind != POWER_ICB || op > BUS_REQUEST_RELEASE ||
-        KeGetCurrentIrql() != PASSIVE_LEVEL)
+    if (!serial || !client || !actions || !count || count > RTL_NUMBER_OF(snapshots) ||
+        op < BUS_REQUEST_QUERY || op > BUS_REQUEST_RELEASE || KeGetCurrentIrql() != PASSIVE_LEVEL)
         return 0;
+    for (uint32_t i = 0u; i < count; ++i)
+        if (actions[i].kind != POWER_ICB)
+            return 0;
     lpi_mutex_acquire(&g_win_lifecycle_lock);
     graph = g_published_graph;
     if (!graph || graph->backend_binding_serial != serial || !graph->acquire || !graph->release ||
         !graph->acquire(graph->lock_ctx))
         goto done;
-    if (!graph->quiescing && hw_backend_begin_bound(serial, &lease)) {
-        if (op == BUS_REQUEST_QUERY)
-            ok = lease.supports(lease.ctx, client, 0u, action);
-        else if (op == BUS_REQUEST_RELEASE)
-            ok = lease.release && lease.release(lease.ctx, client, action);
-        else if (lease.supports(lease.ctx, client, 0u, action) &&
-                 lease.snapshot(lease.ctx, client, 0u, action, &snapshot)) {
-            ok = lease.apply(lease.ctx, client, 0u, action) &&
-                 lease.verify(lease.ctx, client, 0u, action);
-            if (!ok && lease.restore(lease.ctx, client, 0u, action, &snapshot))
-                (void)lease.verify_restored(lease.ctx, client, 0u, action, &snapshot);
+    if ((op == BUS_REQUEST_RELEASE || !graph->quiescing) &&
+        hw_backend_begin_bound(serial, &lease)) {
+        ok = 1;
+        if (op == BUS_REQUEST_RELEASE) {
+            for (uint32_t i = 0u; i < count; ++i)
+                if (!lease.release || !lease.release(lease.ctx, client, &actions[i]))
+                    ok = 0;
+        } else {
+            for (uint32_t i = 0u; i < count && ok; ++i)
+                ok = lease.supports(lease.ctx, client, 0u, &actions[i]) &&
+                     (op == BUS_REQUEST_QUERY ||
+                      lease.snapshot(lease.ctx, client, 0u, &actions[i], &snapshots[i]));
+            if (ok && op == BUS_REQUEST_UPDATE) {
+                for (uint32_t i = 0u; i < count && ok; ++i) {
+                    attempted = i + 1u;
+                    ok = lease.apply(lease.ctx, client, 0u, &actions[i]) &&
+                         lease.verify(lease.ctx, client, 0u, &actions[i]);
+                }
+                if (!ok)
+                    while (attempted) {
+                        --attempted;
+                        if (lease.restore(lease.ctx, client, 0u, &actions[attempted],
+                                          &snapshots[attempted]))
+                            (void)lease.verify_restored(lease.ctx, client, 0u, &actions[attempted],
+                                                        &snapshots[attempted]);
+                    }
+            }
         }
         hw_backend_end_bound();
     }

@@ -30,7 +30,7 @@ The SM8845 tables need to be replaced or checked against the target hardware:
 
 - **Clocks:** controller addresses, parents, rate tables, dividers, branch votes and power domains. Include GPU and display controllers where required.
 - **Interconnect:** ICB routes, BCM groups, bus widths, units, command DB data and minimum bandwidth votes. Shared votes must survive individual devices entering idle.
-- **Bus DCVS:** bandwidth-monitor register revisions, MMIO windows, PnP interrupts, timer rates, counter units and bus limits. The LAGG counter layout and CPU index mapping are target-specific. Keep these in `bwmon_target.c`; do not reuse another SoC's register assignments.
+- **Bus DCVS:** bandwidth-monitor register revisions, MMIO windows, PnP interrupts, timer rates, counter units, bus limits and LLCC-to-DDR rate mappings. The LAGG counter layout and CPU index mapping are target-specific. Keep these in `bwmon_target.c`; do not reuse another SoC's register assignments.
 - **RPMh:** RSC version, DRV assignment, TCS groups, command slots and interrupt routing. Active, sleep and wake command sets need the correct allocation and completion handling.
 - **Regulators and GPIO:** PMIC model, resource names, voltage and mode settings, TLMM tiles, pin functions and sequencing.
 - **Storage and power domains:** UFS dependencies, ARC levels, required clients, clocks and rails.

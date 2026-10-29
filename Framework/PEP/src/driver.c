@@ -124,6 +124,6 @@ NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT driver_object, _In_ PUNICODE_STRING reg
     (VOID) etw_reg();
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER,
-                "driver: build rev=427 bus-bandwidth-scaling");
+                "driver: build rev=428 bus-vote-dependencies");
     return STATUS_SUCCESS;
 }
