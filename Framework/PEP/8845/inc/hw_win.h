@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-#define WIN_BACKEND_VERSION 0x00990002u
+#define WIN_BACKEND_VERSION 0x00990003u
 
 typedef enum hw_delegation {
     HW_DELEGATION_NOT_ESTABLISHED = 0, /* no owner primitive bound. */
@@ -81,6 +81,12 @@ typedef struct hwio {
     int (*bus_route_known)(void* ctx, const char* master, const char* slave);
     int (*bus_has_vote)(void* ctx, const char* path, const char* master, const char* slave);
 
+    int (*arc_known)(void* ctx, const char* name, uint32_t level);
+    int (*arc_vote)(void* ctx, const char* path, const char* name, uint32_t level);
+    int (*arc_withdraw)(void* ctx, const char* path, const char* name);
+    int (*arc_readback)(void* ctx, const char* name, uint64_t* effective);
+    int (*arc_client)(void* ctx, const char* path, const char* name, uint32_t* level);
+
     const char* (*bus_probe_route)(void* ctx, uint32_t key, const char** slave);
     const char* (*pmic_regulator_probe_name)(void* ctx, uint32_t key);
 
@@ -134,12 +140,12 @@ typedef struct npa_client_slot {
 } npa_client_slot_t;
 
 typedef struct win_backend_diag {
-    uint32_t refused[8];
-    uint32_t applied[8];
-    uint32_t verify_failed[8];
-    uint32_t restored[8];
-    uint32_t restore_failed[8];
-    uint32_t withdrawn[8];
+    uint32_t refused[POWER_KIND_COUNT];
+    uint32_t applied[POWER_KIND_COUNT];
+    uint32_t verify_failed[POWER_KIND_COUNT];
+    uint32_t restored[POWER_KIND_COUNT];
+    uint32_t restore_failed[POWER_KIND_COUNT];
+    uint32_t withdrawn[POWER_KIND_COUNT];
     uint32_t probe_calls;
     uint32_t probe_failed;
     uint32_t self_tests;
@@ -170,7 +176,7 @@ typedef struct win_backend {
 } win_backend_t;
 
 typedef struct win_backend_report {
-    hw_delegation_t delegation[8];
+    hw_delegation_t delegation[POWER_KIND_COUNT];
     uint32_t live_kinds;
     uint32_t not_established_kinds;
     uint32_t refused_kinds;

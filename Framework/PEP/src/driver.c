@@ -124,6 +124,6 @@ NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT driver_object, _In_ PUNICODE_STRING reg
     (VOID) etw_reg();
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER,
-                "driver: build rev=423 idle-firmware-initialization");
+                "driver: build rev=426 descriptor-state-transitions");
     return STATUS_SUCCESS;
 }

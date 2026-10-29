@@ -208,12 +208,9 @@ static int validate_action(const aeob_action_t* a, void* ctx)
         return 1;
     }
     if (same(a->kind, "NPARESOURCE")) {
-        /* [type, "/arc/client/rail_*", level]. The first integer is 1 in every observed desc and
-         * the DSDT; the level's units are not established, so this is validated and recorded,
-         * never executed. */
-
         char path[128];
-        if (!next(a->arguments, a->argument_bytes, &pos, &p) || !is_integer(&p))
+        if (!next(a->arguments, a->argument_bytes, &pos, &p) || !is_integer(&p) ||
+            int_value(&p) != 1u)
             goto malformed;
         if (!next(a->arguments, a->argument_bytes, &pos, &p) || !is_string(&p, path, sizeof(path)))
             goto malformed;
@@ -222,7 +219,7 @@ static int validate_action(const aeob_action_t* a, void* ctx)
             return 0;
         }
         if (!next(a->arguments, a->argument_bytes, &pos, &p) || !is_integer(&p) ||
-            pos != a->argument_bytes)
+            int_value(&p) > UINT32_MAX || pos != a->argument_bytes)
             goto malformed;
         ++v->npa_res_cnt;
         return 1;

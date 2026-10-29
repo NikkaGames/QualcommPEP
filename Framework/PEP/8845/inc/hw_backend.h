@@ -11,7 +11,7 @@
 extern "C" {
 #endif
 
-#define HW_BACKEND_VERSION 0x00960002u
+#define HW_BACKEND_VERSION 0x00960003u
 
 /* res domains for independent readback (probe_readback `domain`). */
 typedef enum hw_domain {
@@ -55,6 +55,9 @@ typedef struct hw_backend {
      * provider metadata cannot open admission. */
 
     uint64_t production_attestation; /* must equal HW_ATTEST_MAGIC. */
+
+    /* withdraw one client's vote during rundown, without selecting a descriptor state. */
+    int (*release)(void* ctx, const char* path, const power_action_t*);
 } hw_backend_t;
 
 #define HW_ATTEST_MAGIC 0x484F4E4553543936ull

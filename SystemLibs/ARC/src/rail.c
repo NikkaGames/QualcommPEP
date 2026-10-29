@@ -209,6 +209,10 @@ int arc_vote(arc_rail_t* r, const char* client, uint32_t level, uint32_t enabled
         r->quarantined = 1u;
         return 0;
     }
+    if (!desired) {
+        memset(&r->clients[idx], 0, sizeof(r->clients[idx]));
+        return 1;
+    }
     if (!r->clients[idx].used) {
         memcpy(r->clients[idx].identity, client, strlen(client) + 1u);
         r->clients[idx].used = 1u;

@@ -149,8 +149,6 @@ static power_result_t pep_native_owner_execute(void* ctx, const power_sequence_t
                                                power_execution_t* trace);
 static graph_dev_t* pep_native_ufs_graph_dev(res_graph_t* graph);
 BOOLEAN pep_prepare_native_ufs_scope(pep_devnode_t* n, const char* path);
-static BOOLEAN pep_native_ufs_verify_f1(pep_native_producer_scope_t* scope,
-                                        comp_state_work_t* work);
 power_result_t pep_run_node_d_state(pep_devnode_t* n, ULONG target);
 BOOLEAN pep_native_ufs_retire(pep_devnode_t* n, const UNICODE_STRING* dev_id);
 NTSTATUS pep_native_perf_quiesce_gate(VOID);
@@ -2253,38 +2251,17 @@ done:
     return accepted;
 }
 
-/* called only after PoFx admissions are closed. The final d3 readback uses the graph's
- * retained, desc-derived d3, not a fabricated BPMD d3. */
-/* recompile f1 from the pinned BPMD; a cached f1 selector does not independently prove
- * that all required P-state client votes were withdrawn. */
-static BOOLEAN pep_native_ufs_verify_f1(pep_native_producer_scope_t* scope, comp_state_work_t* work)
+static power_result_t pep_native_d_state(void* ctx, uint32_t target)
 {
-    power_pstate_selection_t selection;
-    const power_pstate_program_t* programs[3];
-    uint32_t i;
-    BOOLEAN valid = FALSE;
-    if (!scope || !work || !scope->producer.owner.bound || scope->producer.owner.quarantined ||
-        !scope->producer.owner.comp[0].state_known || scope->producer.owner.comp[0].quarantined ||
-        scope->producer.owner.comp[0].current_d_state != 1u)
-        return FALSE;
-    for (i = 0u; i < 3u; ++i) {
-        if (!scope->producer.owner.sets[0][i].state_known ||
-            scope->producer.owner.sets[0][i].quarantined ||
-            scope->producer.owner.sets[0][i].current_d_state != 1u ||
-            program_idx_compile(&scope->producer.owner.idx, scope->desc, scope->desc_bytes,
-                                PROGRAM_P_STATE, 0u, i, 1u, NULL, &work->p_states[i]) != POWER_OK)
-            return FALSE;
-        programs[i] = &work->p_states[i];
-    }
-    if (program_idx_compile(&scope->producer.owner.idx, scope->desc, scope->desc_bytes,
-                            PROGRAM_F_STATE, 0u, 0u, 1u, &work->f_state, NULL) != POWER_OK ||
-        power_expand_comp_f_state(&work->f_state, 0u, programs, 3u, 32u, &work->expanded,
-                                  &selection) != POWER_OK ||
-        selection.used_sets != 7u || !scope->backend.lock(scope))
-        return FALSE;
-    valid = (BOOLEAN)scope->backend.verify_current_state(scope, &work->expanded);
-    scope->backend.unlock(scope);
-    return valid;
+    pep_devnode_t* n = ctx;
+    pep_native_producer_scope_t* scope = n ? n->native_owner : NULL;
+    if (!scope || !scope->graph || scope->graph != g_molokai_dpm_authoritative_graph ||
+        scope->serial != hw_backend_verified_serial())
+        return POWER_UNSUPPORTED;
+    /* component programs may have changed resources included in the D0 entry sequence. */
+    if (!target && !graph_forget_state(scope->graph, scope->producer.owner.idx.path))
+        return POWER_UNSUPPORTED;
+    return pep_run_molokai_d_state(&n->instance_path, target);
 }
 
 BOOLEAN pep_node_d_state_declared(pep_devnode_t* n, ULONG target)
@@ -2297,7 +2274,11 @@ BOOLEAN pep_node_d_state_declared(pep_devnode_t* n, ULONG target)
         mask = n->runtime_dstate_scope->program.idx.d_state_mask;
     else if (n->native_owner)
         mask = n->native_owner->producer.owner.idx.d_state_mask;
-    else if (n->runtime_comp || n->peer_scope)
+    else if (n->runtime_comp) {
+        mask = n->runtime_comp->model.owner.idx.d_state_mask;
+        if (!mask)
+            return target == 0u || target == 3u;
+    } else if (n->peer_scope)
         return target == 0u || target == 3u;
     else
         return pep_resolve_molokai_dev(&n->instance_path, path) &&
@@ -2309,6 +2290,8 @@ power_result_t pep_run_node_d_state(pep_devnode_t* n, ULONG target)
 {
     power_result_t result;
     comp_state_work_t* work = NULL;
+    power_execution_t trace;
+    pep_native_producer_scope_t* scope;
     if (!n || target > 3u)
         return POWER_UNSUPPORTED;
     if (n->runtime_comp)
@@ -2319,24 +2302,23 @@ power_result_t pep_run_node_d_state(pep_devnode_t* n, ULONG target)
         return pep_run_peer_d_state(n->peer_scope, target);
     if (!n->native_owner)
         return pep_run_molokai_d_state(&n->instance_path, target);
-    /* keep UFS f1 verification and d3 res withdrawal in one interval shared with the
-     * producer's F/P transactions. The KMUTEX is recursive; VerifyF1 uses the same backend
-     * lock for its independent readback. */
-    if (!pep_native_owner_lock(n->native_owner))
+    scope = n->native_owner;
+    if (!pep_native_owner_lock(scope))
         return POWER_UNSUPPORTED;
-    if (target == 3u) {
-        work = ExAllocatePool2(POOL_FLAG_NON_PAGED, sizeof(*work), POOL_TAG);
-        if (!work || !pep_native_ufs_verify_f1(n->native_owner, work)) {
-            if (work)
-                ExFreePool(work);
-            pep_native_owner_unlock(n->native_owner);
-            return POWER_UNSUPPORTED;
-        }
+    work = ExAllocatePool2(POOL_FLAG_NON_PAGED, sizeof(*work), POOL_TAG);
+    if (!work) {
+        pep_native_owner_unlock(scope);
+        return POWER_BAD_INPUT;
     }
-    result = pep_run_molokai_d_state(&n->instance_path, target);
-    if (work)
-        ExFreePool(work);
-    pep_native_owner_unlock(n->native_owner);
+    result = comp_owner_execute_d_state(&scope->producer.owner, scope->desc, scope->desc_bytes,
+                                        target, scope->verified_d0, &scope->backend, scope->serial,
+                                        n, pep_native_d_state, work, &trace);
+    if (result != POWER_OK)
+        TraceEvents(TRACE_LEVEL_WARNING, TRACE_POWER,
+                    "dpm: path=%wZ D%lu component transition failed result=%d action=%lu",
+                    &n->instance_path, target, (int)result, trace.failure_idx);
+    ExFreePool(work);
+    pep_native_owner_unlock(scope);
     return result;
 }
 
@@ -2391,19 +2373,27 @@ BOOLEAN pep_native_ufs_retire(pep_devnode_t* n, const UNICODE_STRING* dev_id)
         !d3_sequence->action_cnt)
         goto release_done;
     if (!scope->f1_release_verified) {
-        if (!scope->verified_d0->state_known || scope->verified_d0->current_d_state != 0u)
-            goto release_done;
-        RtlZeroMemory(&trace, sizeof(trace));
-        result = comp_owner_execute_f_state(&scope->producer.owner, scope->desc, scope->desc_bytes,
-                                            0u, 1u, scope->verified_d0, &scope->backend,
-                                            scope->serial, work, &trace);
-        if (result == POWER_OK && pep_native_ufs_verify_f1(scope, work))
-            scope->f1_release_verified = TRUE;
+        if (!comp_owner_verify_f_state(&scope->producer.owner, scope->desc, scope->desc_bytes, 0u,
+                                       1u, &scope->backend, scope->serial, work)) {
+            if (!scope->verified_d0->state_known || scope->verified_d0->current_d_state != 0u)
+                goto release_done;
+            RtlZeroMemory(&trace, sizeof(trace));
+            result = comp_owner_execute_f_state(&scope->producer.owner, scope->desc,
+                                                scope->desc_bytes, 0u, 1u, scope->verified_d0,
+                                                &scope->backend, scope->serial, work, &trace);
+            if (result != POWER_OK ||
+                !comp_owner_verify_f_state(&scope->producer.owner, scope->desc, scope->desc_bytes,
+                                           0u, 1u, &scope->backend, scope->serial, work))
+                goto release_done;
+        }
+        scope->f1_release_verified = TRUE;
     }
     if (!scope->f1_release_verified)
         goto release_done;
     if (!graph_verify_native_ufs_d3(scope->graph, "\\_SB.UFS0", scope->serial)) {
-        if (!scope->verified_d0->state_known || scope->verified_d0->current_d_state != 0u ||
+        if (!scope->verified_d0->state_known ||
+            (scope->verified_d0->current_d_state != 0u &&
+             scope->verified_d0->current_d_state != 3u) ||
             pep_run_molokai_lifecycle(dev_id, FALSE) != POWER_OK ||
             !graph_verify_native_ufs_d3(scope->graph, "\\_SB.UFS0", scope->serial))
             goto release_done;

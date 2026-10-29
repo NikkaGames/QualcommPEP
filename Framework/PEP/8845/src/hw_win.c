@@ -41,6 +41,7 @@
 #include "group_vote.h"
 #include "gdsc_native.h"
 #include "arc_rail.h"
+#include "8845_acpi_resources.h"
 #include "domains.h"
 #include "trace.h"
 #include "lpi.h"
@@ -59,6 +60,7 @@ NTSTATUS pep_unpublish_verified_molokai_graph(VOID);
 #define CLOCK_CLIENT_MAX 512u /* exhaustion refuses before mutation. */
 #define CLOCK_TABLE_MAX 256u  /* 153 vendor-mapped GCC entries; fixed bounded nonpaged arrays. */
 #define TLMM_PROBE_PIN 52u
+#define ARC_RAIL_MAX 16u
 
 /* each is a live hardware read; together they are what the production attestation means. */
 
@@ -134,7 +136,7 @@ typedef struct owners {
     icb_bus_t bus;
     rail_owner_t rails;
     ufs_cxmx_owner_t ufs_rail_owner;
-    arc_rail_t ufs_arc[2];
+    arc_rail_t arc_rails[ARC_RAIL_MAX];
     uint32_t ufs_arc_last_address, ufs_arc_last_response;
     rpmh_tcs_result_t ufs_arc_last_result;
     fs_gdsc_driver_t ufs_domain_owner;
@@ -1818,7 +1820,10 @@ static int native_ufs_epoch(void* ctx, uint64_t* epoch)
 
 static int native_arc_owns(void* ctx, uint64_t epoch)
 {
-    return native_ufs_owns(ctx, clock_ufs_domain, epoch);
+    owners_t* o = ctx;
+    return o && epoch && o->os_rsc_lease.owner_epoch == epoch &&
+           InterlockedCompareExchange(&o->os_rsc_lease.active, 0, 0) == 1 && o->rpmh_live &&
+           !o->rpmh_write_fence.quarantined && o->d0_rsc.base != NULL;
 }
 
 static int native_arc_read(void* ctx, uint32_t address, uint32_t* response)
@@ -1829,6 +1834,7 @@ static int native_arc_read(void* ctx, uint32_t address, uint32_t* response)
     if (!o || !response || (address >> 16) != 3u || (address & 3u) ||
         !native_arc_owns(o, o->os_rsc_lease.owner_epoch))
         return 0;
+    *response = 0u;
     command.address = address;
     command.read = 1u;
     result = rpmh_submit_active(o, RPMH_CLIENT_PROBE, &command, 1u, response);
@@ -1852,46 +1858,136 @@ static int native_arc_write(void* ctx, uint32_t address, uint32_t corner)
     return result == TCS_OK ? 1 : (result == TCS_BUSY ? 0 : -1);
 }
 
-static arc_rail_t* native_ufs_arc(owners_t* o, const char* name)
+static arc_rail_t* arc_find(owners_t* o, const char* name)
 {
+    uint32_t i;
     if (!o || !name)
         return NULL;
-    if (!strcmp(name, UFS_CX_NAME))
-        return &o->ufs_arc[0];
-    if (!strcmp(name, UFS_MX_NAME))
-        return &o->ufs_arc[1];
+    for (i = 0u; i < ARC_RAIL_MAX; ++i)
+        if (o->arc_rails[i].bound && !strcmp(o->arc_rails[i].name, name))
+            return &o->arc_rails[i];
     return NULL;
+}
+
+/* callers hold the owner mutex. Every consumer of one ARC address shares this ledger. */
+static arc_rail_t* arc_resolve(owners_t* o, const char* name)
+{
+    arc_rail_t* rail;
+    arc_io_t io = {0};
+    arc_bind_diag_t diag = {0};
+    uint32_t i;
+    if (!o || !name || !native_arc_owns(o, o->os_rsc_lease.owner_epoch))
+        return NULL;
+    rail = arc_find(o, name);
+    if (rail)
+        return rail->epoch == o->os_rsc_lease.owner_epoch && !rail->quarantined ? rail : NULL;
+    for (i = 0u; i < ARC_RAIL_MAX; ++i)
+        if (!o->arc_rails[i].bound && !o->arc_rails[i].quarantined)
+            break;
+    if (i == ARC_RAIL_MAX)
+        return NULL;
+    rail = &o->arc_rails[i];
+    io.ctx = o;
+    io.owns = native_arc_owns;
+    io.read = native_arc_read;
+    io.write = native_arc_write;
+    if (!arc_bind_ex(rail, o->cmd_db, o->cmd_db_bytes, name, &io, o->os_rsc_lease.owner_epoch,
+                     &diag)) {
+        TraceEvents(
+            TRACE_LEVEL_WARNING, TRACE_POWER,
+            "arc: resource=%s phase=%lu address=%05lX aux=%lu index=%lu count=%lu raw=%08lX/%08lX",
+            name, diag.phase, diag.address, diag.aux_length, diag.level_idx, diag.level_cnt,
+            diag.raw[0], diag.raw[1]);
+        return NULL;
+    }
+    for (i = 0u; i < ARC_RAIL_MAX; ++i)
+        if (&o->arc_rails[i] != rail && o->arc_rails[i].bound &&
+            o->arc_rails[i].address == rail->address) {
+            RtlZeroMemory(rail, sizeof(*rail));
+            return NULL;
+        }
+    return rail;
+}
+
+static int win_io_arc_known(void* ctx, const char* path, uint32_t level)
+{
+    owners_t* o = owners_of(ctx);
+    const npa_res_t* res = lookup_npa_res(path);
+    arc_rail_t* rail;
+    uint32_t corner;
+    int ok;
+    if (!o || !res || !res->cmd_db_name || !owners_lock_live(o, LIVE_RPMH))
+        return 0;
+    rail = arc_resolve(o, res->cmd_db_name);
+    ok = rail && arc_map(rail, level, &corner) && (!level || corner);
+    owners_unlock(o);
+    return ok;
+}
+
+static arc_rail_t* arc_resource(owners_t* o, const char* path)
+{
+    const npa_res_t* res = lookup_npa_res(path);
+    return res && res->cmd_db_name ? arc_find(o, res->cmd_db_name) : NULL;
+}
+
+static int win_io_arc_vote(void* ctx, const char* client, const char* path, uint32_t level)
+{
+    owners_t* o = owners_of(ctx);
+    arc_rail_t* rail;
+    int ok;
+    if (!o || !owners_lock_live(o, LIVE_RPMH))
+        return 0;
+    rail = arc_resource(o, path);
+    ok = rail && arc_vote(rail, client, level, level != 0u);
+    owners_unlock(o);
+    return ok;
+}
+
+static int win_io_arc_withdraw(void* ctx, const char* client, const char* path)
+{
+    return win_io_arc_vote(ctx, client, path, 0u);
+}
+
+static int win_io_arc_readback(void* ctx, const char* path, uint64_t* effective)
+{
+    owners_t* o = owners_of(ctx);
+    arc_rail_t* rail;
+    uint32_t enabled, level;
+    int ok;
+    if (!o || !effective || !owners_lock_live(o, LIVE_RPMH))
+        return 0;
+    rail = arc_resource(o, path);
+    ok = rail && arc_read(rail, &enabled, &level);
+    if (ok)
+        *effective = level;
+    owners_unlock(o);
+    return ok;
+}
+
+static int win_io_arc_client(void* ctx, const char* client, const char* path, uint32_t* level)
+{
+    owners_t* o = owners_of(ctx);
+    arc_rail_t* rail;
+    uint32_t enabled;
+    int ok;
+    if (!o || !level || !owners_lock_live(o, LIVE_RPMH))
+        return 0;
+    rail = arc_resource(o, path);
+    ok = rail && arc_client_vote(rail, client, &enabled, level);
+    owners_unlock(o);
+    return ok;
 }
 
 static int native_ufs_resolve(void* ctx, const char* name, uint32_t floor)
 {
     owners_t* o = ctx;
-    arc_rail_t* rail = native_ufs_arc(o, name);
-    arc_io_t io = {0};
-    arc_bind_diag_t diag = {0};
+    arc_rail_t* rail;
     uint32_t corner;
-    int ok = 0;
-    if (!rail || !floor || !owners_lock_live(o, LIVE_RPMH))
+    int ok;
+    if (!o || !floor || !owners_lock_live(o, LIVE_RPMH))
         return 0;
-    io.ctx = o;
-    io.owns = native_arc_owns;
-    io.read = native_arc_read;
-    io.write = native_arc_write;
-    if (!rail->bound && !arc_bind_ex(rail, o->cmd_db, o->cmd_db_bytes, name, &io,
-                                     o->os_rsc_lease.owner_epoch, &diag)) {
-        TraceEvents(
-            TRACE_LEVEL_WARNING, TRACE_POWER,
-            "ufs: ARC=%s phase=%lu address=%05lX aux=%lu index=%lu count=%lu raw=%08lX/%08lX", name,
-            diag.phase, diag.address, diag.aux_length, diag.level_idx, diag.level_cnt, diag.raw[0],
-            diag.raw[1]);
-        goto done;
-    }
-    if (o->ufs_arc[0].bound && o->ufs_arc[1].bound &&
-        o->ufs_arc[0].address == o->ufs_arc[1].address)
-        goto done;
-    ok =
-        rail->epoch == o->os_rsc_lease.owner_epoch && arc_map(rail, floor, &corner) && corner != 0u;
-done:
+    rail = arc_resolve(o, name);
+    ok = rail && arc_map(rail, floor, &corner) && corner;
     owners_unlock(o);
     return ok;
 }
@@ -1900,11 +1996,12 @@ static int native_ufs_client(void* ctx, const char* client, const char* name, ui
                              uint32_t* level)
 {
     owners_t* o = ctx;
-    arc_rail_t* rail = native_ufs_arc(o, name);
+    arc_rail_t* rail;
     int ok;
-    if (!rail || !owners_lock_live(o, LIVE_RPMH))
+    if (!o || !owners_lock_live(o, LIVE_RPMH))
         return 0;
-    ok = arc_client_vote(rail, client, enabled, level);
+    rail = arc_find(o, name);
+    ok = rail && arc_client_vote(rail, client, enabled, level);
     owners_unlock(o);
     return ok;
 }
@@ -1912,11 +2009,12 @@ static int native_ufs_client(void* ctx, const char* client, const char* name, ui
 static int native_ufs_physical(void* ctx, const char* name, uint32_t* enabled, uint32_t* level)
 {
     owners_t* o = ctx;
-    arc_rail_t* rail = native_ufs_arc(o, name);
+    arc_rail_t* rail;
     int ok;
-    if (!rail || !owners_lock_live(o, LIVE_RPMH))
+    if (!o || !owners_lock_live(o, LIVE_RPMH))
         return 0;
-    ok = arc_read(rail, enabled, level);
+    rail = arc_find(o, name);
+    ok = rail && arc_read(rail, enabled, level);
     owners_unlock(o);
     return ok;
 }
@@ -1925,12 +2023,13 @@ static int native_ufs_vote(void* ctx, const char* client, const char* name, uint
                            uint32_t enabled)
 {
     owners_t* o = ctx;
-    arc_rail_t* rail = native_ufs_arc(o, name);
+    arc_rail_t* rail;
     int ok;
-    if (!rail || enabled != 1u || !owners_lock_live(o, LIVE_RPMH))
+    if (!o || enabled != 1u || !owners_lock_live(o, LIVE_RPMH))
         return 0;
-    ok = arc_vote(rail, client, level, enabled);
-    if (rail->quarantined)
+    rail = arc_find(o, name);
+    ok = rail && arc_vote(rail, client, level, enabled);
+    if (rail && rail->quarantined)
         o->ufs_owner_uncertain = TRUE;
     owners_unlock(o);
     return ok;
@@ -1939,12 +2038,13 @@ static int native_ufs_vote(void* ctx, const char* client, const char* name, uint
 static int native_ufs_withdraw(void* ctx, const char* client, const char* name)
 {
     owners_t* o = ctx;
-    arc_rail_t* rail = native_ufs_arc(o, name);
+    arc_rail_t* rail;
     int ok;
-    if (!rail || !owners_lock_live(o, LIVE_RPMH))
+    if (!o || !owners_lock_live(o, LIVE_RPMH))
         return 0;
-    ok = arc_vote(rail, client, 0u, 0u);
-    if (rail->quarantined)
+    rail = arc_find(o, name);
+    ok = rail && arc_vote(rail, client, 0u, 0u);
+    if (rail && rail->quarantined)
         o->ufs_owner_uncertain = TRUE;
     owners_unlock(o);
     return ok;
@@ -2844,14 +2944,20 @@ static int native_ufs_owner_attest(void* ctx, uint64_t epoch)
            o->ufs_group_votes[1]->epoch == owner_epoch && !o->ufs_owner_uncertain;
 }
 
-static int native_ufs_arcs_retire(owners_t* o)
+static int arc_retire_all(owners_t* o)
 {
     uint32_t i;
     int ok = 1;
-    if (!o || o->ufs_rail_owner.bound || o->ufs_rail_owner.held || !owners_lock_live(o, LIVE_RPMH))
+    if (!o || o->ufs_rail_owner.bound || o->ufs_rail_owner.held)
         return 0;
-    for (i = 0u; i < 2u; ++i)
-        if (o->ufs_arc[i].bound && !arc_retire(&o->ufs_arc[i])) {
+    for (i = 0u; i < ARC_RAIL_MAX && !o->arc_rails[i].bound; ++i) {
+    }
+    if (i == ARC_RAIL_MAX)
+        return 1;
+    if (!owners_lock_live(o, LIVE_RPMH))
+        return 0;
+    for (i = 0u; i < ARC_RAIL_MAX; ++i)
+        if (o->arc_rails[i].bound && !arc_retire(&o->arc_rails[i])) {
             ok = 0;
             break;
         }
@@ -2910,8 +3016,7 @@ failed:
         return 0;
     }
     if (ufs_native_rollback_unpublished(&o->ufs_native, &o->ufs_domain_owner, &o->ufs_rail_owner) !=
-            FS_OK ||
-        !native_ufs_arcs_retire(o)) {
+        FS_OK) {
         o->ufs_owner_uncertain = TRUE;
         return 0;
     }
@@ -3544,12 +3649,13 @@ static const char* delegation_name(hw_delegation_t d)
 
 static VOID trace_report(const win_backend_t* core)
 {
-    static const char* const kinds[8] = {"?",        "CLOCK",        "BUSARB", "TLMMGPIO",
-                                         "PMICGPIO", "PMICVREGVOTE", "DELAY",  "PSTATE_ADJUST"};
+    static const char* const kinds[POWER_KIND_COUNT] = {
+        "?",     "CLOCK",         "BUSARB",     "TLMMGPIO",   "PMICGPIO", "PMICVREGVOTE",
+        "DELAY", "PSTATE_ADJUST", "FOOTSWITCH", "NPARESOURCE"};
     win_backend_report_t r;
     int k;
     win_backend_report(core, &r);
-    for (k = (int)POWER_CLOCK; k <= (int)POWER_PSTATE_ADJUST; ++k)
+    for (k = (int)POWER_CLOCK; k < (int)POWER_KIND_COUNT; ++k)
         TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_RESOURCE, "resources: provider=%s state=%s",
                     kinds[k], delegation_name(r.delegation[k]));
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_RESOURCE,
@@ -3698,6 +3804,11 @@ static NTSTATUS hw_backend_win_attach_locked(_In_ WDFDEVICE dev)
         io.pmic_regulator_known = win_io_rail_known;
         io.pmic_regulator_has_vote = win_io_rail_has_vote;
         io.pmic_regulator_probe_name = win_io_rail_probe_name;
+        io.arc_known = win_io_arc_known;
+        io.arc_vote = win_io_arc_vote;
+        io.arc_withdraw = win_io_arc_withdraw;
+        io.arc_readback = win_io_arc_readback;
+        io.arc_client = win_io_arc_client;
     }
 
     io.self_test_pmic_number = 5u;
@@ -4943,13 +5054,17 @@ NTSTATUS hw_backend_win_d0_quiesce(_In_ WDFDEVICE dev)
                  !graph_begin_drain(g_published_graph) || !native_ufs_group_close(o) ||
                  !native_ufs_scalar_program_clients_close(o, o->os_rsc_lease.owner_epoch) ||
                  ufs_native_retire_verified(&o->ufs_native, &o->ufs_domain_owner,
-                                            &o->ufs_rail_owner) != FS_OK ||
-                 !native_ufs_arcs_retire(o))) {
+                                            &o->ufs_rail_owner) != FS_OK)) {
                 g_quarantined_rsc_owner = o;
                 status = STATUS_DEVICE_BUSY;
                 TraceEvents(TRACE_LEVEL_WARNING, TRACE_RESOURCE,
                             "fs: shutdown readback unverified epoch=%llX owner=retained",
                             (unsigned long long)o->os_rsc_lease.owner_epoch);
+            } else if (!arc_retire_all(o)) {
+                g_quarantined_rsc_owner = o;
+                status = STATUS_DEVICE_BUSY;
+                TraceEvents(TRACE_LEVEL_WARNING, TRACE_RESOURCE,
+                            "arc: shutdown clients active owner=retained");
             } else if (!owners_lock(o)) {
                 status = STATUS_DEVICE_BUSY;
                 TraceEvents(TRACE_LEVEL_WARNING, TRACE_RPMH,

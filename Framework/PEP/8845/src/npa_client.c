@@ -64,7 +64,8 @@ static int same_key(const npa_key_t* a, const npa_key_t* b)
 
 static int is_npa(power_action_kind_t kind)
 {
-    return kind == POWER_CLOCK || kind == POWER_ICB || kind == POWER_PMIC_REGULATOR;
+    return kind == POWER_CLOCK || kind == POWER_ICB || kind == POWER_PMIC_REGULATOR ||
+           kind == POWER_NPA;
 }
 
 /* bus client references contain two numeric endpoints; driver ID and client type need separate
@@ -123,6 +124,10 @@ static int make_key(npa_key_t* key, const char* path, uint32_t state, const powe
     }
     if (action->kind == POWER_PMIC_REGULATOR)
         return copy_key_name(key->res, sizeof(key->res), action->u.pmic_regulator.name);
+    if (action->kind == POWER_NPA) {
+        key->client = action->u.npa.type;
+        return key->client == 1u && copy_key_name(key->res, sizeof(key->res), action->u.npa.name);
+    }
     if (action->kind == POWER_ICB) {
         key->client = action->u.icb.client;
         if (!copy_key_name(key->res, sizeof(key->res), action->u.icb.master) ||

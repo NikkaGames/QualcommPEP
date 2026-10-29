@@ -29,6 +29,19 @@ typedef struct comp_state_work {
 
 int comp_owner_bind(comp_state_owner_t* owner, const program_idx_t* idx, uint64_t epoch);
 
+int comp_owner_verify_f_state(comp_state_owner_t* owner, const void* pinned_desc, size_t desc_bytes,
+                              uint32_t comp, uint32_t f_state, const power_backend_t* provider,
+                              uint64_t epoch, comp_state_work_t* work);
+
+/* the caller serializes D/F/P callbacks. The device executor commits its own hardware state. */
+power_result_t comp_owner_execute_d_state(comp_state_owner_t* owner, const void* pinned_desc,
+                                          size_t desc_bytes, uint32_t d_state,
+                                          const power_dev_t* physical_state,
+                                          const power_backend_t* provider, uint64_t epoch,
+                                          void* ctx,
+                                          power_result_t (*execute_device)(void*, uint32_t),
+                                          comp_state_work_t* work, power_execution_t* trace);
+
 power_result_t
 comp_owner_execute_f_state(comp_state_owner_t* owner, const void* pinned_desc, size_t desc_bytes,
                            uint32_t comp, uint32_t f_state, const power_dev_t* physical_d0,

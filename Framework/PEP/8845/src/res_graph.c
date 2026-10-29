@@ -478,7 +478,7 @@ int graph_audit_dstate_scopes_held(res_graph_t* g, void* ctx, scope_client_ready
 /* preserve that distinction here: an OS Dx notify never establishes a verified d3 vote.
  * Firmware may alter the provider resources during suspend. */
 
-int graph_forget_firmware_state(res_graph_t* g, const char* path)
+int graph_forget_state(res_graph_t* g, const char* path)
 {
     graph_dev_t* d;
     int okay = 0;

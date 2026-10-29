@@ -584,7 +584,7 @@ static BOOLEAN pep_forget_firmware_dpm_state(_In_ const UNICODE_STRING* dev_id)
     char path[256];
     if (!pep_resolve_molokai_dev(dev_id, path))
         return FALSE;
-    return graph_forget_firmware_state(g_molokai_dpm_authoritative_graph, path) ? TRUE : FALSE;
+    return graph_forget_state(g_molokai_dpm_authoritative_graph, path) ? TRUE : FALSE;
 }
 
 static int pep_proof_invalidation_ready(void* ctx)

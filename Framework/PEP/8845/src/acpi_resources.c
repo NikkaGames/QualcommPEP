@@ -89,10 +89,11 @@ const unsigned int gdsc_cnt = (unsigned int)(sizeof(gdscs) / sizeof(gdscs[0]));
 /* reviewed ARC client resource paths; provenance is recorded in the source map. */
 
 const npa_res_t npa_resources[] = {
-    {"/arc/client/rail_cx", 1u},    {"/arc/client/rail_gx", 1u},   {"/arc/client/rail_lpicx", 1u},
-    {"/arc/client/rail_lpimx", 1u}, {"/arc/client/rail_mmcx", 1u}, {"/arc/client/rail_mx", 1u},
-    {"/arc/client/rail_mxa", 1u},   {"/arc/client/rail_mxc", 1u},  {"/arc/client/rail_nsp", 1u},
-    {"/arc/client/rail_xo", 1u},
+    {"/arc/client/rail_cx", 1u, "cx.lvl"},     {"/arc/client/rail_gx", 1u, "gfx.lvl"},
+    {"/arc/client/rail_lpicx", 1u, "lcx.lvl"}, {"/arc/client/rail_lpimx", 1u, "lmx.lvl"},
+    {"/arc/client/rail_mmcx", 1u, "mmcx.lvl"}, {"/arc/client/rail_mx", 1u, "mx.lvl"},
+    {"/arc/client/rail_mxa", 1u, 0},           {"/arc/client/rail_mxc", 1u, "mxc.lvl"},
+    {"/arc/client/rail_nsp", 1u, "nsp.lvl"},   {"/arc/client/rail_xo", 1u, "xo.lvl"},
 };
 const unsigned int npa_resource_cnt =
     (unsigned int)(sizeof(npa_resources) / sizeof(npa_resources[0]));

@@ -174,7 +174,7 @@ int po_fx_endpoint_query_current(const pofx_perf_endpoint_t* e, uint64_t epoch, 
     program = &work->p_states[0];
     if (program_idx_compile(&e->owner->idx, e->desc, e->desc_bytes, PROGRAM_P_STATE, comp, set,
                             selector, NULL, program) != POWER_OK ||
-        !program->resources.action_cnt)
+        program->resources.action_cnt > POWER_MAX_ACTIONS)
         goto done;
     ok = e->backend->verify_current_state(e->backend->ctx, &program->resources);
 done:

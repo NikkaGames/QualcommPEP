@@ -21,8 +21,11 @@ typedef enum power_action_kind {
     POWER_DELAY = 6,
     POWER_PSTATE_ADJUST = 7,
 
-    POWER_FOOTSWITCH = 8
+    POWER_FOOTSWITCH = 8,
+    POWER_NPA = 9
 } power_action_kind_t;
+
+#define POWER_KIND_COUNT 10u
 
 typedef struct power_action {
     power_action_kind_t kind;
@@ -75,6 +78,12 @@ typedef struct power_action {
             char name[POWER_NAME_BYTES];
             uint32_t action;
         } footswitch;
+
+        struct {
+            char name[POWER_NAME_BYTES];
+            uint32_t type;
+            uint32_t level;
+        } npa;
     } u;
 } power_action_t;
 

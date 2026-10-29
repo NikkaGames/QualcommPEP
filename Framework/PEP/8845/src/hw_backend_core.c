@@ -107,7 +107,7 @@ static win_backend_t* core_of(void* c)
 
 static void diag_bump(uint32_t* arr, uint32_t kind)
 {
-    if (kind < 8u && arr[kind] != 0xFFFFFFFFu)
+    if (kind < POWER_KIND_COUNT && arr[kind] != 0xFFFFFFFFu)
         ++arr[kind];
 }
 
@@ -176,7 +176,13 @@ hw_delegation_t win_backend_delegation(const win_backend_t* b, power_action_kind
             return (b->io.bus_vote && b->io.bus_readback && rpmh_execution_ready(b))
                        ? HW_DELEGATION_LIVE
                        : HW_DELEGATION_NOT_ESTABLISHED;
+        case POWER_NPA:
+            return (b->io.arc_known && b->io.arc_vote && b->io.arc_withdraw && b->io.arc_readback &&
+                    b->io.arc_client && rpmh_execution_ready(b))
+                       ? HW_DELEGATION_LIVE
+                       : HW_DELEGATION_NOT_ESTABLISHED;
         case POWER_PSTATE_ADJUST:
+        case POWER_FOOTSWITCH:
             /* nested references execute only through the pinned component owner. */
 
             return HW_DELEGATION_REFUSED_BY_RULE;
@@ -193,7 +199,7 @@ void win_backend_report(const win_backend_t* b, win_backend_report_t* r)
     memset(r, 0, sizeof(*r));
     if (!b)
         return;
-    for (k = (int)POWER_CLOCK; k <= (int)POWER_PSTATE_ADJUST; ++k) {
+    for (k = (int)POWER_CLOCK; k < (int)POWER_KIND_COUNT; ++k) {
         hw_delegation_t d = win_backend_delegation(b, (power_action_kind_t)k);
         r->delegation[k] = d;
         if (d == HW_DELEGATION_LIVE)
@@ -257,6 +263,9 @@ static int validate_action(const power_action_t* a)
         case POWER_ICB:
             return valid_resource_name(a->u.icb.master, POWER_NAME_BYTES, "ICBID_MASTER_") &&
                    valid_resource_name(a->u.icb.slave, POWER_NAME_BYTES, "ICBID_SLAVE_");
+        case POWER_NPA:
+            return a->u.npa.type == 1u &&
+                   valid_resource_name(a->u.npa.name, POWER_NAME_BYTES, "/arc/client/");
         case POWER_PSTATE_ADJUST:
             return 0; /* never executed by this backend. */
         default:
@@ -271,7 +280,8 @@ static int owner_knows(win_backend_t* b, const power_action_t* a)
 {
     /* resource lookup must reject a staged RPMh provider without its deferred-completion owner. */
 
-    if ((a->kind == POWER_ICB || a->kind == POWER_PMIC_REGULATOR) && !rpmh_execution_ready(b))
+    if ((a->kind == POWER_ICB || a->kind == POWER_PMIC_REGULATOR || a->kind == POWER_NPA) &&
+        !rpmh_execution_ready(b))
         return 0;
     switch (a->kind) {
         case POWER_CLOCK:
@@ -282,6 +292,8 @@ static int owner_knows(win_backend_t* b, const power_action_t* a)
         case POWER_PMIC_REGULATOR:
             return !b->io.pmic_regulator_known ||
                    b->io.pmic_regulator_known(b->io.ctx, a->u.pmic_regulator.name);
+        case POWER_NPA:
+            return b->io.arc_known && b->io.arc_known(b->io.ctx, a->u.npa.name, a->u.npa.level);
         default:
             return 1;
     }
@@ -307,6 +319,10 @@ static int vote_key(const power_action_t* a, uint32_t* key, const char** n1, con
         case POWER_PMIC_REGULATOR:
             *n1 = a->u.pmic_regulator.name;
             return 1;
+        case POWER_NPA:
+            *n1 = a->u.npa.name;
+            *key = a->u.npa.type;
+            return 1;
         case POWER_ICB:
             *n1 = a->u.icb.master;
             *n2 = a->u.icb.slave;
@@ -319,7 +335,8 @@ static int vote_key(const power_action_t* a, uint32_t* key, const char** n1, con
 
 static int vote_shaped(uint32_t kind)
 {
-    return kind == POWER_CLOCK || kind == POWER_ICB || kind == POWER_PMIC_REGULATOR;
+    return kind == POWER_CLOCK || kind == POWER_ICB || kind == POWER_PMIC_REGULATOR ||
+           kind == POWER_NPA;
 }
 
 static last_vote_t* vote_find(win_backend_t* b, const char* path, const power_action_t* a,
@@ -446,6 +463,10 @@ static int readback_action(win_backend_t* b, const power_action_t* a, uint64_t* 
                 !b->io.bus_readback(b->io.ctx, a->u.icb.master, a->u.icb.slave, &v))
                 return 0;
             break;
+        case POWER_NPA:
+            if (!b->io.arc_readback || !b->io.arc_readback(b->io.ctx, a->u.npa.name, &v))
+                return 0;
+            break;
         default:
             return 0;
     }
@@ -488,6 +509,8 @@ static int apply_action(win_backend_t* b, const char* path, const power_action_t
             return b->io.clock_apply && b->io.clock_apply(b->io.ctx, path, a);
         case POWER_ICB:
             return b->io.bus_vote && b->io.bus_vote(b->io.ctx, path, a);
+        case POWER_NPA:
+            return b->io.arc_vote && b->io.arc_vote(b->io.ctx, path, a->u.npa.name, a->u.npa.level);
         default:
             return 0;
     }
@@ -504,6 +527,8 @@ static int withdraw_action(win_backend_t* b, const char* path, const power_actio
         case POWER_ICB:
             return b->io.bus_withdraw &&
                    b->io.bus_withdraw(b->io.ctx, path, a->u.icb.master, a->u.icb.slave);
+        case POWER_NPA:
+            return b->io.arc_withdraw && b->io.arc_withdraw(b->io.ctx, path, a->u.npa.name);
         default:
             return 0;
     }
@@ -585,6 +610,9 @@ static int op_snapshot(void* c, const char* path, uint32_t dstate, const power_a
                 s->opaque[SN_VOTE0 + 1] = p->u.icb.peak;
                 s->opaque[SN_VOTE0 + 2] = pack2(p->u.icb.client, 0u);
                 break;
+            case POWER_NPA:
+                s->opaque[SN_VOTE0] = pack2(p->u.npa.level, p->u.npa.type);
+                break;
             default:
                 s->opaque[SN_VOTE_OK] = 0u;
                 break;
@@ -633,6 +661,11 @@ static int op_verify(void* c, const char* path, uint32_t dstate, const power_act
         return 1;
     }
     switch (a->kind) {
+        case POWER_NPA: {
+            uint32_t level;
+            return b->io.arc_client && b->io.arc_client(b->io.ctx, path, a->u.npa.name, &level) &&
+                   (a->u.npa.level ? level >= a->u.npa.level : level == 0u) && read >= level;
+        }
         case POWER_TLMM_GPIO:
             /* full configuration readback: must equal the request exactly. */
             if (!tlmm_decode_dsd_t_fields(a->u.gpio.fields, &want) || !tlmm_equal(&eff, &want)) {
@@ -715,6 +748,10 @@ static int op_restore(void* c, const char* path, uint32_t dstate, const power_ac
                 prior.u.icb.peak = s->opaque[SN_VOTE0 + 1];
                 prior.u.icb.client = lo32(s->opaque[SN_VOTE0 + 2]);
                 break;
+            case POWER_NPA:
+                prior.u.npa.level = lo32(s->opaque[SN_VOTE0]);
+                prior.u.npa.type = hi32(s->opaque[SN_VOTE0]);
+                break;
             default:
                 return 0;
         }
@@ -790,6 +827,11 @@ static int op_verify_restored(void* c, const char* path, uint32_t dstate, const 
 
     if (!readback_action(b, a, &now, 0))
         return 0;
+    if (a->kind == POWER_NPA) {
+        uint32_t level, prior = s->opaque[SN_VOTE_OK] ? lo32(s->opaque[SN_VOTE0]) : 0u;
+        return b->io.arc_client && b->io.arc_client(b->io.ctx, path, a->u.npa.name, &level) &&
+               (prior ? level >= prior : level == 0u) && now >= level;
+    }
     return now == s->opaque[SN_READ];
 }
 
@@ -836,6 +878,10 @@ static int op_verify_final(void* c, const char* path, uint32_t dstate,
                 last = 0;
                 break;
             }
+            if (a->kind == POWER_NPA && same_str(o->u.npa.name, a->u.npa.name)) {
+                last = 0;
+                break;
+            }
             if (a->kind == POWER_ICB && same_str(o->u.icb.master, a->u.icb.master) &&
                 same_str(o->u.icb.slave, a->u.icb.slave)) {
                 last = 0;
@@ -846,6 +892,8 @@ static int op_verify_final(void* c, const char* path, uint32_t dstate,
             continue;
         if (!readback_action(b, a, &read, &eff))
             return 0;
+        if (a->kind == POWER_NPA && !op_verify(c, path, dstate, a))
+            return 0;
         if (clock_mem_config(a) && read != 1u)
             return 0;
         if (a->kind == POWER_TLMM_GPIO &&
@@ -853,6 +901,43 @@ static int op_verify_final(void* c, const char* path, uint32_t dstate,
             return 0;
     }
     return 1;
+}
+
+static int op_release(void* c, const char* path, const power_action_t* a)
+{
+    win_backend_t* b = core_of(c);
+    uint64_t read;
+    uint32_t level;
+    int released = 0;
+    if (!b || !a || !vote_shaped(a->kind) || clock_mem_config(a) || !op_supports(c, path, 0u, a) ||
+        !readback_action(b, a, &read, NULL) || !withdraw_action(b, path, a) ||
+        !readback_action(b, a, &read, NULL))
+        return 0;
+    switch (a->kind) {
+        case POWER_CLOCK:
+            released =
+                b->io.clock_has_vote && !b->io.clock_has_vote(b->io.ctx, path, a->u.clock.name);
+            break;
+        case POWER_ICB:
+            released = b->io.bus_has_vote &&
+                       !b->io.bus_has_vote(b->io.ctx, path, a->u.icb.master, a->u.icb.slave);
+            break;
+        case POWER_PMIC_REGULATOR:
+            released = b->io.pmic_regulator_has_vote &&
+                       !b->io.pmic_regulator_has_vote(b->io.ctx, path, a->u.pmic_regulator.name);
+            break;
+        case POWER_NPA:
+            released = b->io.arc_client &&
+                       b->io.arc_client(b->io.ctx, path, a->u.npa.name, &level) && !level;
+            break;
+        default:
+            break;
+    }
+    if (released) {
+        vote_forget(b, path, a);
+        diag_bump(b->diag.withdrawn, (uint32_t)a->kind);
+    }
+    return released;
 }
 
 static int op_probe(void* c, uint32_t domain, uint32_t key, uint64_t* out)
@@ -940,8 +1025,7 @@ static int op_selftest(void* c)
 
 static int valid_npa_key(const npa_key_t* k)
 {
-    return k && valid_device_path(k->dev_path) && k->res[0] &&
-           (k->kind == POWER_CLOCK || k->kind == POWER_ICB || k->kind == POWER_PMIC_REGULATOR);
+    return k && valid_device_path(k->dev_path) && k->res[0] && vote_shaped(k->kind);
 }
 
 static int npa_owns(void* c, const npa_key_t* k)
@@ -959,6 +1043,8 @@ static int npa_owns(void* c, const npa_key_t* k)
         case POWER_PMIC_REGULATOR:
             return b->io.pmic_regulator_vote && b->io.pmic_regulator_readback &&
                    b->io.pmic_regulator_known && b->io.pmic_regulator_known(b->io.ctx, k->res);
+        case POWER_NPA:
+            return k->client == 1u && b->io.arc_known && b->io.arc_known(b->io.ctx, k->res, 0u);
         default:
             return 0;
     }
@@ -1047,6 +1133,11 @@ static int npa_released(void* c, const npa_key_t* k, void* h)
         case POWER_PMIC_REGULATOR:
             return b->io.pmic_regulator_has_vote &&
                    !b->io.pmic_regulator_has_vote(b->io.ctx, k->dev_path, k->res);
+        case POWER_NPA: {
+            uint32_t level;
+            return b->io.arc_client && b->io.arc_client(b->io.ctx, k->dev_path, k->res, &level) &&
+                   !level;
+        }
         default:
             return 0;
     }
@@ -1100,6 +1191,7 @@ int win_backend_init(win_backend_t* b, const hwio_t* io, uint64_t epoch)
     b->table.restore = op_restore;
     b->table.verify_restored = op_verify_restored;
     b->table.verify_final = op_verify_final;
+    b->table.release = op_release;
     b->table.probe_readback = op_probe;
     b->table.self_test = op_selftest;
     b->table.ctx = b;

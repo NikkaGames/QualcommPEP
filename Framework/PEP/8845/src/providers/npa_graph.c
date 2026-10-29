@@ -142,7 +142,8 @@ int npa_graph_make_provider(npa_graph_ctx_t* c, npa_registry_t* reg, power_actio
                             const npa_req_ops_t* ops, graph_provider_t* provider)
 {
     if (!c || !reg || !ops || !provider || reg->active || reg->quarantined ||
-        (kind != POWER_CLOCK && kind != POWER_ICB && kind != POWER_PMIC_REGULATOR) ||
+        (kind != POWER_CLOCK && kind != POWER_ICB && kind != POWER_PMIC_REGULATOR &&
+         kind != POWER_NPA) ||
         !ops->supports || !ops->read || !ops->issue || !ops->verify || !ops->restore ||
         !ops->verify_restored || !ops->verify_final)
         return 0;

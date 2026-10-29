@@ -124,7 +124,7 @@ int hw_backend_bind_graph(res_graph_t* graph)
      * semantics. ufs_fs_graph_bind must attach that independent, already authenticated client
      * BEFORE Seal. */
 
-    for (kind = (int)POWER_CLOCK; kind <= (int)POWER_PSTATE_ADJUST; ++kind) {
+    for (kind = (int)POWER_CLOCK; kind < (int)POWER_KIND_COUNT; ++kind) {
         if (kind == (int)POWER_FOOTSWITCH)
             continue;
         if (!graph_bind(graph, (power_action_kind_t)kind, &prov))

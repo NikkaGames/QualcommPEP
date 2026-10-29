@@ -11,7 +11,7 @@ extern "C" {
 /* Graph and workspace storage is caller-owned nonpaged memory. */
 
 #define GRAPH_MAX_DEVICES 32u
-#define GRAPH_PROVIDER_CNT 9u
+#define GRAPH_PROVIDER_CNT POWER_KIND_COUNT
 #define GRAPH_SRC_MAX 32u
 
 typedef struct graph_desc {
@@ -157,7 +157,7 @@ int graph_audit_dstate_scopes_held(res_graph_t*, void*, scope_client_ready_t,
 
 /* firmware-owned system transitions invalidate cached graph state under the transaction lock. */
 
-int graph_forget_firmware_state(res_graph_t*, const char*);
+int graph_forget_state(res_graph_t*, const char*);
 int graph_is_prepared(res_graph_t*, const char*);
 /* the desc inventory has to be verified and the device still prepared. Such a profile
  * advertises zero PoFx components: accepting a nonzero Windows ComponentCount would leave

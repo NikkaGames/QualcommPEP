@@ -13,13 +13,15 @@ Support on SM8845 (Molokai), using Windows ARM64 build 26100. Device support als
 | Touch | SPI touch works at the desktop and after wake. |
 | Bluetooth | UART initialization and device discovery work. |
 | UFS storage | Boot and normal disk access work. |
+| Subsystem startup | ADSP and CDSP parent devices start. |
 | Peripheral resources | Clock, GPIO, regulator and interconnect control work for the devices tested so far. |
 | Tracing | WPP and IFR are available in Debug and Release builds. |
 
 ## Known issues
 
-- **ADSP and CDSP:** last reported with Device Manager Code 10 (`STATUS_NOT_IMPLEMENTED`).
-- **UFS power management:** D3 transitions can fail.
+- **ADSP companion devices:** some audio child devices lack matching drivers.
+- **Boot and Bluetooth:** intermittent boot stalls and missing Bluetooth radio have been reported; the cause is still under investigation.
+- **UFS power management:** the D3 transition correction awaits hardware testing.
 - **Bluetooth power management:** the current runtime description lacks D3.
 - **Bus DCVS:** bandwidth-monitor DCVS and LAGG monitoring are disabled.
 - **RPMh sleep/wake sets:** explicit command-set handling remains incomplete.
@@ -30,3 +32,5 @@ Support on SM8845 (Molokai), using Windows ARM64 build 26100. Device support als
 Cluster and platform idle support is implemented, but full deep sleep/DRIPS residency and power consumption are unconfirmed. Long sleep/wake cycles, additional wake sources and hibernate need testing.
 
 GPU/display power management, PCIe, thermal limits and the remaining peripherals also need testing. Support for every device power state and performance setting is still being worked through. Performance and power tuning are ongoing.
+
+ADSP audio and CDSP compute operation need testing beyond subsystem startup.

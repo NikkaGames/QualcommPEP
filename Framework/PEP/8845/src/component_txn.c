@@ -89,7 +89,7 @@ power_result_t power_expand_comp_f_state(const power_sequence_t* fstate, uint32_
             }
             if (!match || match->resources.target_d_state != state ||
                 !same_path(match->resources.dev_path, fstate->dev_path, sizeof(fstate->dev_path)) ||
-                !match->resources.action_cnt || match->resources.action_cnt > POWER_MAX_ACTIONS ||
+                match->resources.action_cnt > POWER_MAX_ACTIONS ||
                 match->resources.action_cnt > POWER_MAX_ACTIONS - expanded->action_cnt)
                 goto fail;
             for (k = 0; k < match->resources.action_cnt; ++k)
@@ -104,7 +104,7 @@ power_result_t power_expand_comp_f_state(const power_sequence_t* fstate, uint32_
             /* f-state direct actions are valid, but recursive/unknown kinds must never be passed to
              * a backend as arbitrary memory. */
 
-            if (action->kind < POWER_CLOCK || action->kind > POWER_FOOTSWITCH ||
+            if (action->kind < POWER_CLOCK || (unsigned)action->kind >= POWER_KIND_COUNT ||
                 expanded->action_cnt == POWER_MAX_ACTIONS)
                 goto fail;
             expanded->actions[expanded->action_cnt++] = *action;
@@ -206,7 +206,7 @@ power_result_t power_execute_p_state_batch_from_f_state(
         uint32_t mask;
         if (!p || p->comp != comp || p->set >= set_cnt || p->state >= 32u ||
             p->resources.target_d_state != p->state ||
-            !same_path(p->resources.dev_path, dev_path, 256u) || !p->resources.action_cnt ||
+            !same_path(p->resources.dev_path, dev_path, 256u) ||
             p->resources.action_cnt > POWER_MAX_ACTIONS ||
             p->resources.action_cnt > POWER_MAX_ACTIONS - combined->action_cnt)
             goto invalid;
@@ -221,7 +221,7 @@ power_result_t power_execute_p_state_batch_from_f_state(
         }
         for (j = 0u; j < p->resources.action_cnt; ++j) {
             const power_action_t* a = &p->resources.actions[j];
-            if (a->kind < POWER_CLOCK || a->kind > POWER_FOOTSWITCH ||
+            if (a->kind < POWER_CLOCK || (unsigned)a->kind >= POWER_KIND_COUNT ||
                 a->kind == POWER_PSTATE_ADJUST)
                 goto invalid;
             if (a->kind == POWER_DELAY) {

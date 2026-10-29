@@ -1,6 +1,6 @@
 # QualcommPEP
 
-A Windows ARM64 platform extension plug-in (PEP) for Qualcomm mobile SoCs. It provides CPU frequency control, low-power idle and device power management through ACPI, firmware and the platform's clock, interconnect, regulator and GPIO controllers.
+A Windows ARM64 Power Engine Plug-In (PEP) for Qualcomm mobile SoCs. It provides CPU frequency control, low-power idle and device power management through ACPI, firmware and the platform's clock, interconnect, regulator and GPIO controllers.
 
 The current implementation targets **SM8845 (Molokai)**. Development is ongoing; see [feature status](docs/STATUS.md) for working features and known issues.
 

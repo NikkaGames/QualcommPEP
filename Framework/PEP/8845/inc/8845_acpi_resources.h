@@ -46,11 +46,12 @@ typedef enum {
     ACPI_RES_UNVERIFIED_ALIAS = 4
 } acpi_res_type_t;
 
-/* allowlisted NPA resource paths are recorded only; level units remain unverified. */
+/* ARC levels are translated through the resource's command database table. */
 
 typedef struct {
     const char* path;
     unsigned char reference_name;
+    const char* cmd_db_name;
 } npa_res_t;
 
 extern const npa_res_t npa_resources[];

@@ -35,6 +35,181 @@ int comp_owner_bind(comp_state_owner_t* o, const program_idx_t* idx, uint64_t ep
     return 1;
 }
 
+static power_result_t d_state_components(comp_state_owner_t* o, const void* desc, size_t bytes,
+                                         uint32_t target, uint32_t states[32],
+                                         comp_state_work_t* work)
+{
+    uint32_t c, i, f;
+    power_result_t result;
+    result = program_idx_compile(&o->idx, desc, bytes, PROGRAM_D_STATE, 0u, 0u, target,
+                                 &work->expanded, NULL);
+    if (result != POWER_OK)
+        return result;
+    for (i = 0u; i < work->expanded.action_cnt; ++i) {
+        const power_action_t* a = &work->expanded.actions[i];
+        uint32_t owners = 0u;
+        if (a->kind != POWER_PSTATE_ADJUST)
+            continue;
+        if (a->u.pstate_adjust.fields[0] >= 32u || a->u.pstate_adjust.fields[1] >= 32u)
+            return POWER_INVALID_PROGRAM;
+        for (c = 0u; c < 32u; ++c)
+            if ((o->comp_mask & (UINT32_C(1) << c)) &&
+                (o->idx.p_state_set_mask[c] & (UINT32_C(1) << a->u.pstate_adjust.fields[0])) &&
+                (o->idx.p_state_mask[c][a->u.pstate_adjust.fields[0]] &
+                 (UINT32_C(1) << a->u.pstate_adjust.fields[1])))
+                ++owners;
+        if (owners != 1u)
+            return POWER_INVALID_PROGRAM;
+    }
+    for (c = 0u; c < 32u; ++c) {
+        uint32_t d_sets = 0u, d_targets[32] = {0}, matches = 0u;
+        states[c] = UINT32_MAX;
+        if (!(o->comp_mask & (UINT32_C(1) << c)))
+            continue;
+        for (i = 0u; i < work->expanded.action_cnt; ++i) {
+            const power_action_t* a = &work->expanded.actions[i];
+            uint32_t set, state;
+            if (a->kind != POWER_PSTATE_ADJUST)
+                continue;
+            set = a->u.pstate_adjust.fields[0];
+            state = a->u.pstate_adjust.fields[1];
+            if (!(o->idx.p_state_set_mask[c] & (UINT32_C(1) << set)))
+                continue;
+            if (d_sets & (UINT32_C(1) << set))
+                return POWER_INVALID_PROGRAM;
+            d_sets |= UINT32_C(1) << set;
+            d_targets[set] = state;
+        }
+        if (!d_sets)
+            continue;
+        for (f = 0u; f < 32u; ++f) {
+            uint32_t f_sets = 0u;
+            if (!(o->idx.f_state_mask[c] & (UINT32_C(1) << f)))
+                continue;
+            result = program_idx_compile(&o->idx, desc, bytes, PROGRAM_F_STATE, c, 0u, f,
+                                         &work->f_state, NULL);
+            if (result != POWER_OK)
+                return result;
+            for (i = 0u; i < work->f_state.action_cnt; ++i) {
+                const power_action_t* a = &work->f_state.actions[i];
+                uint32_t set, state;
+                if (a->kind != POWER_PSTATE_ADJUST)
+                    break;
+                set = a->u.pstate_adjust.fields[0];
+                state = a->u.pstate_adjust.fields[1];
+                if (set >= 32u || !(d_sets & (UINT32_C(1) << set)) ||
+                    (f_sets & (UINT32_C(1) << set)) || d_targets[set] != state)
+                    break;
+                f_sets |= UINT32_C(1) << set;
+            }
+            if (i == work->f_state.action_cnt && f_sets == d_sets) {
+                states[c] = f;
+                ++matches;
+            }
+        }
+        if (matches != 1u)
+            return POWER_UNSUPPORTED;
+    }
+    return POWER_OK;
+}
+
+int comp_owner_verify_f_state(comp_state_owner_t* o, const void* desc, size_t bytes, uint32_t comp,
+                              uint32_t state, const power_backend_t* backend, uint64_t epoch,
+                              comp_state_work_t* work)
+{
+    power_pstate_selection_t selection;
+    uint32_t i, count = 0u, used = 0u;
+    int ok;
+    if (!o || !o->bound || o->quarantined || !epoch || o->owner_epoch != epoch || !desc || !work ||
+        comp >= 32u || !(o->comp_mask & (UINT32_C(1) << comp)) || state >= 32u ||
+        !o->comp[comp].state_known || o->comp[comp].quarantined ||
+        o->comp[comp].current_d_state != state || !backend || !backend->lock || !backend->unlock ||
+        !backend->verify_current_state ||
+        program_idx_compile(&o->idx, desc, bytes, PROGRAM_F_STATE, comp, 0u, state, &work->f_state,
+                            NULL) != POWER_OK)
+        return 0;
+    for (i = 0u; i < work->f_state.action_cnt; ++i) {
+        const power_action_t* a = &work->f_state.actions[i];
+        uint32_t set, target;
+        if (a->kind != POWER_PSTATE_ADJUST)
+            continue;
+        set = a->u.pstate_adjust.fields[0];
+        target = a->u.pstate_adjust.fields[1];
+        if (set >= 32u || target >= 32u || (used & (UINT32_C(1) << set)) ||
+            !o->sets[comp][set].state_known || o->sets[comp][set].quarantined ||
+            o->sets[comp][set].current_d_state != target || count == 32u ||
+            program_idx_compile(&o->idx, desc, bytes, PROGRAM_P_STATE, comp, set, target, NULL,
+                                &work->p_states[count]) != POWER_OK)
+            return 0;
+        used |= UINT32_C(1) << set;
+        work->program_refs[count] = &work->p_states[count];
+        ++count;
+    }
+    if (power_expand_comp_f_state(&work->f_state, comp, work->program_refs, count, 32u,
+                                  &work->expanded, &selection) != POWER_OK ||
+        !backend->lock(backend->ctx))
+        return 0;
+    ok = o->owner_epoch == epoch && !o->quarantined &&
+         backend->verify_current_state(backend->ctx, &work->expanded);
+    backend->unlock(backend->ctx);
+    return ok;
+}
+
+power_result_t comp_owner_execute_d_state(comp_state_owner_t* o, const void* desc, size_t bytes,
+                                          uint32_t target, const power_dev_t* dev,
+                                          const power_backend_t* backend, uint64_t epoch, void* ctx,
+                                          power_result_t (*execute_device)(void*, uint32_t),
+                                          comp_state_work_t* work, power_execution_t* trace)
+{
+    uint32_t states[32], c;
+    power_result_t result;
+    if (!trace)
+        return POWER_BAD_INPUT;
+    if (!o || !o->bound || !desc || !bytes || target >= POWER_DSTATE_COUNT || !dev || !backend ||
+        !epoch || o->owner_epoch != epoch || !execute_device || !work)
+        return refuse(trace, POWER_BAD_INPUT);
+    if (o->quarantined || dev->quarantined)
+        return refuse(trace, POWER_QUARANTINED);
+    result = d_state_components(o, desc, bytes, target, states, work);
+    if (result != POWER_OK)
+        return refuse(trace, result);
+    if (target) {
+        if (!dev->state_known || dev->current_d_state >= POWER_DSTATE_COUNT)
+            return refuse(trace, POWER_NO_KNOWN_STATE);
+        for (c = 0u; c < 32u; ++c) {
+            if (states[c] == UINT32_MAX)
+                continue;
+            if (dev->state_known && dev->current_d_state == 0u) {
+                result = comp_owner_execute_f_state(o, desc, bytes, c, states[c], dev, backend,
+                                                    epoch, work, trace);
+                if (result != POWER_OK)
+                    return result;
+            } else if (!comp_owner_verify_f_state(o, desc, bytes, c, states[c], backend, epoch,
+                                                  work))
+                return refuse(trace, POWER_NO_KNOWN_STATE);
+        }
+    }
+    memset(trace, 0, sizeof(*trace));
+    trace->failure_idx = UINT32_MAX;
+    result = execute_device(ctx, target);
+    if (result != POWER_OK)
+        return (trace->result = result);
+    if (!dev->state_known || dev->quarantined || dev->current_d_state != target) {
+        o->quarantined = 1u;
+        return (trace->result = POWER_FINAL_STATE_FAILED);
+    }
+    if (!target)
+        for (c = 0u; c < 32u; ++c) {
+            if (states[c] == UINT32_MAX)
+                continue;
+            result = comp_owner_execute_f_state(o, desc, bytes, c, states[c], dev, backend, epoch,
+                                                work, trace);
+            if (result != POWER_OK)
+                return result;
+        }
+    return (trace->result = POWER_OK);
+}
+
 power_result_t comp_owner_execute_f_state(comp_state_owner_t* o, const void* desc, size_t bytes,
                                           uint32_t comp, uint32_t state, const power_dev_t* dev,
                                           const power_backend_t* backend, uint64_t epoch,

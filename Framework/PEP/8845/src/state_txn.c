@@ -158,6 +158,17 @@ static int compile_action(const aeob_action_t* a, void* ctx)
             out->u.pmic_regulator.fields[i] = 0u;
         if (pos != a->argument_bytes)
             return 0;
+    } else if (strcmp(a->kind, "NPARESOURCE") == 0) {
+        out->kind = POWER_NPA;
+        if (!next_number(a->arguments, a->argument_bytes, &pos, &n) || n != 1u)
+            return 0;
+        out->u.npa.type = (uint32_t)n;
+        if (!next_string(a->arguments, a->argument_bytes, &pos, out->u.npa.name,
+                         sizeof(out->u.npa.name)) ||
+            !next_number(a->arguments, a->argument_bytes, &pos, &n) || n > UINT32_MAX ||
+            pos != a->argument_bytes)
+            return 0;
+        out->u.npa.level = (uint32_t)n;
     } else if (strcmp(a->kind, "FOOTSWITCH") == 0) {
         if (!build->comp_p_state)
             return 0;
@@ -312,7 +323,7 @@ power_result_t power_compile_aeo_bp_state(const void* buf, size_t length, const 
     builder.comp_p_state = 1;
     status = aeo_b_visit_comp_p_state(buf, length, path, comp, set, state, compile_action, &builder,
                                       &visits);
-    if (status != AEO_B_OK || visits != sequence->action_cnt || !visits) {
+    if (status != AEO_B_OK || visits != sequence->action_cnt) {
         memset(program, 0, sizeof(*program));
         return builder.overflow ? POWER_TOO_MANY_ACTIONS : POWER_INVALID_PROGRAM;
     }
@@ -538,8 +549,8 @@ power_result_t power_execute_action_batch(const power_sequence_t* actions,
     power_dev_t transient = {0};
     if (!trace)
         return POWER_BAD_INPUT;
-    if (!actions || actions->target_d_state != 0u || !actions->action_cnt ||
-        actions->action_cnt > POWER_MAX_ACTIONS || actions->dev_path[0] != '\\') {
+    if (!actions || actions->target_d_state != 0u || actions->action_cnt > POWER_MAX_ACTIONS ||
+        actions->dev_path[0] != '\\') {
         memset(trace, 0, sizeof(*trace));
         trace->failure_idx = UINT32_MAX;
         return (trace->result = POWER_BAD_INPUT);
@@ -583,8 +594,7 @@ power_result_t power_execute_p_state(const power_pstate_program_t* program, cons
     if (!program || !dev || !comp || !per_set || !backend || !scratch || program->comp >= 32u ||
         program->set >= 32u || program->state >= 32u ||
         program->resources.target_d_state != program->state ||
-        program->resources.action_cnt == 0u || program->resources.action_cnt > POWER_MAX_ACTIONS ||
-        program->resources.dev_path[0] != '\\')
+        program->resources.action_cnt > POWER_MAX_ACTIONS || program->resources.dev_path[0] != '\\')
         return (trace->result = POWER_BAD_INPUT);
     /* oem: cannot change P-state of a component in f1 or of a device in Dx. */
 
