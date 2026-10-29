@@ -2,6 +2,7 @@
 #include "stats.h"
 #include "po_fx.h"
 #include "acpi.h"
+#include "lpi.h"
 #include "wmi.h"
 #include "chipinfo.h"
 #include "tsens.h"
@@ -599,8 +600,8 @@ NTSTATUS evt_dev_self_managed_io_init(_In_ WDFDEVICE dev)
 {
     NTSTATUS status;
 
-    /* have been validated on Molokai hardware. */
-    status = acpi_molokai_prepare_lpi(dev);
+    /* Expose the firmware LPI descriptions before this device completes its first start. */
+    status = lpi_firmware_init(dev);
     if (!NT_SUCCESS(status)) {
         TraceEvents(TRACE_LEVEL_WARNING, TRACE_ACPI, "acpi: _DSM initialization failed status=%08X",
                     status);

@@ -3,6 +3,7 @@
 
 VOID lpi_init(ULONG processors);
 BOOLEAN lpi_ready(VOID);
+NTSTATUS lpi_firmware_init(WDFDEVICE device);
 VOID lpi_stop(VOID);
 BOOLEAN lpi_notify(PVOID processor, ULONG notification, PVOID data, BOOLEAN* accepted);
 

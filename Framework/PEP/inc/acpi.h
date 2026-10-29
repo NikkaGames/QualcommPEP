@@ -24,7 +24,7 @@ NTSTATUS acpi_eval_dsm_package_ulongs(_In_ WDFDEVICE dev, _In_ const GUID* guid,
                                       _Out_writes_to_(value_capacity, *value_cnt) PULONG values,
                                       _In_ ULONG value_capacity, _Out_ PULONG value_cnt);
 
-NTSTATUS acpi_molokai_prepare_lpi(_In_ WDFDEVICE dev);
+NTSTATUS acpi_lpi_init(_In_ WDFDEVICE dev);
 
 /* only discovers method names; it NEVER initiates a d0/d3 vote. */
 #define MOLOKAI_STND_METHOD_MAX 32u

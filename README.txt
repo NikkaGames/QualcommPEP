@@ -11,7 +11,7 @@ Maintenance docs, symbol maps, generators and verification tools:
 ../qcpep8845_development/README.md
 
 Tracing: WPP and Inflight Trace Recorder in both configurations.
-Current image marker: rev=422 acpi-low-power-idle
+Current image marker: rev=423 idle-firmware-initialization
 
 CPU performance control is enabled: Parameters\CpuPerformanceEnable (DWORD), default 1.
 It discovers SCMI performance levels and fast channels, then checks the CCGP CPU
@@ -26,6 +26,12 @@ Set CpuPerformanceEnable to 0 and reboot to disable CPU performance control.
 The CPU provider leaves voltage sequencing and thermal limits to PDP firmware.
 
 Native ACPI low-power idle is enabled: Parameters\CpuIdleEnable (DWORD), default 1.
+PEP0 verifies _DSM function support and completes firmware initialization during
+its first device start, exposing cluster and platform LPI descriptions before
+Windows enumerates them.
+Platform entry requires this acknowledgement; a failed handshake leaves device
+power management and per-core idle available. The separate
+MolokaiAcpiInitDsmEnable switch is no longer required or consulted.
 Windows uses firmware _LPI entry methods, dependencies and architectural context
 flags for processor, cluster and platform suspend. The PEP validates and retains
 the dependency descriptions without replacing their PSCI state IDs or CPU policy.

@@ -1,4 +1,5 @@
 #include "lpi.h"
+#include "acpi.h"
 #include "cpu_device.h"
 #include "soc_transport.h"
 #include "hw_backend_windows_wdf.h"
@@ -39,6 +40,7 @@ typedef struct lpi_catalog {
 
 static volatile LONG enabled;
 static volatile LONG advertised;
+static volatile LONG firmware_ready;
 static KMUTEX configuration_lock;
 static volatile LONG io_users;
 static volatile LONG64 sessions;
@@ -46,7 +48,7 @@ static ULONG processor_count;
 static ULONG processor_states[LPI_PROCESSORS];
 static lpi_catalog_t* catalog;
 static volatile LONG rejected_entries;
-static volatile LONG invalid_completions;
+static volatile LONG ignored_completions;
 static volatile LONG resume_failures;
 
 BOOLEAN lpi_ready(VOID)
@@ -100,6 +102,24 @@ VOID lpi_init(ULONG processors)
         KeInitializeMutex(&configuration_lock, 0);
         InterlockedExchange(&enabled, 1);
     }
+}
+
+NTSTATUS lpi_firmware_init(WDFDEVICE device)
+{
+    NTSTATUS status;
+    if (!lpi_ready())
+        return STATUS_SUCCESS;
+    if (!device || KeGetCurrentIrql() != PASSIVE_LEVEL)
+        return STATUS_INVALID_PARAMETER;
+    InterlockedExchange(&firmware_ready, 0);
+    if (!hw_backend_ready())
+        return STATUS_DEVICE_NOT_READY;
+    status = acpi_lpi_init(device);
+    if (NT_SUCCESS(status)) {
+        InterlockedExchange(&firmware_ready, 1);
+        TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_PPM, "lpi: firmware initialization acknowledged");
+    }
+    return status;
 }
 
 static BOOLEAN read_enter(VOID)
@@ -270,6 +290,10 @@ static NTSTATUS prepare(PPEP_PPM_LPI_PRE_EXECUTE request)
             root = index;
         }
     }
+    if (root != MAXULONG && !InterlockedCompareExchange(&firmware_ready, 0, 0)) {
+        status = STATUS_DEVICE_NOT_READY;
+        goto done;
+    }
     value = InterlockedCompareExchange64(&sessions, 0, 0);
     for (;;) {
         if ((ULONG)value & mask) {
@@ -324,18 +348,19 @@ static VOID complete(PPEP_PPM_LPI_COMPLETE request)
         return;
     if (!catalog || request->CoordinatedStateCount > catalog->count ||
         (request->CoordinatedStateCount && !request->CoordinatedStates)) {
-        InterlockedIncrement(&invalid_completions);
+        InterlockedIncrement(&ignored_completions);
         goto done;
     }
     for (ULONG i = 0u; i < request->CoordinatedStateCount; ++i) {
         ULONG index = request->CoordinatedStates[i];
         if (index >= catalog->count) {
-            InterlockedIncrement(&invalid_completions);
+            InterlockedIncrement(&ignored_completions);
             continue;
         }
         lpi_state_t* state = &catalog->states[index];
         if (InterlockedCompareExchange(&state->phase, 2, 1) != 1) {
-            InterlockedIncrement(&invalid_completions);
+            /* Completions after a declined entry have no active resource lease. */
+            InterlockedIncrement(&ignored_completions);
             continue;
         }
         if (state->owns_io) {
@@ -409,6 +434,7 @@ BOOLEAN lpi_notify(PVOID processor, ULONG notification, PVOID data, BOOLEAN* acc
 VOID lpi_stop(VOID)
 {
     InterlockedExchange(&enabled, 0);
+    InterlockedExchange(&firmware_ready, 0);
     /* Active firmware transitions retain their resident catalog until completion. */
     if (InterlockedCompareExchange64(&sessions, LPI_CONFIG, 0) == 0) {
         lpi_catalog_t* previous = catalog;

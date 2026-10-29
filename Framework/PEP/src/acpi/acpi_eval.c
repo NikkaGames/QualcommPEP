@@ -609,17 +609,25 @@ NTSTATUS acpi_eval_dsm_ulong_with_arg_ulong(_In_ WDFDEVICE dev, _In_ const GUID*
     return STATUS_SUCCESS;
 }
 
-/* require Windows hardware testing before deep-idle activation is safe. */
-NTSTATUS acpi_molokai_prepare_lpi(_In_ WDFDEVICE dev)
+NTSTATUS acpi_lpi_init(_In_ WDFDEVICE dev)
 {
     static const GUID pep_acpi_dsm_guid = {
         0x8d5ca34c, 0xae83, 0x4a2a, {0x9d, 0xd1, 0xa7, 0x4f, 0xfe, 0xad, 0x54, 0x8b}};
+    ULONG functions = 0u;
+    ULONG initialized = 0u;
+    NTSTATUS status;
 
-    if (registry_query_u_long(L"MolokaiAcpiInitDsmEnable", 0) == 0)
-        return STATUS_SUCCESS;
+    if (!dev || KeGetCurrentIrql() != PASSIVE_LEVEL)
+        return STATUS_INVALID_PARAMETER;
 
-    ULONG initialized = 0;
-    NTSTATUS status = acpi_eval_dsm_ulong(dev, &pep_acpi_dsm_guid, 0, 1, &initialized);
+    status = acpi_eval_dsm_ulong(dev, &pep_acpi_dsm_guid, 0u, 0u, &functions);
+    if (!NT_SUCCESS(status))
+        return status;
+    if (!(functions & (1u << 1)))
+        return STATUS_NOT_SUPPORTED;
+
+    /* Firmware exposes the container LPI descriptions after this acknowledgement. */
+    status = acpi_eval_dsm_ulong(dev, &pep_acpi_dsm_guid, 0u, 1u, &initialized);
     if (!NT_SUCCESS(status))
         return status;
     return initialized == 1 ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
