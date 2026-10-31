@@ -59,7 +59,7 @@ NTSTATUS pep_unpublish_verified_molokai_graph(VOID);
 #define OWNER_TCS 0u /* amc slot this owner uses. */
 #define RPMH_POLL_LIMIT 20000u
 #define CLOCK_CLIENT_MAX 512u /* exhaustion refuses before mutation. */
-#define CLOCK_TABLE_MAX 256u  /* 153 vendor-mapped GCC entries; fixed bounded nonpaged arrays. */
+#define CLOCK_TABLE_MAX 256u
 #define TLMM_PROBE_PIN 52u
 #define ARC_RAIL_MAX 16u
 
@@ -132,6 +132,7 @@ typedef struct owners {
     rpmh_sync_deferred_t rpmh_wait;
     rpmh_deferred_scheduler_t deferred_scheduler;
     gcc_io_t gcc_io;
+    gcc_io_t gpucc_io;
     tlmm_io_t tlmm_io;
     rpmh_tcs_t rpmh;
     rpmh_sleep_t sleep;
@@ -231,6 +232,43 @@ static int gcc_read(void* c, uint32_t off, uint32_t* v)
 static int gcc_write(void* c, uint32_t off, uint32_t v)
 {
     return mmio_write32(&((owners_t*)c)->mmio.gcc, off, v);
+}
+
+static int gpucc_read(void* ctx, uint32_t offset, uint32_t* value)
+{
+    owners_t* o = (owners_t*)ctx;
+    uint32_t relative;
+    return o && clock_window_offset(CLOCK_CTL_GPUCC, offset, &relative) &&
+           mmio_read32(&o->mmio.gpucc, relative, (ULONG*)value);
+}
+
+static int gpucc_write(void* ctx, uint32_t offset, uint32_t value)
+{
+    owners_t* o = (owners_t*)ctx;
+    uint32_t relative;
+    return o && clock_window_offset(CLOCK_CTL_GPUCC, offset, &relative) &&
+           mmio_write32(&o->mmio.gpucc, relative, value);
+}
+
+static const gcc_io_t* clock_io(owners_t* o, const gcc_clock_t* clock)
+{
+    const clock_window_t* window;
+    if (!o || !clock || !(window = clock_window_get(clock->controller)))
+        return NULL;
+    switch (clock->controller) {
+        case CLOCK_CTL_GCC:
+            return o->mmio.gcc.base && o->mmio.gcc.physical == window->physical &&
+                           o->mmio.gcc.bytes == window->bytes
+                       ? &o->gcc_io
+                       : NULL;
+        case CLOCK_CTL_GPUCC:
+            return o->mmio.gpucc.base && o->mmio.gpucc.physical == window->physical &&
+                           o->mmio.gpucc.bytes == window->bytes
+                       ? &o->gpucc_io
+                       : NULL;
+        default:
+            return NULL;
+    }
 }
 
 static void io_barrier(void* c)
@@ -1207,8 +1245,9 @@ static LONG clock_idx(const char* name)
      * name-indexed owners could otherwise disable each other. */
     for (i = 0; i < idx; ++i) {
         const gcc_clock_t* p = &gcc_clocks[i];
-        if (p->kind == c->kind && p->cbcr_offset == c->cbcr_offset &&
-            p->vote_offset == c->vote_offset && p->vote_mask == c->vote_mask &&
+        if (p->controller == c->controller && p->kind == c->kind &&
+            p->cbcr_offset == c->cbcr_offset && p->vote_offset == c->vote_offset &&
+            p->vote_mask == c->vote_mask &&
             (p->domain_idx == c->domain_idx || c->kind == GCC_KIND_REQ))
             return i;
     }
@@ -1285,25 +1324,26 @@ static void clock_aggregate(owners_t* o, ULONG ci, int* enabled, ULONG* max_hz)
 static int clock_apply_aggregate(owners_t* o, ULONG ci, int previously_enabled, ULONG previous_hz)
 {
     const gcc_clock_t* clk = &gcc_clocks[ci];
+    const gcc_io_t* io = clock_io(o, clk);
     ULONG max_hz = 0;
     int any_enabled = 0;
     gcc_commit_result_t result;
     gcc_commit_diag_t diag;
-    if (o->clock_uncertain[ci])
+    if (!io || o->clock_uncertain[ci])
         return 0;
     clock_aggregate(o, ci, &any_enabled, &max_hz);
     if (previously_enabled && any_enabled && previous_hz == max_hz) {
         /* previous state is a committed PEP client, not an assumed firmware vote. verify the held
          * clock in hardware twice. */
 
-        result = gcc_verify_retained_vote(&o->gcc_io, clk, o->clock_programmed_hz[ci]);
+        result = gcc_verify_retained_vote(io, clk, o->clock_programmed_hz[ci]);
         if (result != GCC_COMMIT_OK)
             TraceEvents(TRACE_LEVEL_WARNING, TRACE_CLOCK,
                         "clock: %s retained vote unverified new-client=rejected", clk->name);
         return result == GCC_COMMIT_OK;
     }
-    result = gcc_commit_branch_vote_ex(&o->gcc_io, clk, max_hz, any_enabled,
-                                       &o->clock_programmed_hz[ci], &diag);
+    result =
+        gcc_commit_branch_vote_ex(io, clk, max_hz, any_enabled, &o->clock_programmed_hz[ci], &diag);
     if (result != GCC_COMMIT_OK) {
         TraceEvents(TRACE_LEVEL_WARNING, TRACE_CLOCK,
                     "clock: %s result=%d phase=%lu wrote=%lu polls=%lu target=%luHz enable=%d "
@@ -1329,18 +1369,19 @@ static int clock_apply_aggregate(owners_t* o, ULONG ci, int previously_enabled, 
 static int clock_apply_freq(owners_t* o, ULONG ci, ULONG hz)
 {
     const gcc_clock_t* clk = &gcc_clocks[ci];
+    const gcc_io_t* io = clock_io(o, clk);
     gcc_commit_result_t result;
     gcc_commit_diag_t diag;
     ULONG active_hz;
     int enabled;
     clock_aggregate(o, ci, &enabled, &active_hz);
-    if (!hz || o->clock_uncertain[ci])
+    if (!io || !hz || o->clock_uncertain[ci])
         return 0;
     /* commit the active aggregate; a lower caller request is still valid while a different
      * client holds a higher minimum. */
     if (active_hz > hz)
         hz = active_hz;
-    result = gcc_commit_freq_ex(&o->gcc_io, clk, hz, &o->clock_programmed_hz[ci], &diag);
+    result = gcc_commit_freq_ex(io, clk, hz, &o->clock_programmed_hz[ci], &diag);
     if (result == GCC_COMMIT_UNCERTAIN)
         o->clock_uncertain[ci] = 1u;
     if (result != GCC_COMMIT_OK)
@@ -1360,7 +1401,7 @@ static int win_io_clock_known(void* ctx, const char* clock_name)
     ci = clock_idx(clock_name);
     if (ci < 0 || (ULONG)ci >= CLOCK_TABLE_MAX || !owners_lock_live(o, LIVE_CLOCK))
         return 0;
-    known = !o->clock_uncertain[ci];
+    known = !o->clock_uncertain[ci] && clock_io(o, &gcc_clocks[ci]) != NULL;
     owners_unlock(o);
     return known;
 }
@@ -1416,7 +1457,7 @@ static int win_io_clock_apply(void* ctx, const char* path, const power_action_t*
     ci = clock_idx(action->u.clock.name);
     if (ci < 0 || (ULONG)ci >= CLOCK_TABLE_MAX || !owners_lock_live(o, LIVE_CLOCK))
         return 0;
-    if (o->clock_uncertain[ci]) {
+    if (o->clock_uncertain[ci] || !clock_io(o, &gcc_clocks[ci])) {
         owners_unlock(o);
         return 0;
     }
@@ -1530,7 +1571,8 @@ static int win_io_clock_readback(void* ctx, const char* clock_name, uint64_t* ef
             return 0;
         }
     }
-    ok = gcc_readback(&o->gcc_io, clk, &st) == GCC_OK;
+    const gcc_io_t* io = clock_io(o, clk);
+    ok = io && gcc_readback(io, clk, &st) == GCC_OK;
     owners_unlock(o);
     if (!ok)
         return 0;
@@ -1566,7 +1608,8 @@ int hw_backend_win_clock_dfs_catalog(uint64_t serial, const char* name, gcc_dfs_
     instance = g_win_backend;
     owner = instance ? instance->io.owners : NULL;
     if (owner && owners_lock_live(owner, LIVE_CLOCK)) {
-        ok = gcc_read_dfs_catalog(&owner->gcc_io, clock, out);
+        const gcc_io_t* io = clock_io(owner, clock);
+        ok = io && gcc_read_dfs_catalog(io, clock, out);
         owners_unlock(owner);
     }
     hw_backend_end_bound();
@@ -3797,6 +3840,9 @@ static owners_t* owners_create(VOID)
     o->gcc_io.write32 = gcc_write;
     o->gcc_io.barrier = io_barrier;
     o->gcc_io.stall_microseconds = io_stall;
+    o->gpucc_io = o->gcc_io;
+    o->gpucc_io.read32 = gpucc_read;
+    o->gpucc_io.write32 = gpucc_write;
     o->tlmm_io.ctx = o;
     o->tlmm_io.lock = tlmm_lock_fn;
     o->tlmm_io.unlock = tlmm_unlock_fn;

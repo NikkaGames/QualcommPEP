@@ -124,6 +124,6 @@ NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT driver_object, _In_ PUNICODE_STRING reg
     (VOID) etw_reg();
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER,
-                "driver: build rev=430 ufs-idle-transitions");
+                "driver: build rev=431 gpucc-smmu-vote");
     return STATUS_SUCCESS;
 }

@@ -1,9 +1,7 @@
 #ifndef MMIO_WIN_H
 #define MMIO_WIN_H
-/* reg windows identified from Molokai firmware/DTS, NOT proof that the replacement PEP
- * owns them. Production direct RW mapping is blocked until separate Windows ownership
- * acquisition is established: CLK_CTL (GCC + PLLs) 0x00100000 2 MiB read/write, uncached
- * TLMM tile 0 pins 0x0F100000 1 MiB. */
+/* register windows retained by the Windows resource owner. Peripheral mappings follow
+ * D0 RSC/IRQ acquisition; resource admission still requires provider verification. */
 
 #include "driver.h"
 #include "gcc.h"
@@ -19,6 +17,7 @@ typedef struct mmio_window {
 
 typedef struct mmio {
     mmio_window_t gcc;
+    mmio_window_t gpucc;
     mmio_window_t tlmm;
     mmio_window_t rsc;
 } mmio_t;

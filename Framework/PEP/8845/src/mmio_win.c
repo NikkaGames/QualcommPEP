@@ -1,6 +1,7 @@
 
 
 #include "mmio_win.h"
+#include "clock_target.h"
 #include "trace.h"
 #include "mmio_win.tmh"
 
@@ -65,7 +66,29 @@ VOID mmio_unmap(_Inout_ mmio_t* mmio)
         return;
     unmap_one(&mmio->rsc);
     unmap_one(&mmio->tlmm);
+    unmap_one(&mmio->gpucc);
     unmap_one(&mmio->gcc);
+}
+
+static VOID map_gpucc_vote(mmio_t* mmio)
+{
+    const clock_window_t* window = clock_window_get(CLOCK_CTL_GPUCC);
+    ULONG a = 0u, b = 0u;
+    NTSTATUS status;
+    if (!window)
+        return;
+    status = map_one(&mmio->gpucc, window->physical, window->bytes, PAGE_READWRITE | PAGE_NOCACHE);
+    if (NT_SUCCESS(status) &&
+        (!mmio_read32(&mmio->gpucc, 0u, &a) || !mmio_read32(&mmio->gpucc, 0u, &b) ||
+         a == MAXULONG || b == MAXULONG || ((a ^ b) & CBCR_CLK_ENABLE)))
+        status = STATUS_DEVICE_HARDWARE_ERROR;
+    if (!NT_SUCCESS(status)) {
+        unmap_one(&mmio->gpucc);
+        TraceEvents(TRACE_LEVEL_WARNING, TRACE_CLOCK,
+                    "clock: GPUCC vote mapping unavailable status=%08X", status);
+    } else
+        TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_CLOCK,
+                    "clock: GPUCC vote mapped physical=%llX value=%08lX", window->physical, b);
 }
 
 /* clock_InitBases and TLMM_DeviceInit map their BSP controller ranges independently of the
@@ -81,7 +104,7 @@ NTSTATUS mmio_d0_map_peripherals(_Inout_ mmio_t* mmio)
         return STATUS_INVALID_PARAMETER;
     if (KeGetCurrentIrql() != PASSIVE_LEVEL)
         return STATUS_INVALID_DEVICE_STATE;
-    if (mmio->gcc.base || mmio->tlmm.base)
+    if (mmio->gcc.base || mmio->tlmm.base || mmio->gpucc.base)
         return STATUS_DEVICE_BUSY;
     /* never disturb the separate RSC d0 mapping. */
 
@@ -109,6 +132,7 @@ NTSTATUS mmio_d0_map_peripherals(_Inout_ mmio_t* mmio)
     }
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_RESOURCE,
                 "mmio: GCC/TLMM mapped GPLL0=%08lX GPIO52=%08lX attestation=pending", gcc_a, pin_a);
+    map_gpucc_vote(mmio);
     return STATUS_SUCCESS;
 rollback:
     mmio_d0_unmap_peripherals(mmio);
@@ -120,6 +144,7 @@ VOID mmio_d0_unmap_peripherals(_Inout_ mmio_t* mmio)
     if (!mmio)
         return;
     unmap_one(&mmio->tlmm);
+    unmap_one(&mmio->gpucc);
     unmap_one(&mmio->gcc);
 }
 

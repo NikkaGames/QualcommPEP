@@ -57,7 +57,7 @@ const oem_power_domain_t oem_power_domains[OEM_POWER_DOMAIN_CNT] = {
     {"gcc_usb_1_phy_gdsc", 0x20032u, UINT64_C(0x12C024)},
     {"gcc_usb_2_phy_gdsc", 0x20033u, UINT64_C(0x150018)},
     {"gpu_cc_cx_gdsc", 0x20034u, UINT64_C(0x3DC5080)},
-    {"gpu_cc_gpu_smmu_vote_gds", 0x20035u, UINT64_C(0x3DC3004)},
+    {"gpu_cc_gpu_smmu_vote_gds", 0x20035u, UINT64_C(0x3D97004)},
     {"gx_clkctl_gx_gdsc", 0x20036u, UINT64_C(0x3D68024)},
     {"video_cc_mvs0_gdsc", 0x20037u, UINT64_C(0xAAF8068)},
     {"video_cc_mvs0c_gdsc", 0x20038u, UINT64_C(0xAAF8034)},

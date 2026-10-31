@@ -53,6 +53,10 @@ typedef struct gcc_domain {
  * on a peripheral or another hardware owner. */
 #define GCC_KIND_REQ 4u
 
+#define CLOCK_CTL_GCC 0u
+#define CLOCK_CTL_GPUCC 1u
+#define CLOCK_CTL_COUNT 2u
+
 typedef struct gcc_clock {
     const char* name;
     uint32_t kind;
@@ -62,6 +66,7 @@ typedef struct gcc_clock {
     int32_t domain_idx;
     uint32_t gdscr_offset;
     uint32_t bcr_offset; /* informational only; never written. */
+    uint32_t controller;
 } gcc_clock_t;
 
 extern const gcc_freq_t gcc_freqs[];

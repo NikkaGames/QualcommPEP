@@ -362,6 +362,8 @@ gcc_result_t gcc_readback(const gcc_io_t* io, const gcc_clock_t* clock, gcc_stat
     }
     if (!rd(io, clock->cbcr_offset, &v))
         return GCC_IO_FAILED;
+    if (v == UINT32_MAX)
+        return GCC_IO_FAILED;
     state->cbcr = v;
     state->on = branch_on(v) ? 1u : 0u;
     if (clock->kind == GCC_KIND_VOTE) {
