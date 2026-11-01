@@ -876,17 +876,13 @@ NTSTATUS acpi_populate_molokai_res_graph(WDFDEVICE pep_dev, res_graph_t* graph,
             source->preload = (uint8_t)list;
             if (aeo_b_empty(buffer, size))
                 continue;
+            /* The startup owner parses PRELOAD selections independently of OS admission. */
+            if (list)
+                continue;
             if (!validate_runtime_desc(buffer, size, info)) {
                 TraceEvents(TRACE_LEVEL_WARNING, TRACE_ACPI,
                             "acpi: method=%s descriptor rejected status=%u failure=%u", method,
                             info->status, info->failure);
-                continue;
-            }
-            if (list) {
-                /* Preload programs have separate ownership from OS-managed device states. */
-                TraceEvents(TRACE_LEVEL_WARNING, TRACE_ACPI,
-                            "acpi: method=%s preload devices=%lu execution=unavailable", method,
-                            info->dev_cnt);
                 continue;
             }
             status = runtime_res_import((PACPI_EVAL_OUTPUT_BUFFER)buffer, &parsed);

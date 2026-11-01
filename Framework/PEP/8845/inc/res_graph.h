@@ -98,6 +98,8 @@ typedef struct res_graph {
     graph_desc_t sources[GRAPH_SRC_MAX];
     uint32_t src_cnt;
     void (*release_src)(const void*);
+    struct preload_node* preloads;
+    uint8_t preloads_done;
     power_sequence_t provider_sequence; /* serialized by the graph lock. */
 } res_graph_t;
 

@@ -21,7 +21,7 @@ Support on SM8845 (Molokai), using Windows ARM64 build 26100. Device support als
 
 Cluster and platform idle support is implemented, but full deep sleep/DRIPS residency and power consumption are unconfirmed. Long sleep/wake cycles, additional wake sources and hibernate need testing.
 
-GPU/display power management, PCIe, thermal limits and the remaining peripherals also need testing. Support for every device power state and performance setting is still being worked through. Performance and power tuning are ongoing.
+GPU/display preload descriptions still need Macan regulator and pin settings, plus display clock and power-domain providers. PCIe, thermal limits and the remaining peripherals also need testing. Support for every device power state and performance setting is still being worked through. Performance and power tuning are ongoing.
 
 Bus DCVS uses interrupt-driven LLCC and DDR bandwidth monitors, with LAGG request counters for CPU activity. Hardware testing is needed for bandwidth scaling, idle power and resume.
 

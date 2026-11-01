@@ -156,6 +156,25 @@ static int compile_action(const aeob_action_t* a, void* ctx)
         }
         for (; i < 5u; ++i)
             out->u.pmic_regulator.fields[i] = 0u;
+        /* Optional attributes must match the available HLOS required-client transport. */
+        if (pos < a->argument_bytes) {
+            char option[24];
+            uint32_t options = 0u;
+            while (pos < a->argument_bytes) {
+                uint32_t bit;
+                if (!next_string(a->arguments, a->argument_bytes, &pos, option, sizeof(option)))
+                    return 0;
+                if (!strcmp(option, "HLOS_DRV"))
+                    bit = 1u;
+                else if (!strcmp(option, "REQUIRED"))
+                    bit = 2u;
+                else
+                    return 0;
+                if (options & bit)
+                    return 0;
+                options |= bit;
+            }
+        }
         if (pos != a->argument_bytes)
             return 0;
     } else if (strcmp(a->kind, "NPARESOURCE") == 0) {
@@ -176,9 +195,16 @@ static int compile_action(const aeob_action_t* a, void* ctx)
         if (!next_string(a->arguments, a->argument_bytes, &pos, out->u.footswitch.name,
                          sizeof(out->u.footswitch.name)) ||
             !next_number(a->arguments, a->argument_bytes, &pos, &n) ||
-            (n != 1u && n != 2u && n != 3u && n != 4u) || pos != a->argument_bytes)
+            (n != 1u && n != 2u && n != 3u && n != 4u))
             return 0;
         out->u.footswitch.action = (uint32_t)n;
+        if (pos < a->argument_bytes) {
+            if (!next_number(a->arguments, a->argument_bytes, &pos, &n) || n > 1u)
+                return 0;
+            out->u.footswitch.notify = (uint32_t)n;
+        }
+        if (pos != a->argument_bytes)
+            return 0;
     } else if (strcmp(a->kind, "PSTATE_ADJUST") == 0) {
         out->kind = POWER_PSTATE_ADJUST;
         for (i = 0; i < 2u; ++i) {
@@ -198,6 +224,17 @@ static int compile_action(const aeob_action_t* a, void* ctx)
         return 0;
     build->sequence->action_cnt++;
     return 1;
+}
+
+int power_append_action(power_sequence_t* sequence, const aeob_action_t* action, int performance)
+{
+    sequence_builder_t builder;
+    if (!sequence || !action || sequence->action_cnt >= POWER_MAX_ACTIONS)
+        return 0;
+    builder.sequence = sequence;
+    builder.overflow = 0;
+    builder.comp_p_state = performance;
+    return compile_action(action, &builder);
 }
 
 power_result_t power_compile_aeo_b(const void* buf, size_t length, const char* path, uint32_t state,

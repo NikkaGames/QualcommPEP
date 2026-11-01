@@ -32,6 +32,7 @@
 #include "power_delay.h"
 #include "acpi.h"
 #include "res_graph.h"
+#include "preload_win.h"
 #include "npa_client.h"
 #include "owner_attach_policy.h"
 #include "pnp_resources.h"
@@ -213,6 +214,7 @@ static npa_registry_t* g_quarantined_npa;
 static WDFWAITLOCK g_published_graph_lock;
 /* unpublished native clients can still hold graph callback pointers. */
 static res_graph_t* g_quarantined_fs_graph;
+static res_graph_t* g_quarantined_preload_graph;
 
 /* process-lifetime PnP/peer/publication serialization. This KMUTEX is initialized in
  * DriverEntry BEFORE WdfDriverCreate can dispatch PnP. */
@@ -2626,6 +2628,7 @@ static NTSTATUS hw_backend_win_ufs_fs_transition_locked(_In_z_ const char* path,
     if (!program || strcmp(program->resources.dev_path, path) ||
         program->resources.action_cnt != 1u ||
         program->resources.actions[0].kind != POWER_FOOTSWITCH ||
+        program->resources.actions[0].u.footswitch.notify ||
         strcmp(program->resources.actions[0].u.footswitch.name, res->name))
         return STATUS_NOT_SUPPORTED;
     if (!group_win_lock(bridge))
@@ -5696,7 +5699,7 @@ static VOID hw_backend_win_detach_locked(_In_ WDFDEVICE dev)
     g_win_backend = NULL;
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_RESOURCE,
                 "resources: backend unregistered admission=%d", hw_backend_ready());
-    if (g_quarantined_fs_graph) {
+    if (g_quarantined_fs_graph || g_quarantined_preload_graph) {
         g_quarantined_backend_instance = inst;
         TraceEvents(TRACE_LEVEL_WARNING, TRACE_RESOURCE,
                     "fs: unpublished client retained backend=pinned");
@@ -5884,7 +5887,7 @@ static NTSTATUS hw_backend_win_try_publish_locked(_In_ WDFDEVICE dev)
             return STATUS_DEVICE_HARDWARE_ERROR;
         return STATUS_SUCCESS;
     }
-    if (g_quarantined_npa || g_quarantined_fs_graph)
+    if (g_quarantined_npa || g_quarantined_fs_graph || g_quarantined_preload_graph)
         return STATUS_DEVICE_HARDWARE_ERROR;
     if (!g_win_backend || !g_win_backend->core.registered)
         return STATUS_DEVICE_NOT_READY;
@@ -5966,6 +5969,9 @@ static NTSTATUS hw_backend_win_try_publish_locked(_In_ WDFDEVICE dev)
         status = STATUS_DEVICE_NOT_READY;
         goto fail;
     }
+    status = preload_win_start(graph);
+    if (!NT_SUCCESS(status))
+        goto fail;
     status = pep_publish_verified_molokai_graph(graph, npa);
     if (!NT_SUCCESS(status)) {
         TraceEvents(TRACE_LEVEL_WARNING, TRACE_RESOURCE,
@@ -5995,6 +6001,14 @@ fail: {
     BOOLEAN fs_retained = owner && (ufs_native_retains_graph(&owner->ufs_native) ||
                                     owner->ufs_rail_owner.held || owner->ufs_owner_uncertain);
     BOOLEAN npa_retained = npa && npa_may_hold_clients && npa_needs_retention(npa);
+    BOOLEAN preload_retained = graph && graph->preloads && !preload_win_abort(graph);
+
+    if (preload_retained) {
+        g_quarantined_preload_graph = graph;
+        g_quarantined_backend_instance = g_win_backend;
+        TraceEvents(TRACE_LEVEL_ERROR, TRACE_RESOURCE,
+                    "preload: rollback incomplete owner retained");
+    }
 
     if (fs_retained) {
         /* failed publication cannot release storage referenced by native clients. */
@@ -6014,13 +6028,13 @@ fail: {
     }
     if (graph_initialized)
         (VOID) graph_retire(graph);
-    if (lock && !fs_retained && !npa_retained)
+    if (lock && !fs_retained && !npa_retained && !preload_retained)
         WdfObjectDelete(lock);
     if (sequence)
         ExFreePool(sequence);
     if (npa)
         ExFreePool(npa);
-    if (graph && !fs_retained && !npa_retained) {
+    if (graph && !fs_retained && !npa_retained && !preload_retained) {
         graph_free_sources(graph);
         ExFreePool(graph);
     }

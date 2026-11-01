@@ -185,13 +185,30 @@ static int validate_action(const aeob_action_t* a, void* ctx)
                 goto malformed;
         }
         cnt = 1u;
-        while (pos < a->argument_bytes) {
+        while (cnt < want) {
             if (!next(a->arguments, a->argument_bytes, &pos, &p) || !is_integer(&p))
                 goto malformed;
             ++cnt;
         }
-        if (cnt != want)
-            goto malformed;
+        if (pos < a->argument_bytes) {
+            char option[24];
+            uint32_t options = 0u;
+            while (pos < a->argument_bytes) {
+                uint32_t bit;
+                if (!next(a->arguments, a->argument_bytes, &pos, &p) ||
+                    !is_string(&p, option, sizeof(option)))
+                    goto malformed;
+                if (same(option, "HLOS_DRV"))
+                    bit = 1u;
+                else if (same(option, "REQUIRED"))
+                    bit = 2u;
+                else
+                    goto malformed;
+                if (options & bit)
+                    goto malformed;
+                options |= bit;
+            }
+        }
         ++v->pmic_regulator_cnt;
         return 1;
     }
@@ -257,7 +274,16 @@ static int validate_comp_action(const aeob_action_t* a, void* ctx)
             return 0;
         }
         if (!next(a->arguments, a->argument_bytes, &pos, &p) || !is_integer(&p) ||
-            pos != a->argument_bytes) {
+            int_value(&p) < 1u || int_value(&p) > 4u) {
+            v->failure = AEO_B_RES_MALFORMED;
+            return 0;
+        }
+        if (pos < a->argument_bytes && (!next(a->arguments, a->argument_bytes, &pos, &p) ||
+                                        !is_integer(&p) || int_value(&p) > 1u)) {
+            v->failure = AEO_B_RES_MALFORMED;
+            return 0;
+        }
+        if (pos != a->argument_bytes) {
             v->failure = AEO_B_RES_MALFORMED;
             return 0;
         }

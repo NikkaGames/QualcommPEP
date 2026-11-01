@@ -37,7 +37,8 @@ static int owns(void* ctx, const pofx_required_action_t* a)
     pofx_fs_required_t* s = (pofx_fs_required_t*)ctx;
     uint32_t actual = 0u;
     return a && a->action.kind == POWER_FOOTSWITCH && a->program_class == PROGRAM_P_STATE &&
-           a->action.u.footswitch.action >= 1u && a->action.u.footswitch.action <= 2u && s &&
+           !a->action.u.footswitch.notify && a->action.u.footswitch.action >= 1u &&
+           a->action.u.footswitch.action <= 2u && s &&
            !strcmp(a->action.u.footswitch.name, s->domain) && physical(s, &actual);
 }
 

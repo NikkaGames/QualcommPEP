@@ -9,7 +9,8 @@ static int supports_ufs_action(ufs_fs_graph_t* a, const char* path, uint32_t sta
 {
     if (!a || !a->bound || !a->res || !a->owner_epoch || !path || strcmp(path, k_path) != 0 ||
         !act || act->kind != POWER_FOOTSWITCH ||
-        strcmp(act->u.footswitch.name, clock_ufs_domain) != 0 || state >= POWER_DSTATE_COUNT ||
+        strcmp(act->u.footswitch.name, clock_ufs_domain) != 0 || act->u.footswitch.notify ||
+        state >= POWER_DSTATE_COUNT ||
         (act->u.footswitch.action != FS_ENABLE && act->u.footswitch.action != FS_DISABLE) ||
         !a->res->bound || a->res->quarantined || !a->res->enable_client ||
         strcmp(a->res->name, clock_ufs_domain) != 0 || a->res->owner_epoch != a->owner_epoch)

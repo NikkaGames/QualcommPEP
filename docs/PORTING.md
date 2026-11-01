@@ -20,7 +20,11 @@ Start with the target's DSDT and SSDTs. Match the PEP device, processor identiti
 
 Review the PEP node's objects and their consumers, including `STND`, `PREL`, `G0MD` for GPU resources and `PEMC` for PCIe where present. Their contents and calling conventions depend on the platform.
 
-`PREL` is an optional list of startup resource programs. It is absent from the current SM8845 tables. The driver validates and retains nonempty preload descriptions but does not execute them; a port that supplies them needs a startup owner separate from device D-state handling.
+`PREL` lists resource descriptions used during startup. The driver reads the declared `PRELOAD_DSTATE`, `PRELOAD_FSTATE` and `PRELOAD_PSTATE` selections from both `STND` and `PREL` descriptions. Startup runs after the resource providers are ready, before device power callbacks are admitted. Component transitions preserve the previous state's `EXIT` program and the selected state's `ENTER` program. Unqualified actions belong to `ENTER`. P-state requests are not applied while their device or component is inactive.
+
+Startup resource clients have separate ownership from normal device transitions. Each selected program must pass provider admission before any of its resources change. Failed transactions restore the previous votes; an uncertain rollback retains the owner and prevents graph publication. Empty lists and descriptions without preload selections issue no votes.
+
+The presence of a description does not provide its hardware backend. A port must supply every clock controller, interconnect route, regulator and power-domain operation used by its preload programs. Unsupported programs report the method, device and failing resource through WPP.
 
 Device handling should follow the ACPI descriptions. Preserve declared D0-D3 states, component F states and performance sets. New devices should use the same resource handling as existing devices without adding name-based exceptions. UFS must follow these rules as well.
 

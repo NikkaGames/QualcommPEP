@@ -82,6 +82,29 @@ aeob_status_t aeo_b_inventory_dev_components(const void* buf, size_t avail_bytes
 aeob_status_t aeo_b_list_dev_paths(const void* buf, size_t avail_bytes, char* paths,
                                    uint32_t capacity, uint32_t* cnt);
 
+typedef enum aeob_state_kind {
+    AEOB_D_STATE,
+    AEOB_F_STATE,
+    AEOB_P_STATE
+} aeob_state_kind_t;
+
+typedef struct aeob_preload_action {
+    aeob_action_t resource;
+    aeob_state_kind_t kind;
+    uint32_t component, set, state;
+} aeob_preload_action_t;
+
+typedef struct aeob_preload_result {
+    uint32_t d_states, f_states, p_states, inactive, actions;
+} aeob_preload_result_t;
+
+typedef int (*aeob_preload_visitor_t)(const aeob_preload_action_t*, void*);
+/* Select only explicit PRELOAD states. EXIT programs precede ENTER programs; P-state
+ * requests in inactive devices or components are not executed. */
+aeob_status_t aeo_b_visit_preload(const void* buf, size_t bytes, const char* path,
+                                  aeob_preload_visitor_t visit, void* ctx,
+                                  aeob_preload_result_t* result);
+
 #ifdef __cplusplus
 }
 #endif

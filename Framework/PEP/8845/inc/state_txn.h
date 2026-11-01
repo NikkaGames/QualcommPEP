@@ -77,6 +77,7 @@ typedef struct power_action {
         struct {
             char name[POWER_NAME_BYTES];
             uint32_t action;
+            uint32_t notify;
         } footswitch;
 
         struct {
@@ -164,6 +165,9 @@ typedef struct power_execution {
     uint32_t failure_idx;
     power_result_t result;
 } power_execution_t;
+
+/* Decode one resource operation. Provider admission is a separate prerequisite. */
+int power_append_action(power_sequence_t*, const aeob_action_t*, int performance);
 
 /* all selected resources must already pass the Molokai catalog and route validator. */
 

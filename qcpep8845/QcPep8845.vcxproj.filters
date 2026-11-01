@@ -648,6 +648,15 @@
     <ClCompile Include="..\Framework\PEP\8845\src\runtime_component.c">
       <Filter>Framework\PEP\8845\src</Filter>
     </ClCompile>
+    <ClCompile Include="..\Framework\PEP\src\acpi\aeob_preload.c">
+      <Filter>Framework\PEP\src\acpi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\preload.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\preload_win.c">
+      <Filter>Framework\PEP\8845\src</Filter>
+    </ClCompile>
     <ClCompile Include="..\Framework\PEP\8845\src\runtime_component_win.c">
       <Filter>Framework\PEP\8845\src</Filter>
     </ClCompile>
@@ -1167,6 +1176,12 @@
       <Filter>Framework\PEP\8845\inc</Filter>
     </ClInclude>
     <ClInclude Include="..\Framework\PEP\8845\inc\runtime_component_win.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\preload.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\preload_win.h">
       <Filter>Framework\PEP\8845\inc</Filter>
     </ClInclude>
     <ClInclude Include="..\Framework\PEP\8845\inc\runtime_dstate.h">
