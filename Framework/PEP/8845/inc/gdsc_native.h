@@ -41,6 +41,10 @@ typedef struct fs_gdsc_driver {
     uint32_t domain_id;
     uint32_t effective_action;
     uint32_t effective_hw_action;
+    void* notify_ctx;
+    void (*notify)(void*, const char* client, const char* domain, uint32_t action);
+    const char* notify_client;
+    uint8_t notify_enabled;
     char domain[FS_NAME_BYTES];
     fs_nodes_t npa;
     uint8_t bound;

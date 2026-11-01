@@ -42,14 +42,14 @@ fs_result_t ufs_native_discard_unbound(ufs_native_scope_t* scope);
 /* external PoFx/graph admission must already be closed and callbacks drained. The GCC and
  * rail owners remain live throughout this operation. */
 struct fs_gdsc_driver;
-struct ufs_cxmx_owner;
+struct domain_rails;
 /* roll back a provision that never published a native graph provider or issued votes.
  * Neither an active client nor ambiguous physical state is disposable. */
 fs_result_t ufs_native_rollback_unpublished(ufs_native_scope_t* scope,
                                             struct fs_gdsc_driver* domain,
-                                            struct ufs_cxmx_owner* rails);
+                                            struct domain_rails* rails);
 fs_result_t ufs_native_retire_verified(ufs_native_scope_t* scope, struct fs_gdsc_driver* domain,
-                                       struct ufs_cxmx_owner* rails);
+                                       struct domain_rails* rails);
 
 #ifdef __cplusplus
 }

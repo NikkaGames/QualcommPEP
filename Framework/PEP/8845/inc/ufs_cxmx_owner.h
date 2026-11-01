@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 #include "gdsc_native.h"
+#include "domain_rails.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -16,27 +17,9 @@ extern "C" {
 #define UFS_MX_LEVEL 0x30u
 #define UFS_RAIL_CLIENT "\\_SB.UFS0#GDSC"
 
-typedef struct ufs_cxmx_io {
-    void* ctx;
-    int (*owns_domain)(void*, const char*, uint64_t);
-    int (*owner_epoch)(void*, uint64_t*);
-    int (*rail_resolved)(void*, const char*, uint32_t);
-    /* return per-client vote; no aggregate is a substitute for this query. */
-    int (*read_client_vote)(void*, const char*, const char*, uint32_t*, uint32_t*);
+typedef domain_rail_io_t ufs_cxmx_io_t;
 
-    int (*read_physical)(void*, const char*, uint32_t*, uint32_t*);
-
-    int (*vote)(void*, const char*, const char*, uint32_t, uint32_t);
-    int (*withdraw)(void*, const char*, const char*);
-} ufs_cxmx_io_t;
-
-typedef struct ufs_cxmx_owner {
-    ufs_cxmx_io_t io;
-    uint64_t epoch;
-    uint8_t bound;
-    uint8_t held;
-    uint8_t quarantined;
-} ufs_cxmx_owner_t;
+typedef domain_rails_t ufs_cxmx_owner_t;
 
 /* bind ONLY to verified idle per-client slots; preexisting firmware votes are permitted,
  * and must NOT be adopted as the PEP client's vote. */

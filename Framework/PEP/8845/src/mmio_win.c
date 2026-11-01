@@ -2,6 +2,7 @@
 
 #include "mmio_win.h"
 #include "clock_target.h"
+#include "dispcc.h"
 #include "trace.h"
 #include "mmio_win.tmh"
 
@@ -66,6 +67,9 @@ VOID mmio_unmap(_Inout_ mmio_t* mmio)
         return;
     unmap_one(&mmio->rsc);
     unmap_one(&mmio->tlmm);
+    unmap_one(&mmio->disp_crm_common);
+    unmap_one(&mmio->disp_crm);
+    unmap_one(&mmio->dispcc);
     unmap_one(&mmio->gpucc);
     unmap_one(&mmio->gcc);
 }
@@ -104,7 +108,8 @@ NTSTATUS mmio_d0_map_peripherals(_Inout_ mmio_t* mmio)
         return STATUS_INVALID_PARAMETER;
     if (KeGetCurrentIrql() != PASSIVE_LEVEL)
         return STATUS_INVALID_DEVICE_STATE;
-    if (mmio->gcc.base || mmio->tlmm.base || mmio->gpucc.base)
+    if (mmio->gcc.base || mmio->tlmm.base || mmio->gpucc.base || mmio->dispcc.base ||
+        mmio->disp_crm.base || mmio->disp_crm_common.base)
         return STATUS_DEVICE_BUSY;
     /* never disturb the separate RSC d0 mapping. */
 
@@ -133,6 +138,25 @@ NTSTATUS mmio_d0_map_peripherals(_Inout_ mmio_t* mmio)
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_RESOURCE,
                 "mmio: GCC/TLMM mapped GPLL0=%08lX GPIO52=%08lX attestation=pending", gcc_a, pin_a);
     map_gpucc_vote(mmio);
+    {
+        const clock_window_t* window = clock_window_get(CLOCK_CTL_DISPCC);
+        NTSTATUS display = window ? map_one(&mmio->dispcc, window->physical, window->bytes,
+                                            PAGE_READWRITE | PAGE_NOCACHE)
+                                  : STATUS_NOT_FOUND;
+        if (NT_SUCCESS(display))
+            display = map_one(&mmio->disp_crm, DISP_CRM_PHYS, DISP_CRM_BYTES,
+                              PAGE_READWRITE | PAGE_NOCACHE);
+        if (NT_SUCCESS(display))
+            display = map_one(&mmio->disp_crm_common, DISP_CRM_COMMON_PHYS, DISP_CRM_COMMON_BYTES,
+                              PAGE_READWRITE | PAGE_NOCACHE);
+        if (!NT_SUCCESS(display)) {
+            unmap_one(&mmio->disp_crm_common);
+            unmap_one(&mmio->disp_crm);
+            unmap_one(&mmio->dispcc);
+            TraceEvents(TRACE_LEVEL_WARNING, TRACE_CLOCK,
+                        "clock: display mapping unavailable status=%08X", display);
+        }
+    }
     return STATUS_SUCCESS;
 rollback:
     mmio_d0_unmap_peripherals(mmio);
@@ -144,6 +168,9 @@ VOID mmio_d0_unmap_peripherals(_Inout_ mmio_t* mmio)
     if (!mmio)
         return;
     unmap_one(&mmio->tlmm);
+    unmap_one(&mmio->disp_crm_common);
+    unmap_one(&mmio->disp_crm);
+    unmap_one(&mmio->dispcc);
     unmap_one(&mmio->gpucc);
     unmap_one(&mmio->gcc);
 }

@@ -174,6 +174,15 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Framework\PEP\8845\src\footswitch\fs_votes.c">
+      <Filter>Framework\PEP\8845\src\footswitch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\footswitch\domain_rails.c">
+      <Filter>Framework\PEP\8845\src\footswitch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\clock\8845\src\dispcc.c">
+      <Filter>SystemLibs\clock\8845\src</Filter>
+    </ClCompile>
     <ClCompile Include="..\Framework\PEP\src\idle\lpi.c">
       <Filter>Framework\PEP\src\idle</Filter>
     </ClCompile>
@@ -414,6 +423,18 @@
     <ClCompile Include="..\SystemLibs\RPMh\8845\src\sleep_target.c">
       <Filter>SystemLibs\RPMh\8845\src</Filter>
     </ClCompile>
+    <ClInclude Include="..\Framework\PEP\8845\inc\fs_votes.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\domain_rail_io.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Framework\PEP\8845\inc\domain_rails.h">
+      <Filter>Framework\PEP\8845\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SystemLibs\clock\8845\inc\dispcc.h">
+      <Filter>SystemLibs\clock\8845\inc</Filter>
+    </ClInclude>
     <ClInclude Include="..\SystemLibs\RPMh\8845\inc\sleep.h">
       <Filter>SystemLibs\RPMh\8845\inc</Filter>
     </ClInclude>

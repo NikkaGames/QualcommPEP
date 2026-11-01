@@ -45,6 +45,9 @@
 #include "arc_rail.h"
 #include "8845_acpi_resources.h"
 #include "domains.h"
+#include "dispcc.h"
+#include "domain_rails.h"
+#include "fs_votes.h"
 #include "trace.h"
 #include "lpi.h"
 #include "hw_win.tmh"
@@ -60,7 +63,7 @@ NTSTATUS pep_unpublish_verified_molokai_graph(VOID);
 #define OWNER_TCS 0u /* amc slot this owner uses. */
 #define RPMH_POLL_LIMIT 20000u
 #define CLOCK_CLIENT_MAX 512u /* exhaustion refuses before mutation. */
-#define CLOCK_TABLE_MAX 256u
+#define CLOCK_TABLE_MAX 512u
 #define TLMM_PROBE_PIN 52u
 #define ARC_RAIL_MAX 16u
 
@@ -134,6 +137,7 @@ typedef struct owners {
     rpmh_deferred_scheduler_t deferred_scheduler;
     gcc_io_t gcc_io;
     gcc_io_t gpucc_io;
+    dispcc_t display;
     tlmm_io_t tlmm_io;
     rpmh_tcs_t rpmh;
     rpmh_sleep_t sleep;
@@ -146,6 +150,11 @@ typedef struct owners {
     uint32_t ufs_arc_last_address, ufs_arc_last_response;
     rpmh_tcs_result_t ufs_arc_last_result;
     fs_gdsc_driver_t ufs_domain_owner;
+    fs_votes_t ufs_domain_votes;
+    fs_gdsc_driver_t display_domain;
+    domain_rails_t display_rails;
+    fs_votes_t display_domain_votes;
+    PCALLBACK_OBJECT domain_notification;
     ufs_native_scope_t ufs_native;
     group_vote_t* ufs_group_votes[2]; /* desc sets 1 and 2 */
     ufs_group_bridge_t* ufs_group_bridge;
@@ -252,6 +261,31 @@ static int gpucc_write(void* ctx, uint32_t offset, uint32_t value)
            mmio_write32(&o->mmio.gpucc, relative, value);
 }
 
+static int dispcc_read32(void* ctx, uint32_t offset, uint32_t* value)
+{
+    return mmio_read32(&((owners_t*)ctx)->mmio.dispcc, offset, (ULONG*)value);
+}
+
+static int dispcc_write32(void* ctx, uint32_t offset, uint32_t value)
+{
+    return mmio_write32(&((owners_t*)ctx)->mmio.dispcc, offset, value);
+}
+
+static int disp_crm_read(void* ctx, uint32_t offset, uint32_t* value)
+{
+    return mmio_read32(&((owners_t*)ctx)->mmio.disp_crm, offset, (ULONG*)value);
+}
+
+static int disp_crm_write(void* ctx, uint32_t offset, uint32_t value)
+{
+    return mmio_write32(&((owners_t*)ctx)->mmio.disp_crm, offset, value);
+}
+
+static int disp_common_read(void* ctx, uint32_t offset, uint32_t* value)
+{
+    return mmio_read32(&((owners_t*)ctx)->mmio.disp_crm_common, offset, (ULONG*)value);
+}
+
 static const gcc_io_t* clock_io(owners_t* o, const gcc_clock_t* clock)
 {
     const clock_window_t* window;
@@ -268,9 +302,21 @@ static const gcc_io_t* clock_io(owners_t* o, const gcc_clock_t* clock)
                            o->mmio.gpucc.bytes == window->bytes
                        ? &o->gpucc_io
                        : NULL;
+        case CLOCK_CTL_DISPCC:
+            return o->mmio.dispcc.base && o->mmio.dispcc.physical == window->physical &&
+                           o->mmio.dispcc.bytes == window->bytes && !o->display.quarantined
+                       ? &o->display.clocks
+                       : NULL;
         default:
             return NULL;
     }
+}
+
+static int clock_read(owners_t* o, const gcc_clock_t* clock, gcc_state_t* state)
+{
+    const gcc_io_t* io = clock_io(o, clock);
+    return io && (clock->controller == CLOCK_CTL_DISPCC ? dispcc_read(&o->display, clock, state)
+                                                        : gcc_readback(io, clock, state) == GCC_OK);
 }
 
 static void io_barrier(void* c)
@@ -1319,6 +1365,24 @@ static void clock_aggregate(owners_t* o, ULONG ci, int* enabled, ULONG* max_hz)
     }
 }
 
+/* One CRM bandwidth node serves every branch of the MDP RCG. */
+static ULONG display_rate(owners_t* o, int* active)
+{
+    ULONG i, maximum = 0u;
+    *active = 0;
+    for (i = 0u; i < gcc_clock_cnt; ++i) {
+        ULONG rate;
+        int enabled;
+        if (!dispcc_rate_group(&gcc_clocks[i]))
+            continue;
+        clock_aggregate(o, i, &enabled, &rate);
+        *active |= enabled;
+        if (enabled && rate > maximum)
+            maximum = rate;
+    }
+    return maximum;
+}
+
 /* when the old and new aggregates are identical and active, re-attest the retained
  * physical vote without writing the same CBCR. failed re-attestation rejects the new
  * client, and never claims to have written or rolled back hardware. */
@@ -1334,6 +1398,15 @@ static int clock_apply_aggregate(owners_t* o, ULONG ci, int previously_enabled, 
     if (!io || o->clock_uncertain[ci])
         return 0;
     clock_aggregate(o, ci, &any_enabled, &max_hz);
+    if (clk->controller == CLOCK_CTL_DISPCC) {
+        int active = 0;
+        ULONG rate = dispcc_rate_group(clk) ? display_rate(o, &active) : 0u;
+        result = dispcc_commit(&o->display, clk, rate, any_enabled, 0, rate != 0u || !active,
+                               &o->clock_programmed_hz[ci]);
+        if (result == GCC_COMMIT_UNCERTAIN)
+            o->clock_uncertain[ci] = 1u;
+        return result == GCC_COMMIT_OK;
+    }
     if (previously_enabled && any_enabled && previous_hz == max_hz) {
         /* previous state is a committed PEP client, not an assumed firmware vote. verify the held
          * clock in hardware twice. */
@@ -1383,6 +1456,16 @@ static int clock_apply_freq(owners_t* o, ULONG ci, ULONG hz)
      * client holds a higher minimum. */
     if (active_hz > hz)
         hz = active_hz;
+    if (clk->controller == CLOCK_CTL_DISPCC) {
+        int active;
+        ULONG shared = display_rate(o, &active);
+        if (shared > hz)
+            hz = shared;
+        result = dispcc_commit(&o->display, clk, hz, enabled, 1, 1, &o->clock_programmed_hz[ci]);
+        if (result == GCC_COMMIT_UNCERTAIN)
+            o->clock_uncertain[ci] = 1u;
+        return result == GCC_COMMIT_OK;
+    }
     result = gcc_commit_freq_ex(io, clk, hz, &o->clock_programmed_hz[ci], &diag);
     if (result == GCC_COMMIT_UNCERTAIN)
         o->clock_uncertain[ci] = 1u;
@@ -1391,6 +1474,152 @@ static int clock_apply_freq(owners_t* o, ULONG ci, ULONG hz)
                     "clock: %s rate=%lu result=%d phase=%lu wrote=%lu", clk->name, hz, (int)result,
                     (ULONG)diag.stage, (ULONG)diag.write_started);
     return result == GCC_COMMIT_OK;
+}
+
+static int win_io_clock_supported(void* ctx, const power_action_t* a)
+{
+    owners_t* o = owners_of(ctx);
+    const gcc_clock_t* clock;
+    const gcc_freq_t* frequency;
+    int ok;
+    if (!o || !a || a->kind != POWER_CLOCK || !(clock = gcc_find_req_clock(a->u.clock.name)) ||
+        !owners_lock_live(o, LIVE_CLOCK))
+        return 0;
+    if (clock->controller == CLOCK_CTL_DISPCC) {
+        ok = !o->display.quarantined && clock_io(o, clock) &&
+             (a->u.clock.vote == 1u || a->u.clock.vote == 2u ||
+              ((a->u.clock.vote == 3u || a->u.clock.vote == 8u) && dispcc_rate_group(clock) &&
+               a->u.clock.extra[0] <= 650000000u && dispcc_probe(&o->display)));
+    } else if (a->u.clock.vote == 3u || a->u.clock.vote == 8u)
+        ok = gcc_select_freq(clock, a->u.clock.extra[0], &frequency) == GCC_OK && frequency &&
+             frequency->hz == a->u.clock.extra[0];
+    else
+        ok = 1;
+    owners_unlock(o);
+    return ok;
+}
+
+static int win_io_clock_client_snapshot(void* ctx, const char* path, const char* name,
+                                        uint64_t values[4])
+{
+    owners_t* o = owners_of(ctx);
+    clock_client_t* client;
+    LONG ci = clock_idx(name);
+    int ok = 1;
+    if (!o || !path || !values || ci < 0 || (ULONG)ci >= CLOCK_TABLE_MAX ||
+        !owners_lock_live(o, LIVE_CLOCK))
+        return 0;
+    RtlZeroMemory(values, 4u * sizeof(*values));
+    client = clock_client(o, path, (ULONG)ci, 0);
+    if (client)
+        values[0] = UINT64_C(0x8000000000000000) | ((uint64_t)client->enable << 32) | client->hz;
+    if (dispcc_rate_group(&gcc_clocks[ci]))
+        ok = dispcc_rate_snapshot(&o->display, &values[1]);
+    ok = ok && !o->clock_uncertain[ci];
+    owners_unlock(o);
+    return ok;
+}
+
+static int clock_group_present(owners_t* o, ULONG ci)
+{
+    ULONG i;
+    int group = dispcc_rate_group(&gcc_clocks[ci]);
+    for (i = 0u; i < CLOCK_CLIENT_MAX; ++i) {
+        clock_client_t* c = &o->clock_clients[i];
+        if (c->in_use && (c->enable || c->hz) &&
+            (c->clock_idx == ci || (group && dispcc_rate_group(&gcc_clocks[c->clock_idx]))))
+            return 1;
+    }
+    return 0;
+}
+
+static int win_io_clock_client_restore(void* ctx, const char* path, const char* name,
+                                       const uint64_t values[4], uint64_t physical)
+{
+    owners_t* o = owners_of(ctx);
+    clock_client_t* client;
+    const gcc_clock_t* clock;
+    const gcc_io_t* io;
+    LONG ci = clock_idx(name);
+    ULONG hz, before_hz;
+    int enabled, before_enabled, ok;
+    gcc_commit_result_t result;
+    if (!o || !path || !values || (values[0] & UINT64_C(0x7ffffffe00000000)) || ci < 0 ||
+        (ULONG)ci >= CLOCK_TABLE_MAX || !owners_lock_live(o, LIVE_CLOCK))
+        return 0;
+    clock = &gcc_clocks[ci];
+    io = clock_io(o, clock);
+    if (!io || o->clock_uncertain[ci]) {
+        owners_unlock(o);
+        return 0;
+    }
+    clock_aggregate(o, (ULONG)ci, &before_enabled, &before_hz);
+    client = clock_client(o, path, (ULONG)ci, values[0] >> 63);
+    if (values[0] >> 63) {
+        if (!client) {
+            owners_unlock(o);
+            return 0;
+        }
+        client->enable = (UCHAR)((values[0] >> 32) & 1u);
+        client->hz = (ULONG)values[0];
+    } else if (client)
+        RtlZeroMemory(client, sizeof(*client));
+    clock_aggregate(o, (ULONG)ci, &enabled, &hz);
+    if (!clock_group_present(o, (ULONG)ci)) {
+        enabled = (int)((physical >> 33) & 1u);
+        hz = (ULONG)physical;
+        if (clock->controller == CLOCK_CTL_DISPCC) {
+            /* The saved CRM banks belong to the software voter, not the physical aggregate. */
+            result = dispcc_branch_restore(&o->display, clock, enabled);
+            if (result == GCC_COMMIT_OK && dispcc_rate_group(clock))
+                result = dispcc_rate_restore(&o->display, &values[1]);
+        } else
+            result = gcc_commit_branch_vote(io, clock, hz, enabled, &o->clock_programmed_hz[ci]);
+        ok = result == GCC_COMMIT_OK;
+        if (result == GCC_COMMIT_UNCERTAIN)
+            o->clock_uncertain[ci] = 1u;
+    } else {
+        ok = clock_apply_aggregate(o, (ULONG)ci, before_enabled, before_hz);
+        if (ok && client && client->hz && !enabled)
+            ok = clock_apply_freq(o, (ULONG)ci, client->hz);
+    }
+    if (!ok)
+        o->clock_uncertain[ci] = 1u;
+    owners_unlock(o);
+    return ok;
+}
+
+static int win_io_clock_client_verify(void* ctx, const char* path, const char* name,
+                                      const uint64_t values[4], uint64_t physical)
+{
+    owners_t* o = owners_of(ctx);
+    const gcc_clock_t* clock;
+    gcc_state_t a, b;
+    uint64_t current[4];
+    LONG ci = clock_idx(name);
+    ULONG hz;
+    int enabled, ok;
+    if (!o || !values || ci < 0 || (ULONG)ci >= CLOCK_TABLE_MAX || !owners_lock_live(o, LIVE_CLOCK))
+        return 0;
+    clock = &gcc_clocks[ci];
+    ok = win_io_clock_client_snapshot(ctx, path, name, current) && current[0] == values[0] &&
+         clock_read(o, clock, &a) && clock_read(o, clock, &b);
+    clock_aggregate(o, (ULONG)ci, &enabled, &hz);
+    if (!clock_group_present(o, (ULONG)ci)) {
+        enabled = (int)((physical >> 33) & 1u);
+        if (dispcc_rate_group(clock))
+            ok = ok && ((current[1] ^ values[1]) & UINT64_C(0x20003fff)) == 0u &&
+                 current[2] == values[2] && current[3] == values[3];
+        else
+            hz = (ULONG)physical;
+    }
+    if (ok && clock->controller == CLOCK_CTL_DISPCC)
+        ok = a.enabled == enabled && b.enabled == enabled &&
+             (!enabled || dispcc_verify(&o->display, clock, hz));
+    else if (ok)
+        ok = a.enabled == enabled && b.enabled == enabled && (!hz || (a.hz == hz && b.hz == hz));
+    owners_unlock(o);
+    return ok;
 }
 
 static int win_io_clock_known(void* ctx, const char* clock_name)
@@ -1574,7 +1803,7 @@ static int win_io_clock_readback(void* ctx, const char* clock_name, uint64_t* ef
         }
     }
     const gcc_io_t* io = clock_io(o, clk);
-    ok = io && gcc_readback(io, clk, &st) == GCC_OK;
+    ok = io && clock_read(o, clk, &st);
     owners_unlock(o);
     if (!ok)
         return 0;
@@ -2225,7 +2454,7 @@ static int win_io_arc_client(void* ctx, const char* client, const char* path, ui
     return ok;
 }
 
-static int native_ufs_resolve(void* ctx, const char* name, uint32_t floor)
+static int native_rail_resolve(void* ctx, const char* name, uint32_t floor)
 {
     owners_t* o = ctx;
     arc_rail_t* rail;
@@ -2239,8 +2468,8 @@ static int native_ufs_resolve(void* ctx, const char* name, uint32_t floor)
     return ok;
 }
 
-static int native_ufs_client(void* ctx, const char* client, const char* name, uint32_t* enabled,
-                             uint32_t* level)
+static int native_rail_client(void* ctx, const char* client, const char* name, uint32_t* enabled,
+                              uint32_t* level)
 {
     owners_t* o = ctx;
     arc_rail_t* rail;
@@ -2253,7 +2482,7 @@ static int native_ufs_client(void* ctx, const char* client, const char* name, ui
     return ok;
 }
 
-static int native_ufs_physical(void* ctx, const char* name, uint32_t* enabled, uint32_t* level)
+static int native_rail_physical(void* ctx, const char* name, uint32_t* enabled, uint32_t* level)
 {
     owners_t* o = ctx;
     arc_rail_t* rail;
@@ -2266,8 +2495,8 @@ static int native_ufs_physical(void* ctx, const char* name, uint32_t* enabled, u
     return ok;
 }
 
-static int native_ufs_vote(void* ctx, const char* client, const char* name, uint32_t level,
-                           uint32_t enabled)
+static int native_rail_vote(void* ctx, const char* client, const char* name, uint32_t level,
+                            uint32_t enabled)
 {
     owners_t* o = ctx;
     arc_rail_t* rail;
@@ -2282,7 +2511,7 @@ static int native_ufs_vote(void* ctx, const char* client, const char* name, uint
     return ok;
 }
 
-static int native_ufs_withdraw(void* ctx, const char* client, const char* name)
+static int native_rail_withdraw(void* ctx, const char* client, const char* name)
 {
     owners_t* o = ctx;
     arc_rail_t* rail;
@@ -2295,6 +2524,203 @@ static int native_ufs_withdraw(void* ctx, const char* client, const char* name)
         o->ufs_owner_uncertain = TRUE;
     owners_unlock(o);
     return ok;
+}
+
+/* The callback record is the Windows FootswitchState v1 interface. */
+typedef struct domain_notification {
+    ULONG version;
+    const char* client;
+    const char* domain;
+    ULONG action;
+    void* reserved;
+} domain_notification_t;
+
+C_ASSERT(sizeof(domain_notification_t) == 40u);
+
+static void native_domain_notify(void* ctx, const char* client, const char* domain, uint32_t action)
+{
+    owners_t* o = ctx;
+    domain_notification_t record = {0};
+    char resource[FS_FACTORY_NAME_BYTES];
+    if (!o || !o->domain_notification || !client || !domain ||
+        !NT_SUCCESS(RtlStringCbPrintfA(resource, sizeof(resource), "%s/%s", domain,
+                                       action > 2u ? "hwctrlenable" : "enable")))
+        return;
+    record.version = 1u;
+    record.client = client;
+    record.domain = resource;
+    record.action = action;
+    ExNotifyCallback(o->domain_notification, &record, NULL);
+}
+
+static int native_domain_owns(void* ctx, const char* domain, uint64_t epoch)
+{
+    owners_t* o = ctx;
+    molokai_gdsc_location_t location;
+    const mmio_window_t* window;
+    if (!o || !o->clocks_live || !native_arc_owns(o, epoch) ||
+        !molokai_gdsc_location(domain, &location))
+        return 0;
+    if (location.controller_physical == DISP_CC_PHYS && o->display.quarantined)
+        return 0;
+    window = location.controller_physical == GCC_WINDOW_PHYS ? &o->mmio.gcc : &o->mmio.dispcc;
+    return window->base && window->physical == location.controller_physical &&
+           window->bytes == location.controller_bytes;
+}
+
+static int native_domain_epoch(void* ctx, uint64_t* epoch)
+{
+    owners_t* o = ctx;
+    if (!o || !epoch || !native_arc_owns(o, o->os_rsc_lease.owner_epoch))
+        return 0;
+    *epoch = o->os_rsc_lease.owner_epoch;
+    return 1;
+}
+
+static void native_domains_bind(owners_t* o)
+{
+    static const domain_rail_spec_t display = {"disp_cc_mdss_core_gdsc",
+                                               "display_gdsc",
+                                               {"mmcx.lvl", "mx.lvl"},
+                                               {0x30u, 0x30u},
+                                               RAIL_VDD_MM | RAIL_VDD_MX};
+    domain_rail_io_t io = {0};
+    fs_gdsc_rail_provider_t rails = {0};
+    molokai_gdsc_location_t location;
+    if (!o || !owners_lock_live(o, LIVE_CLOCK | LIVE_RPMH))
+        return;
+    if (o->ufs_domain_owner.bound && !o->ufs_domain_votes.bound) {
+        o->ufs_domain_owner.notify_ctx = o;
+        o->ufs_domain_owner.notify = o->domain_notification ? native_domain_notify : NULL;
+        (void)fs_votes_bind(&o->ufs_domain_votes, &o->ufs_domain_owner);
+    }
+    if (o->display_domain_votes.bound || o->display_domain.bound ||
+        !native_domain_owns(o, display.domain, o->os_rsc_lease.owner_epoch) ||
+        !molokai_gdsc_location(display.domain, &location))
+        goto done;
+    io.ctx = o;
+    io.owns_domain = native_domain_owns;
+    io.owner_epoch = native_domain_epoch;
+    io.rail_resolved = native_rail_resolve;
+    io.read_client_vote = native_rail_client;
+    io.read_physical = native_rail_physical;
+    io.vote = native_rail_vote;
+    io.withdraw = native_rail_withdraw;
+    if (!domain_rails_bind(&o->display_rails, &display, &io, o->os_rsc_lease.owner_epoch) ||
+        !domain_rails_provider(&o->display_rails, &rails) ||
+        !fs_gdsc_init_window_with_rails(&o->display_domain, &o->display.clocks, display.domain,
+                                        location.native_clock_id, location.controller_physical,
+                                        location.controller_bytes, o, native_domain_owns,
+                                        o->os_rsc_lease.owner_epoch, &rails)) {
+        TraceEvents(TRACE_LEVEL_WARNING, TRACE_RESOURCE,
+                    "footswitch: domain=%s provider unavailable", display.domain);
+        goto done;
+    }
+    o->display_domain.notify_ctx = o;
+    o->display_domain.notify = o->domain_notification ? native_domain_notify : NULL;
+    if (!fs_votes_bind(&o->display_domain_votes, &o->display_domain))
+        TraceEvents(TRACE_LEVEL_WARNING, TRACE_RESOURCE,
+                    "footswitch: domain=%s client owner unavailable", display.domain);
+done:
+    owners_unlock(o);
+}
+
+static fs_votes_t* native_domain_votes(owners_t* o, const char* name)
+{
+    fs_votes_t* domains[] = {&o->ufs_domain_votes, &o->display_domain_votes};
+    ULONG i;
+    for (i = 0u; i < RTL_NUMBER_OF(domains); ++i)
+        if (domains[i]->bound && !domains[i]->quarantined &&
+            !strcmp(domains[i]->driver->domain, name))
+            return domains[i];
+    return NULL;
+}
+
+static int win_io_domain_known(void* ctx, const char* name, uint32_t action, uint32_t notify)
+{
+    owners_t* o = owners_of(ctx);
+    fs_votes_t* votes;
+    uint32_t physical;
+    int ok;
+    if (!o || !name || action < 1u || action > 4u || notify > 1u ||
+        !owners_lock_live(o, LIVE_CLOCK | LIVE_RPMH))
+        return 0;
+    votes = native_domain_votes(o, name);
+    ok = votes && (!notify || o->domain_notification) &&
+         fs_gdsc_read(votes->driver, action > 2u, &physical);
+    owners_unlock(o);
+    return ok;
+}
+
+static int win_io_domain_apply(void* ctx, const char* path, const power_action_t* a)
+{
+    owners_t* o = owners_of(ctx);
+    fs_votes_t* votes;
+    int ok;
+    if (!o || !a || a->kind != POWER_FOOTSWITCH || !owners_lock_live(o, LIVE_CLOCK | LIVE_RPMH))
+        return 0;
+    votes = native_domain_votes(o, a->u.footswitch.name);
+    ok = votes && fs_votes_apply(votes, path, a->u.footswitch.action, a->u.footswitch.notify);
+    owners_unlock(o);
+    return ok;
+}
+
+static int win_io_domain_read(void* ctx, const char* name, uint32_t family, uint64_t* value)
+{
+    owners_t* o = owners_of(ctx);
+    fs_votes_t* votes;
+    uint32_t actual;
+    int ok;
+    if (!o || !name || !value || !owners_lock_live(o, LIVE_CLOCK | LIVE_RPMH))
+        return 0;
+    votes = native_domain_votes(o, name);
+    ok = votes && fs_gdsc_read(votes->driver, family, &actual);
+    if (ok)
+        *value = actual;
+    owners_unlock(o);
+    return ok;
+}
+
+static int win_io_domain_client(void* ctx, const char* path, const char* name, uint32_t family,
+                                uint32_t* action, uint32_t* notify)
+{
+    owners_t* o = owners_of(ctx);
+    fs_votes_t* votes;
+    int ok;
+    if (!o || !name || !owners_lock_live(o, LIVE_CLOCK | LIVE_RPMH))
+        return 0;
+    votes = native_domain_votes(o, name);
+    ok = votes && fs_votes_client(votes, path, family, action, notify);
+    owners_unlock(o);
+    return ok;
+}
+
+static int win_io_domain_withdraw(void* ctx, const char* path, const char* name, uint32_t family)
+{
+    owners_t* o = owners_of(ctx);
+    fs_votes_t* votes;
+    int ok;
+    if (!o || !name || !owners_lock_live(o, LIVE_CLOCK | LIVE_RPMH))
+        return 0;
+    votes = native_domain_votes(o, name);
+    ok = votes && fs_votes_withdraw(votes, path, family);
+    owners_unlock(o);
+    return ok;
+}
+
+static int native_display_retained(const owners_t* o)
+{
+    ULONG i;
+    if (!o)
+        return 0;
+    if (o->display.quarantined || o->display_rails.held || o->display_rails.quarantined ||
+        o->display_domain.quarantined || o->display_domain.npa.quarantined ||
+        o->display_domain_votes.quarantined)
+        return 1;
+    for (i = 0u; i < FS_VOTE_CLIENTS; ++i)
+        if (o->display_domain_votes.clients[i].used)
+            return 1;
+    return o->display_domain_votes.restore[0].bound || o->display_domain_votes.restore[1].bound;
 }
 
 static int native_ufs_gdsc_physical(void* ctx, const char* domain, uint64_t epoch, uint32_t* state)
@@ -3219,7 +3645,7 @@ static int arc_retire_all(owners_t* o)
 {
     uint32_t i;
     int ok = 1;
-    if (!o || o->ufs_rail_owner.bound || o->ufs_rail_owner.held)
+    if (!o || o->ufs_rail_owner.bound || o->ufs_rail_owner.held || native_display_retained(o))
         return 0;
     for (i = 0u; i < ARC_RAIL_MAX && !o->arc_rails[i].bound; ++i) {
     }
@@ -3250,11 +3676,11 @@ static int native_ufs_graph_bind(owners_t* o, res_graph_t* graph)
     io.ctx = o;
     io.owns_domain = native_ufs_owns;
     io.owner_epoch = native_ufs_epoch;
-    io.rail_resolved = native_ufs_resolve;
-    io.read_client_vote = native_ufs_client;
-    io.read_physical = native_ufs_physical;
-    io.vote = native_ufs_vote;
-    io.withdraw = native_ufs_withdraw;
+    io.rail_resolved = native_rail_resolve;
+    io.read_client_vote = native_rail_client;
+    io.read_physical = native_rail_physical;
+    io.vote = native_rail_vote;
+    io.withdraw = native_rail_withdraw;
     if (!ufs_cx_mx_bind(&o->ufs_rail_owner, &io, epoch) ||
         !ufs_cx_mx_rail_provider(&o->ufs_rail_owner, &rails))
         goto failed;
@@ -3714,7 +4140,7 @@ static VOID owners_destroy(owners_t* o)
     /* the WDF/PnP owner has not yet supplied a complete worker/ISR teardown proof. Never
      * release bound storage. */
 
-    if (o->sleep.bound || o->sleep.frozen || o->sleep.faulted ||
+    if (native_display_retained(o) || o->sleep.bound || o->sleep.frozen || o->sleep.faulted ||
         ufs_native_retains_graph(&o->ufs_native) || o->ufs_group_bridge || o->ufs_group_votes[0] ||
         o->ufs_group_votes[1] || o->ufs_rail_owner.held || o->ufs_owner_uncertain ||
         o->rpmh_irq_pipeline.bound || o->rpmh_irq_pipeline.faulted ||
@@ -3734,6 +4160,10 @@ static VOID owners_destroy(owners_t* o)
     /* leave_cb the shared RSC as it was found: drop the AMC grant and the completion interrupt
      * bit this owner enabled. */
 
+    if (o->domain_notification) {
+        ObDereferenceObject(o->domain_notification);
+        o->domain_notification = NULL;
+    }
     rpmh_scheduler_revoke(&o->rpmh_scheduler);
     rsc_completion_revoke(&o->rsc_completion);
     {
@@ -3843,9 +4273,29 @@ static owners_t* owners_create(VOID)
     o->gcc_io.write32 = gcc_write;
     o->gcc_io.barrier = io_barrier;
     o->gcc_io.stall_microseconds = io_stall;
+    {
+        UNICODE_STRING name = RTL_CONSTANT_STRING(L"\\Callback\\FootswitchState");
+        OBJECT_ATTRIBUTES attributes;
+        NTSTATUS status;
+        InitializeObjectAttributes(&attributes, &name, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
+                                   NULL, NULL);
+        status = ExCreateCallback(&o->domain_notification, &attributes, TRUE, TRUE);
+        if (!NT_SUCCESS(status))
+            TraceEvents(TRACE_LEVEL_WARNING, TRACE_RESOURCE,
+                        "footswitch: notification object unavailable status=%08X", status);
+    }
     o->gpucc_io = o->gcc_io;
     o->gpucc_io.read32 = gpucc_read;
     o->gpucc_io.write32 = gpucc_write;
+    o->display.clocks = o->gcc_io;
+    o->display.clocks.read32 = dispcc_read32;
+    o->display.clocks.write32 = dispcc_write32;
+    o->display.crm = o->gcc_io;
+    o->display.crm.read32 = disp_crm_read;
+    o->display.crm.write32 = disp_crm_write;
+    o->display.common = o->gcc_io;
+    o->display.common.read32 = disp_common_read;
+    o->display.common.write32 = NULL;
     o->tlmm_io.ctx = o;
     o->tlmm_io.lock = tlmm_lock_fn;
     o->tlmm_io.unlock = tlmm_unlock_fn;
@@ -4054,11 +4504,20 @@ static NTSTATUS hw_backend_win_attach_locked(_In_ WDFDEVICE dev)
         io.tlmm_cfg = win_io_tlmm_cfg;
         io.tlmm_readback = win_io_tlmm_readback;
         io.clock_execution_ready = win_io_clock_execution_ready;
+        io.domain_known = win_io_domain_known;
+        io.domain_apply = win_io_domain_apply;
+        io.domain_readback = win_io_domain_read;
+        io.domain_client = win_io_domain_client;
+        io.domain_withdraw = win_io_domain_withdraw;
         io.clock_apply = win_io_clock_apply;
         io.clock_withdraw = win_io_clock_withdraw;
         io.clock_readback = win_io_clock_readback;
         io.clock_known = win_io_clock_known;
         io.clock_has_vote = win_io_clock_has_vote;
+        io.clock_supported = win_io_clock_supported;
+        io.clock_client_snapshot = win_io_clock_client_snapshot;
+        io.clock_client_restore = win_io_clock_client_restore;
+        io.clock_client_verify = win_io_clock_client_verify;
         io.clock_config_readback = win_io_clock_config_readback;
         io.clock_config_write = win_io_clock_config_write;
     }
@@ -5358,7 +5817,8 @@ NTSTATUS hw_backend_win_d0_quiesce(_In_ WDFDEVICE dev)
                 if (ufs_native_retains_graph(&o->ufs_native) || o->ufs_scalar_required ||
                     o->ufs_scalar_catalog || o->ufs_scalar_owner || o->ufs_group_bridge ||
                     o->ufs_group_votes[0] || o->ufs_group_votes[1] || o->ufs_ice_config.saved ||
-                    o->ufs_rail_owner.held || o->ufs_owner_uncertain) {
+                    o->ufs_rail_owner.held || o->ufs_owner_uncertain ||
+                    native_display_retained(o)) {
                     g_quarantined_rsc_owner = o;
                     status = STATUS_DEVICE_BUSY;
                     TraceEvents(TRACE_LEVEL_WARNING, TRACE_RESOURCE,
@@ -5594,12 +6054,12 @@ NTSTATUS hw_backend_win_d0_unmap_rsc(_In_ WDFDEVICE dev)
     lpi_mutex_acquire(&g_win_lifecycle_lock);
     inst = g_win_backend;
     o = inst && inst->io.dev == dev ? inst->io.owners : NULL;
-    if (o &&
-        (ufs_native_retains_graph(&o->ufs_native) || o->ufs_group_bridge || o->ufs_group_votes[0] ||
-         o->ufs_group_votes[1] || o->ufs_rail_owner.held || o->ufs_owner_uncertain)) {
+    if (o && (ufs_native_retains_graph(&o->ufs_native) || o->ufs_group_bridge ||
+              o->ufs_group_votes[0] || o->ufs_group_votes[1] || o->ufs_rail_owner.held ||
+              o->ufs_owner_uncertain || native_display_retained(o))) {
         g_quarantined_rsc_owner = o;
         TraceEvents(TRACE_LEVEL_WARNING, TRACE_POWER,
-                    "ufs: unmap rejected epoch=%llX client=%llX uncertain=%u",
+                    "footswitch: unmap rejected epoch=%llX UFS-client=%llX uncertain=%u",
                     (unsigned long long)o->os_rsc_lease.owner_epoch,
                     (unsigned long long)o->ufs_native.factory.normal_handle,
                     (unsigned)o->ufs_owner_uncertain);
@@ -5969,6 +6429,7 @@ static NTSTATUS hw_backend_win_try_publish_locked(_In_ WDFDEVICE dev)
         status = STATUS_DEVICE_NOT_READY;
         goto fail;
     }
+    native_domains_bind(g_win_backend->io.owners);
     status = preload_win_start(graph);
     if (!NT_SUCCESS(status))
         goto fail;
@@ -5998,10 +6459,12 @@ static NTSTATUS hw_backend_win_try_publish_locked(_In_ WDFDEVICE dev)
 
 fail: {
     owners_t* owner = g_win_backend ? g_win_backend->io.owners : NULL;
-    BOOLEAN fs_retained = owner && (ufs_native_retains_graph(&owner->ufs_native) ||
-                                    owner->ufs_rail_owner.held || owner->ufs_owner_uncertain);
+    BOOLEAN fs_retained;
     BOOLEAN npa_retained = npa && npa_may_hold_clients && npa_needs_retention(npa);
     BOOLEAN preload_retained = graph && graph->preloads && !preload_win_abort(graph);
+    fs_retained =
+        owner && (ufs_native_retains_graph(&owner->ufs_native) || owner->ufs_rail_owner.held ||
+                  owner->ufs_owner_uncertain || native_display_retained(owner));
 
     if (preload_retained) {
         g_quarantined_preload_graph = graph;

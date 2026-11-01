@@ -32,7 +32,8 @@ Device handling should follow the ACPI descriptions. Preserve declared D0-D3 sta
 
 The SM8845 tables need to be replaced or checked against the target hardware:
 
-- **Clocks:** controller addresses, parents, rate tables, dividers, branch votes and power domains. Include GPU and display controllers where required.
+- **Clocks:** controller addresses, parents, rate tables, dividers, branch votes and power domains. Include GPU and display controllers where required. Molokai's MDP source is controlled by CESTA; `dispcc.c` uses the display CRM software bandwidth voter and checks the resulting clock rate. A new target must use its own controller protocol and register layout.
+- **Power-domain notifications:** a FOOTSWITCH request can ask for the Windows `\Callback\FootswitchState` v1 notification. Notifications follow the aggregated transition: after enable and before disable. Domain and rail clients share the physical owner used by component power states.
 - **Interconnect:** ICB routes, BCM groups, bus widths, units, command DB data and minimum bandwidth votes. Shared votes must survive individual devices entering idle.
 - **Bus DCVS:** bandwidth-monitor register revisions, MMIO windows, PnP interrupts, timer rates, counter units, bus limits and LLCC-to-DDR rate mappings. The LAGG counter layout and CPU index mapping are target-specific. Keep these in `bwmon_target.c`; do not reuse another SoC's register assignments.
 - **RPMh:** RSC version, DRV assignment, TCS groups, command slots and interrupt routing. Active, sleep and wake command sets need the correct allocation and completion handling.

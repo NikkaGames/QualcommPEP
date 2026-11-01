@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-#define WIN_BACKEND_VERSION 0x00990003u
+#define WIN_BACKEND_VERSION 0x00990004u
 
 typedef enum hw_delegation {
     HW_DELEGATION_NOT_ESTABLISHED = 0, /* no owner primitive bound. */
@@ -65,12 +65,27 @@ typedef struct hwio {
     int (*clock_readback)(void* ctx, const char* clock_name, uint64_t* effective);
     int (*clock_known)(void* ctx, const char* clock_name);
     int (*clock_has_vote)(void* ctx, const char* path, const char* clock_name);
+    int (*clock_supported)(void*, const power_action_t*);
+    /* Enable and frequency form one client request. The owner snapshots both together,
+     * including firmware-controlled rate banks when the controller requires them. */
+    int (*clock_client_snapshot)(void*, const char*, const char*, uint64_t values[4]);
+    int (*clock_client_restore)(void*, const char*, const char*, const uint64_t values[4],
+                                uint64_t);
+    int (*clock_client_verify)(void*, const char*, const char*, const uint64_t values[4], uint64_t);
     /* the only verified production form is UFS ICE CORE config 18 (force memory core ON).
      * Configuration changes have independent register snapshots/restore; they must NOT
      * overwrite a clock enable/rate client vote record. */
 
     int (*clock_config_readback)(void* ctx, const char* clock_name, uint32_t* force_on);
     int (*clock_config_write)(void* ctx, const char* clock_name, uint32_t force_on);
+
+    /* Native domain clients share the physical GDSC owner used by component states. */
+    int (*domain_known)(void*, const char*, uint32_t action, uint32_t notify);
+    int (*domain_apply)(void*, const char* path, const power_action_t*);
+    int (*domain_withdraw)(void*, const char* path, const char* domain, uint32_t family);
+    int (*domain_readback)(void*, const char* domain, uint32_t family, uint64_t*);
+    int (*domain_client)(void*, const char* path, const char* domain, uint32_t family,
+                         uint32_t* action, uint32_t* notify);
 
     /* icb/BCM (owner): record the client's bandwidth on the route and commit the affected BCM
      * votes; withdraw; read back the BCMs. */

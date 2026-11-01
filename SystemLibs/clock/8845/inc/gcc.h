@@ -55,7 +55,8 @@ typedef struct gcc_domain {
 
 #define CLOCK_CTL_GCC 0u
 #define CLOCK_CTL_GPUCC 1u
-#define CLOCK_CTL_COUNT 2u
+#define CLOCK_CTL_DISPCC 2u
+#define CLOCK_CTL_COUNT 3u
 
 typedef struct gcc_clock {
     const char* name;

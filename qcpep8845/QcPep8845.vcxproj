@@ -9,6 +9,15 @@
       <Configuration>Release</Configuration>
       <Platform>ARM64</Platform>
     </ProjectConfiguration>
+    <ClCompile Include="..\Framework\PEP\8845\src\footswitch\fs_votes.c">
+      <ObjectFileName>$(IntDir)fs_votes.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\Framework\PEP\8845\src\footswitch\domain_rails.c">
+      <ObjectFileName>$(IntDir)domain_rails.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SystemLibs\clock\8845\src\dispcc.c">
+      <ObjectFileName>$(IntDir)dispcc.obj</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\SystemLibs\RPMh\8845\src\rpmh_sync_deferred.c">
       <ObjectFileName>$(IntDir)rpmh_sync_deferred_6eadcc23.obj</ObjectFileName>
     </ClCompile>
@@ -85,7 +94,7 @@
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
     </DriverSign>
     <Inf>
-      <TimeStamp>700.32000.0.433</TimeStamp>
+      <TimeStamp>700.32000.0.434</TimeStamp>
     </Inf>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
@@ -105,7 +114,7 @@
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
     </DriverSign>
     <Inf>
-      <TimeStamp>700.32000.0.433</TimeStamp>
+      <TimeStamp>700.32000.0.434</TimeStamp>
     </Inf>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -129,6 +138,10 @@
     <ClCompile Include="..\SystemLibs\RPMh\8845\src\sleep_target.c">
       <ObjectFileName>$(IntDir)rpmh_sleep_target.obj</ObjectFileName>
     </ClCompile>
+    <ClInclude Include="..\Framework\PEP\8845\inc\fs_votes.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\domain_rail_io.h" />
+    <ClInclude Include="..\Framework\PEP\8845\inc\domain_rails.h" />
+    <ClInclude Include="..\SystemLibs\clock\8845\inc\dispcc.h" />
     <ClInclude Include="..\SystemLibs\RPMh\8845\inc\sleep.h" />
     <ClCompile Include="..\Framework\PEP\src\driver.c">
       <ObjectFileName>$(IntDir)driver_cddce7a9.obj</ObjectFileName>

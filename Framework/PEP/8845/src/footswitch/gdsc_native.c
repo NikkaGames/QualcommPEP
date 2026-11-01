@@ -137,6 +137,8 @@ static int node_apply(void* ctx, const char* domain, uint64_t epoch, uint32_t ac
         if (!owned(d) || !rails_consistent(d))
             goto lost;
     }
+    if (!enabling && d->notify_enabled && d->notify)
+        d->notify(d->notify_ctx, d->notify_client, domain, action);
     if (action > 2u) {
         if (!apply_hw_control(d, action))
             goto lost;
@@ -154,6 +156,10 @@ static int node_apply(void* ctx, const char* domain, uint64_t epoch, uint32_t ac
         d->rails_held = 0u;
     }
     if (!owned(d) || !rails_consistent(d) || !verify_hw(d, action))
+        goto lost;
+    if (enabling && d->notify_enabled && d->notify)
+        d->notify(d->notify_ctx, d->notify_client, domain, action);
+    if (!owned(d) || !verify_hw(d, action))
         goto lost;
     d->effective_action = normal;
     d->effective_hw_action = hardware;

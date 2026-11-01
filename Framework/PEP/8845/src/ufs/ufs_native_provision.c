@@ -146,7 +146,7 @@ fs_result_t ufs_native_discard_unbound(ufs_native_scope_t* s)
 }
 
 fs_result_t ufs_native_rollback_unpublished(ufs_native_scope_t* s, struct fs_gdsc_driver* d,
-                                            struct ufs_cxmx_owner* rails)
+                                            struct domain_rails* rails)
 {
     if (!s || !d || !rails || s->bound || s->adapter.bound || s->quarantined ||
         s->factory.quarantined || d->quarantined || d->rails_held || d->npa.quarantined ||
@@ -178,7 +178,7 @@ failed:
 /* completes the src-owned NPA node lifetime, not a generic npa_complete_request. A prior
  * OFF vote must already have committed to hardware. */
 fs_result_t ufs_native_retire_verified(ufs_native_scope_t* s, struct fs_gdsc_driver* d,
-                                       struct ufs_cxmx_owner* rails)
+                                       struct domain_rails* rails)
 {
     res_graph_t* graph;
     fs_result_t result = FS_UNSUPPORTED;

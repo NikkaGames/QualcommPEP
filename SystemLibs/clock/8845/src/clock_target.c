@@ -11,6 +11,7 @@ static const clock_window_t windows[CLOCK_CTL_COUNT] = {
     {GCC_WINDOW_PHYS, 0u, GCC_WINDOW_BYTES},
     /* only the HLOS SMMU vote register is mapped here. */
     {UINT64_C(0x03D97000), 0x7000u, 4u},
+    {UINT64_C(0x09BA2000), 0u, 0x20000u},
 };
 
 const clock_window_t* clock_window_get(uint32_t controller)

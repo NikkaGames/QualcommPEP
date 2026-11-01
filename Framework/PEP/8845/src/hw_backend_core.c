@@ -181,8 +181,13 @@ hw_delegation_t win_backend_delegation(const win_backend_t* b, power_action_kind
                     b->io.arc_client && rpmh_execution_ready(b))
                        ? HW_DELEGATION_LIVE
                        : HW_DELEGATION_NOT_ESTABLISHED;
-        case POWER_PSTATE_ADJUST:
         case POWER_FOOTSWITCH:
+            return b->io.domain_known && b->io.domain_apply && b->io.domain_readback &&
+                           b->io.domain_client && b->io.domain_withdraw &&
+                           clock_execution_ready(b) && rpmh_execution_ready(b)
+                       ? HW_DELEGATION_LIVE
+                       : HW_DELEGATION_NOT_ESTABLISHED;
+        case POWER_PSTATE_ADJUST:
             /* nested references execute only through the pinned component owner. */
 
             return HW_DELEGATION_REFUSED_BY_RULE;
@@ -266,6 +271,10 @@ static int validate_action(const power_action_t* a)
         case POWER_NPA:
             return a->u.npa.type == 1u &&
                    valid_resource_name(a->u.npa.name, POWER_NAME_BYTES, "/arc/client/");
+        case POWER_FOOTSWITCH:
+            return valid_resource_name(a->u.footswitch.name, POWER_NAME_BYTES, NULL) &&
+                   a->u.footswitch.action >= 1u && a->u.footswitch.action <= 4u &&
+                   a->u.footswitch.notify <= 1u;
         case POWER_PSTATE_ADJUST:
             return 0; /* never executed by this backend. */
         default:
@@ -284,8 +293,13 @@ static int owner_knows(win_backend_t* b, const power_action_t* a)
         !rpmh_execution_ready(b))
         return 0;
     switch (a->kind) {
+        case POWER_FOOTSWITCH:
+            return b->io.domain_known &&
+                   b->io.domain_known(b->io.ctx, a->u.footswitch.name, a->u.footswitch.action,
+                                      a->u.footswitch.notify);
         case POWER_CLOCK:
-            return !b->io.clock_known || b->io.clock_known(b->io.ctx, a->u.clock.name);
+            return (!b->io.clock_known || b->io.clock_known(b->io.ctx, a->u.clock.name)) &&
+                   (!b->io.clock_supported || b->io.clock_supported(b->io.ctx, a));
         case POWER_ICB:
             return !b->io.bus_route_known ||
                    b->io.bus_route_known(b->io.ctx, a->u.icb.master, a->u.icb.slave);
@@ -313,6 +327,10 @@ static int vote_key(const power_action_t* a, uint32_t* key, const char** n1, con
         case POWER_TLMM_GPIO:
             *key = a->u.gpio.fields[0];
             return 1;
+        case POWER_FOOTSWITCH:
+            *n1 = a->u.footswitch.name;
+            *key = a->u.footswitch.action > 2u;
+            return 1;
         case POWER_CLOCK:
             *n1 = a->u.clock.name;
             return 1;
@@ -336,7 +354,7 @@ static int vote_key(const power_action_t* a, uint32_t* key, const char** n1, con
 static int vote_shaped(uint32_t kind)
 {
     return kind == POWER_CLOCK || kind == POWER_ICB || kind == POWER_PMIC_REGULATOR ||
-           kind == POWER_NPA;
+           kind == POWER_NPA || kind == POWER_FOOTSWITCH;
 }
 
 static last_vote_t* vote_find(win_backend_t* b, const char* path, const power_action_t* a,
@@ -423,6 +441,11 @@ static int readback_action(win_backend_t* b, const power_action_t* a, uint64_t* 
 {
     uint64_t v = 0;
     switch (a->kind) {
+        case POWER_FOOTSWITCH:
+            if (!b->io.domain_readback || !b->io.domain_readback(b->io.ctx, a->u.footswitch.name,
+                                                                 a->u.footswitch.action > 2u, &v))
+                return 0;
+            break;
         case POWER_PMIC_GPIO:
             if (!readback_pmic_gpio(b, a->u.pmic_gpio.fields[0], a->u.pmic_gpio.fields[1], &v))
                 return 0;
@@ -477,6 +500,8 @@ static int readback_action(win_backend_t* b, const power_action_t* a, uint64_t* 
 static int apply_action(win_backend_t* b, const char* path, const power_action_t* a)
 {
     switch (a->kind) {
+        case POWER_FOOTSWITCH:
+            return b->io.domain_apply && b->io.domain_apply(b->io.ctx, path, a);
         case POWER_DELAY:
             return b->io.delay_ms && b->io.delay_ms(b->io.ctx, a->u.delay.ms);
         case POWER_PMIC_GPIO: {
@@ -519,6 +544,10 @@ static int apply_action(win_backend_t* b, const char* path, const power_action_t
 static int withdraw_action(win_backend_t* b, const char* path, const power_action_t* a)
 {
     switch (a->kind) {
+        case POWER_FOOTSWITCH:
+            return b->io.domain_withdraw &&
+                   b->io.domain_withdraw(b->io.ctx, path, a->u.footswitch.name,
+                                         a->u.footswitch.action > 2u);
         case POWER_PMIC_REGULATOR:
             return b->io.pmic_regulator_withdraw &&
                    b->io.pmic_regulator_withdraw(b->io.ctx, path, a->u.pmic_regulator.name);
@@ -577,6 +606,11 @@ static int op_snapshot(void* c, const char* path, uint32_t dstate, const power_a
 
     if (clock_mem_config(a))
         return 1;
+    if (a->kind == POWER_CLOCK && b->io.clock_client_snapshot && b->io.clock_client_restore &&
+        b->io.clock_client_verify) {
+        s->opaque[SN_VOTE_OK] = 2u;
+        return b->io.clock_client_snapshot(b->io.ctx, path, a->u.clock.name, &s->opaque[SN_VOTE0]);
+    }
     prior = vote_prior(b, path, a);
     if (prior) {
         const power_action_t* p = &prior->action;
@@ -609,6 +643,9 @@ static int op_snapshot(void* c, const char* path, uint32_t dstate, const power_a
                 s->opaque[SN_VOTE0 + 0] = p->u.icb.average;
                 s->opaque[SN_VOTE0 + 1] = p->u.icb.peak;
                 s->opaque[SN_VOTE0 + 2] = pack2(p->u.icb.client, 0u);
+                break;
+            case POWER_FOOTSWITCH:
+                s->opaque[SN_VOTE0] = pack2(p->u.footswitch.action, p->u.footswitch.notify);
                 break;
             case POWER_NPA:
                 s->opaque[SN_VOTE0] = pack2(p->u.npa.level, p->u.npa.type);
@@ -661,6 +698,12 @@ static int op_verify(void* c, const char* path, uint32_t dstate, const power_act
         return 1;
     }
     switch (a->kind) {
+        case POWER_FOOTSWITCH: {
+            uint32_t action, notify;
+            return b->io.domain_client(b->io.ctx, path, a->u.footswitch.name,
+                                       a->u.footswitch.action > 2u, &action, &notify) &&
+                   action == a->u.footswitch.action && notify == a->u.footswitch.notify;
+        }
         case POWER_NPA: {
             uint32_t level;
             return b->io.arc_client && b->io.arc_client(b->io.ctx, path, a->u.npa.name, &level) &&
@@ -709,6 +752,28 @@ static int op_restore(void* c, const char* path, uint32_t dstate, const power_ac
         return 1;
     }
     memcpy(&prior, a, sizeof(prior));
+    if (a->kind == POWER_CLOCK && s->opaque[SN_VOTE_OK] == 2u) {
+        uint64_t client = s->opaque[SN_VOTE0];
+        if (!b->io.clock_client_restore ||
+            !b->io.clock_client_restore(b->io.ctx, path, a->u.clock.name, &s->opaque[SN_VOTE0],
+                                        s->opaque[SN_READ])) {
+            diag_bump(b->diag.restore_failed, (uint32_t)a->kind);
+            return 0;
+        }
+        if (client >> 63) {
+            uint32_t enabled = (uint32_t)(client >> 32) & 1u;
+            uint32_t hz = (uint32_t)client;
+            memset(prior.u.clock.extra, 0, sizeof(prior.u.clock.extra));
+            prior.u.clock.extra_cnt = hz ? 2u : 0u;
+            prior.u.clock.extra[0] = hz;
+            prior.u.clock.extra[1] = hz ? 1u : 0u;
+            prior.u.clock.vote = enabled ? (hz ? 8u : 1u) : (hz ? 3u : 2u);
+            vote_record(b, path, &prior);
+        } else
+            vote_forget(b, path, a);
+        diag_bump(b->diag.restored, (uint32_t)a->kind);
+        return 1;
+    }
     if (s->opaque[SN_VOTE_OK]) {
         /* re-issue the exact vote this client issued before. */
         switch (a->kind) {
@@ -747,6 +812,10 @@ static int op_restore(void* c, const char* path, uint32_t dstate, const power_ac
                 prior.u.icb.average = s->opaque[SN_VOTE0 + 0];
                 prior.u.icb.peak = s->opaque[SN_VOTE0 + 1];
                 prior.u.icb.client = lo32(s->opaque[SN_VOTE0 + 2]);
+                break;
+            case POWER_FOOTSWITCH:
+                prior.u.footswitch.action = lo32(s->opaque[SN_VOTE0]);
+                prior.u.footswitch.notify = hi32(s->opaque[SN_VOTE0]);
                 break;
             case POWER_NPA:
                 prior.u.npa.level = lo32(s->opaque[SN_VOTE0]);
@@ -825,12 +894,24 @@ static int op_verify_restored(void* c, const char* path, uint32_t dstate, const 
      * transaction touched this res. Byte equality is a valid check even for an opaque
      * readback. */
 
+    if (a->kind == POWER_CLOCK && !clock_mem_config(a) && s->opaque[SN_VOTE_OK] == 2u)
+        return b->io.clock_client_verify &&
+               b->io.clock_client_verify(b->io.ctx, path, a->u.clock.name, &s->opaque[SN_VOTE0],
+                                         s->opaque[SN_READ]);
     if (!readback_action(b, a, &now, 0))
         return 0;
     if (a->kind == POWER_NPA) {
         uint32_t level, prior = s->opaque[SN_VOTE_OK] ? lo32(s->opaque[SN_VOTE0]) : 0u;
         return b->io.arc_client && b->io.arc_client(b->io.ctx, path, a->u.npa.name, &level) &&
                (prior ? level >= prior : level == 0u) && now >= level;
+    }
+    if (a->kind == POWER_FOOTSWITCH) {
+        uint32_t action, notify;
+        uint32_t prior = s->opaque[SN_VOTE_OK] ? lo32(s->opaque[SN_VOTE0]) : 0u;
+        return b->io.domain_client(b->io.ctx, path, a->u.footswitch.name,
+                                   a->u.footswitch.action > 2u, &action, &notify) &&
+               action == prior && (!prior || notify == hi32(s->opaque[SN_VOTE0])) &&
+               now == s->opaque[SN_READ];
     }
     return now == s->opaque[SN_READ];
 }
@@ -882,6 +963,12 @@ static int op_verify_final(void* c, const char* path, uint32_t dstate,
                 last = 0;
                 break;
             }
+            if (a->kind == POWER_FOOTSWITCH &&
+                (a->u.footswitch.action > 2u) == (o->u.footswitch.action > 2u) &&
+                same_str(a->u.footswitch.name, o->u.footswitch.name)) {
+                last = 0;
+                break;
+            }
             if (a->kind == POWER_ICB && same_str(o->u.icb.master, a->u.icb.master) &&
                 same_str(o->u.icb.slave, a->u.icb.slave)) {
                 last = 0;
@@ -892,7 +979,7 @@ static int op_verify_final(void* c, const char* path, uint32_t dstate,
             continue;
         if (!readback_action(b, a, &read, &eff))
             return 0;
-        if (a->kind == POWER_NPA && !op_verify(c, path, dstate, a))
+        if ((a->kind == POWER_NPA || a->kind == POWER_FOOTSWITCH) && !op_verify(c, path, dstate, a))
             return 0;
         if (clock_mem_config(a) && read != 1u)
             return 0;
@@ -914,6 +1001,13 @@ static int op_release(void* c, const char* path, const power_action_t* a)
         !readback_action(b, a, &read, NULL))
         return 0;
     switch (a->kind) {
+        case POWER_FOOTSWITCH: {
+            uint32_t notify;
+            released = b->io.domain_client(b->io.ctx, path, a->u.footswitch.name,
+                                           a->u.footswitch.action > 2u, &level, &notify) &&
+                       !level;
+            break;
+        }
         case POWER_CLOCK:
             released =
                 b->io.clock_has_vote && !b->io.clock_has_vote(b->io.ctx, path, a->u.clock.name);

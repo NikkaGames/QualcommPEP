@@ -18,6 +18,7 @@ typedef struct mmio_window {
 typedef struct mmio {
     mmio_window_t gcc;
     mmio_window_t gpucc;
+    mmio_window_t dispcc, disp_crm, disp_crm_common;
     mmio_window_t tlmm;
     mmio_window_t rsc;
 } mmio_t;
