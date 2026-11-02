@@ -4,9 +4,18 @@
 #include <string.h>
 static const molokai_gdsc_location_t verified[] = {
     {"gcc_ufs_phy_gdsc", OEM_UFS_PHY_DOMAIN_ID, GCC_WINDOW_PHYS, GCC_WINDOW_BYTES, 0x77004u,
-     UINT64_C(0x00177004)},
+     UINT64_C(0x00177004), RAIL_VDD_CX | RAIL_VDD_MX, 1u},
     {"disp_cc_mdss_core_gdsc", 0x00020006u, DISP_CC_PHYS, DISP_CC_BYTES, DISP_CORE_GDSCR_OFFSET,
-     DISP_CORE_GDSCR_PHYS}};
+     DISP_CORE_GDSCR_PHYS, RAIL_VDD_MM | RAIL_VDD_MX, 0u},
+    {"gcc_pcie_0_gdsc", 0xC1C9C0D4u, GCC_WINDOW_PHYS, GCC_WINDOW_BYTES, 0x6B004u,
+     UINT64_C(0x0016B004), RAIL_VDD_CX | RAIL_VDD_MX, 0u},
+    {"gcc_pcie_0_phy_gdsc", 0x2AE8F85Bu, GCC_WINDOW_PHYS, GCC_WINDOW_BYTES, 0x6C000u,
+     UINT64_C(0x0016C000), RAIL_VDD_CX | RAIL_VDD_MX, 0u}};
+
+const molokai_gdsc_location_t* molokai_gdsc_at(uint32_t index)
+{
+    return index < sizeof(verified) / sizeof(verified[0]) ? &verified[index] : NULL;
+}
 
 int molokai_gdsc_location(const char* domain, molokai_gdsc_location_t* out)
 {

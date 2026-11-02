@@ -71,6 +71,7 @@ VOID mmio_unmap(_Inout_ mmio_t* mmio)
     unmap_one(&mmio->disp_crm);
     unmap_one(&mmio->dispcc);
     unmap_one(&mmio->gpucc);
+    unmap_one(&mmio->tcsr);
     unmap_one(&mmio->gcc);
 }
 
@@ -108,7 +109,7 @@ NTSTATUS mmio_d0_map_peripherals(_Inout_ mmio_t* mmio)
         return STATUS_INVALID_PARAMETER;
     if (KeGetCurrentIrql() != PASSIVE_LEVEL)
         return STATUS_INVALID_DEVICE_STATE;
-    if (mmio->gcc.base || mmio->tlmm.base || mmio->gpucc.base || mmio->dispcc.base ||
+    if (mmio->gcc.base || mmio->tlmm.base || mmio->gpucc.base || mmio->tcsr.base || mmio->dispcc.base ||
         mmio->disp_crm.base || mmio->disp_crm_common.base)
         return STATUS_DEVICE_BUSY;
     /* never disturb the separate RSC d0 mapping. */
@@ -138,6 +139,15 @@ NTSTATUS mmio_d0_map_peripherals(_Inout_ mmio_t* mmio)
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_RESOURCE,
                 "mmio: GCC/TLMM mapped GPLL0=%08lX GPIO52=%08lX attestation=pending", gcc_a, pin_a);
     map_gpucc_vote(mmio);
+    {
+        const clock_window_t* window = clock_window_get(CLOCK_CTL_TCSR);
+        NTSTATUS status = window ? map_one(&mmio->tcsr, window->physical, window->bytes,
+                                           PAGE_READWRITE | PAGE_NOCACHE)
+                                 : STATUS_NOT_FOUND;
+        if (!NT_SUCCESS(status))
+            TraceEvents(TRACE_LEVEL_WARNING, TRACE_CLOCK,
+                        "clock: TCSR mapping unavailable status=%08X", status);
+    }
     {
         const clock_window_t* window = clock_window_get(CLOCK_CTL_DISPCC);
         NTSTATUS display = window ? map_one(&mmio->dispcc, window->physical, window->bytes,
@@ -172,6 +182,7 @@ VOID mmio_d0_unmap_peripherals(_Inout_ mmio_t* mmio)
     unmap_one(&mmio->disp_crm);
     unmap_one(&mmio->dispcc);
     unmap_one(&mmio->gpucc);
+    unmap_one(&mmio->tcsr);
     unmap_one(&mmio->gcc);
 }
 

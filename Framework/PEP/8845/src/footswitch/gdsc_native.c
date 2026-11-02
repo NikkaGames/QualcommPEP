@@ -48,13 +48,28 @@ static uint32_t decode_action(uint32_t value, uint32_t family)
 
 static int read_hw(fs_gdsc_driver_t* d, uint32_t family, uint32_t* action)
 {
-    uint32_t a, b, observed;
+    uint32_t a, b, observed, vote_a, vote_b;
     if (!action || family > 1u || !owned(d) || !d->clock || !d->io.read32 ||
         (family && !supports_hw_control(d)) ||
         !d->io.read32(d->io.ctx, d->clock->gdscr_offset, &a) ||
         !d->io.read32(d->io.ctx, d->clock->gdscr_offset, &b) || a == UINT32_MAX ||
         b == UINT32_MAX || ((a ^ b) & (GDSCR_SW_COLLAPSE | GDSCR_HW_CONTROL)) || !owned(d))
         return 0;
+    if (!family && d->clock->vote_offset && d->clock->vote_mask) {
+        if (!d->io.read32(d->io.ctx, d->clock->vote_offset, &vote_a) ||
+            !d->io.read32(d->io.ctx, d->clock->vote_offset, &vote_b) ||
+            vote_a == UINT32_MAX || vote_b == UINT32_MAX ||
+            ((vote_a ^ vote_b) & d->clock->vote_mask) || !owned(d))
+            return 0;
+        if (vote_b & d->clock->vote_mask)
+            observed = FS_DISABLE;
+        else if ((a & GDSCR_PWR_ON) && (b & GDSCR_PWR_ON))
+            observed = FS_ENABLE;
+        else
+            return 0;
+        *action = observed;
+        return 1;
+    }
     /* power status may change after the collapse request is accepted. */
     observed = decode_action(a, family);
     if (!observed || observed != decode_action(b, family))
@@ -183,8 +198,7 @@ int fs_gdsc_init_window_with_rails(fs_gdsc_driver_t* d, const gcc_io_t* io, cons
         !io->stall_microseconds || !valid_identifier(domain, FS_NAME_BYTES) || !owns || !epoch ||
         !id || !owns(owner, domain, epoch) || !molokai_gdsc_location(domain, &location) ||
         (!rails || !rails->acquire_votes || !rails->verify_votes || !rails->release_votes ||
-         rails->rail_mask != (!strcmp(domain, clock_ufs_domain) ? (RAIL_VDD_CX | RAIL_VDD_MX)
-                                                                : (RAIL_VDD_MM | RAIL_VDD_MX)) ||
+         rails->rail_mask != location.rail_mask ||
          !rails->verify_votes(rails->ctx, domain, epoch, 0u)) ||
         location.native_clock_id != id || location.controller_physical != window_phys ||
         location.controller_bytes != window_bytes ||
@@ -195,7 +209,7 @@ int fs_gdsc_init_window_with_rails(fs_gdsc_driver_t* d, const gcc_io_t* io, cons
     gcc = gcc_find_clock(domain);
     if (gcc) {
         if (gcc->kind != GCC_KIND_GDSC || gcc->gdscr_offset != location.gdscr_offset ||
-            (gcc->vote_offset && gcc->vote_mask))
+            (!!gcc->vote_offset != !!gcc->vote_mask))
             return 0;
         local = *gcc;
     } else if (!strcmp(domain, "disp_cc_mdss_core_gdsc")) {

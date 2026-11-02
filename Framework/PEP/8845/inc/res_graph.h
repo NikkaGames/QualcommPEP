@@ -13,6 +13,7 @@ extern "C" {
 #define GRAPH_MAX_DEVICES 32u
 #define GRAPH_PROVIDER_CNT POWER_KIND_COUNT
 #define GRAPH_SRC_MAX 32u
+#define GRAPH_DOMAIN_PROVIDERS 8u
 
 typedef struct graph_desc {
     char method[5];
@@ -62,6 +63,11 @@ typedef struct graph_dev {
 typedef struct res_graph {
     graph_dev_t devices[GRAPH_MAX_DEVICES];
     graph_provider_t providers[GRAPH_PROVIDER_CNT];
+    struct {
+        char name[POWER_NAME_BYTES];
+        graph_provider_t provider;
+    } domains[GRAPH_DOMAIN_PROVIDERS];
+    uint32_t domain_count;
     void* lock_ctx;
     int (*acquire)(void*);
     void (*release)(void*);
@@ -109,6 +115,7 @@ typedef struct res_graph {
 void graph_init(res_graph_t*, void*, int (*)(void*), void (*)(void*));
 int graph_add_sequence(res_graph_t*, const power_sequence_t*);
 int graph_bind(res_graph_t*, power_action_kind_t, const graph_provider_t*);
+int graph_bind_domain(res_graph_t*, const char*, const graph_provider_t*);
 int graph_seal(res_graph_t*);
 int graph_has_d_state(const graph_dev_t*, uint32_t state);
 int graph_d_state_declared(res_graph_t*, const char*, uint32_t state);

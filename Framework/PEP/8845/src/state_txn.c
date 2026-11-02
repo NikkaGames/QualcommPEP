@@ -189,8 +189,6 @@ static int compile_action(const aeob_action_t* a, void* ctx)
             return 0;
         out->u.npa.level = (uint32_t)n;
     } else if (strcmp(a->kind, "FOOTSWITCH") == 0) {
-        if (!build->comp_p_state)
-            return 0;
         out->kind = POWER_FOOTSWITCH;
         if (!next_string(a->arguments, a->argument_bytes, &pos, out->u.footswitch.name,
                          sizeof(out->u.footswitch.name)) ||

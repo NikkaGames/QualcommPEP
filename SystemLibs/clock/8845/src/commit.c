@@ -9,6 +9,11 @@
 
 #define GCC_VOTE_VERIFY_POLLS 2000u
 
+static int request_only(const gcc_clock_t* clock)
+{
+    return clock->kind == GCC_KIND_REQ || clock->kind == GCC_KIND_VOTE_REQ;
+}
+
 static int same_observation(const gcc_state_t* a, const gcc_state_t* b)
 {
     uint32_t cbcr_mask = 0xffffffffu;
@@ -30,7 +35,7 @@ static int same_vote_observation(const gcc_clock_t* clock, const gcc_state_t* a,
                                  const gcc_state_t* b)
 {
     gcc_state_t x, y;
-    if (clock->kind != GCC_KIND_REQ)
+    if (!request_only(clock))
         return same_observation(a, b);
     x = *a;
     y = *b;
@@ -52,7 +57,7 @@ gcc_commit_result_t gcc_verify_retained_vote(const gcc_io_t* io, const gcc_clock
     uint32_t mask;
     if (!io || !io->read32 || !clock ||
         (clock->kind != GCC_KIND_BRANCH && clock->kind != GCC_KIND_VOTE &&
-         clock->kind != GCC_KIND_REQ))
+         !request_only(clock)))
         return GCC_COMMIT_DECLINED;
     if (gcc_readback(io, clock, &a) != GCC_OK || gcc_readback(io, clock, &b) != GCC_OK ||
         !a.enabled || !b.enabled)
@@ -67,11 +72,11 @@ gcc_commit_result_t gcc_verify_retained_vote(const gcc_io_t* io, const gcc_clock
     if ((a.cbcr & CBCR_CLK_HW_CTL) != (b.cbcr & CBCR_CLK_HW_CTL))
         return GCC_COMMIT_DECLINED;
     mask = (a.cbcr & CBCR_CLK_HW_CTL) ? 0x7fffffffu : 0xffffffffu;
-    if (clock->kind == GCC_KIND_REQ)
+    if (request_only(clock))
         mask &= ~CBCR_CLK_OFF_MASK;
     if ((a.cbcr & mask) != (b.cbcr & mask))
         return GCC_COMMIT_DECLINED;
-    if (clock->kind != GCC_KIND_REQ && !(a.cbcr & CBCR_CLK_HW_CTL) && (!a.on || !b.on))
+    if (!request_only(clock) && !(a.cbcr & CBCR_CLK_HW_CTL) && (!a.on || !b.on))
         return GCC_COMMIT_DECLINED;
     return GCC_COMMIT_OK;
 }
@@ -165,7 +170,7 @@ gcc_commit_result_t gcc_commit_branch_vote_ex(const gcc_io_t* io, const gcc_cloc
     if (!io || !io->read32 || !io->write32 || !io->barrier || !io->stall_microseconds || !clock ||
         !programmed_hz || (enable != 0 && enable != 1) ||
         (clock->kind != GCC_KIND_BRANCH && clock->kind != GCC_KIND_VOTE &&
-         clock->kind != GCC_KIND_REQ))
+         !request_only(clock)))
         return GCC_COMMIT_DECLINED;
 
     if (requested_hz && gcc_select_freq(clock, requested_hz, &selected) != GCC_OK)
@@ -249,7 +254,7 @@ gcc_commit_result_t gcc_commit_branch_vote_ex(const gcc_io_t* io, const gcc_cloc
             }
             if (same_vote_observation(clock, &after1, &after2) && (int)after1.enabled == enable &&
                 (int)after2.enabled == enable &&
-                (!enable || clock->kind == GCC_KIND_REQ || after2.on ||
+                (!enable || request_only(clock) || after2.on ||
                  (after2.cbcr & CBCR_CLK_HW_CTL)) &&
                 (!selected || (after1.hz == target_hz && after2.hz == target_hz)))
                 break;

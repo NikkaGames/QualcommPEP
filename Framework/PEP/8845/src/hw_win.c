@@ -137,6 +137,7 @@ typedef struct owners {
     rpmh_deferred_scheduler_t deferred_scheduler;
     gcc_io_t gcc_io;
     gcc_io_t gpucc_io;
+    gcc_io_t tcsr_io;
     dispcc_t display;
     tlmm_io_t tlmm_io;
     rpmh_tcs_t rpmh;
@@ -154,6 +155,11 @@ typedef struct owners {
     fs_gdsc_driver_t display_domain;
     domain_rails_t display_rails;
     fs_votes_t display_domain_votes;
+    struct {
+        fs_gdsc_driver_t driver;
+        domain_rails_t rails;
+        fs_votes_t votes;
+    } pcie_domains[2];
     PCALLBACK_OBJECT domain_notification;
     ufs_native_scope_t ufs_native;
     group_vote_t* ufs_group_votes[2]; /* desc sets 1 and 2 */
@@ -261,6 +267,22 @@ static int gpucc_write(void* ctx, uint32_t offset, uint32_t value)
            mmio_write32(&o->mmio.gpucc, relative, value);
 }
 
+static int tcsr_read(void* ctx, uint32_t offset, uint32_t* value)
+{
+    owners_t* o = ctx;
+    uint32_t relative;
+    return o && clock_window_offset(CLOCK_CTL_TCSR, offset, &relative) &&
+           mmio_read32(&o->mmio.tcsr, relative, (ULONG*)value);
+}
+
+static int tcsr_write(void* ctx, uint32_t offset, uint32_t value)
+{
+    owners_t* o = ctx;
+    uint32_t relative;
+    return o && clock_window_offset(CLOCK_CTL_TCSR, offset, &relative) &&
+           mmio_write32(&o->mmio.tcsr, relative, value);
+}
+
 static int dispcc_read32(void* ctx, uint32_t offset, uint32_t* value)
 {
     return mmio_read32(&((owners_t*)ctx)->mmio.dispcc, offset, (ULONG*)value);
@@ -301,6 +323,11 @@ static const gcc_io_t* clock_io(owners_t* o, const gcc_clock_t* clock)
             return o->mmio.gpucc.base && o->mmio.gpucc.physical == window->physical &&
                            o->mmio.gpucc.bytes == window->bytes
                        ? &o->gpucc_io
+                       : NULL;
+        case CLOCK_CTL_TCSR:
+            return o->mmio.tcsr.base && o->mmio.tcsr.physical == window->physical &&
+                           o->mmio.tcsr.bytes == window->bytes
+                       ? &o->tcsr_io
                        : NULL;
         case CLOCK_CTL_DISPCC:
             return o->mmio.dispcc.base && o->mmio.dispcc.physical == window->physical &&
@@ -2584,6 +2611,12 @@ static void native_domains_bind(owners_t* o)
                                                {"mmcx.lvl", "mx.lvl"},
                                                {0x30u, 0x30u},
                                                RAIL_VDD_MM | RAIL_VDD_MX};
+    static const domain_rail_spec_t pcie[] = {
+        {"gcc_pcie_0_gdsc", "pcie_core", {"cx.lvl", "mx.lvl"},
+         {0x40u, 0x40u}, RAIL_VDD_CX | RAIL_VDD_MX},
+        {"gcc_pcie_0_phy_gdsc", "pcie_phy", {"cx.lvl", "mx.lvl"},
+         {0x40u, 0x40u}, RAIL_VDD_CX | RAIL_VDD_MX},
+    };
     domain_rail_io_t io = {0};
     fs_gdsc_rail_provider_t rails = {0};
     molokai_gdsc_location_t location;
@@ -2622,12 +2655,47 @@ static void native_domains_bind(owners_t* o)
         TraceEvents(TRACE_LEVEL_WARNING, TRACE_RESOURCE,
                     "footswitch: domain=%s client owner unavailable", display.domain);
 done:
+    io.ctx = o;
+    io.owns_domain = native_domain_owns;
+    io.owner_epoch = native_domain_epoch;
+    io.rail_resolved = native_rail_resolve;
+    io.read_client_vote = native_rail_client;
+    io.read_physical = native_rail_physical;
+    io.vote = native_rail_vote;
+    io.withdraw = native_rail_withdraw;
+    for (ULONG i = 0u; i < RTL_NUMBER_OF(pcie); ++i) {
+        fs_gdsc_driver_t* driver = &o->pcie_domains[i].driver;
+        domain_rails_t* supply = &o->pcie_domains[i].rails;
+        fs_votes_t* votes = &o->pcie_domains[i].votes;
+        RtlZeroMemory(&rails, sizeof(rails));
+        if (votes->bound || driver->bound ||
+            !native_domain_owns(o, pcie[i].domain, o->os_rsc_lease.owner_epoch) ||
+            !molokai_gdsc_location(pcie[i].domain, &location))
+            continue;
+        if (!domain_rails_bind(supply, &pcie[i], &io, o->os_rsc_lease.owner_epoch) ||
+            !domain_rails_provider(supply, &rails) ||
+            !fs_gdsc_init_window_with_rails(driver, &o->gcc_io, pcie[i].domain,
+                                            location.native_clock_id,
+                                            location.controller_physical,
+                                            location.controller_bytes, o, native_domain_owns,
+                                            o->os_rsc_lease.owner_epoch, &rails)) {
+            TraceEvents(TRACE_LEVEL_WARNING, TRACE_RESOURCE,
+                        "footswitch: domain=%s provider unavailable", pcie[i].domain);
+            continue;
+        }
+        driver->notify_ctx = o;
+        driver->notify = o->domain_notification ? native_domain_notify : NULL;
+        if (!fs_votes_bind(votes, driver))
+            TraceEvents(TRACE_LEVEL_WARNING, TRACE_RESOURCE,
+                        "footswitch: domain=%s client owner unavailable", pcie[i].domain);
+    }
     owners_unlock(o);
 }
 
 static fs_votes_t* native_domain_votes(owners_t* o, const char* name)
 {
-    fs_votes_t* domains[] = {&o->ufs_domain_votes, &o->display_domain_votes};
+    fs_votes_t* domains[] = {&o->ufs_domain_votes, &o->display_domain_votes,
+                             &o->pcie_domains[0].votes, &o->pcie_domains[1].votes};
     ULONG i;
     for (i = 0u; i < RTL_NUMBER_OF(domains); ++i)
         if (domains[i]->bound && !domains[i]->quarantined &&
@@ -2708,11 +2776,23 @@ static int win_io_domain_withdraw(void* ctx, const char* path, const char* name,
     return ok;
 }
 
-static int native_display_retained(const owners_t* o)
+static int native_domains_retained(const owners_t* o)
 {
     ULONG i;
     if (!o)
         return 0;
+    for (i = 0u; i < RTL_NUMBER_OF(o->pcie_domains); ++i) {
+        const fs_gdsc_driver_t* driver = &o->pcie_domains[i].driver;
+        const fs_votes_t* votes = &o->pcie_domains[i].votes;
+        const domain_rails_t* rails = &o->pcie_domains[i].rails;
+        if (driver->quarantined || driver->npa.quarantined || votes->quarantined ||
+            rails->held || rails->quarantined || votes->restore[0].bound ||
+            votes->restore[1].bound)
+            return 1;
+        for (ULONG j = 0u; j < FS_VOTE_CLIENTS; ++j)
+            if (votes->clients[j].used)
+                return 1;
+    }
     if (o->display.quarantined || o->display_rails.held || o->display_rails.quarantined ||
         o->display_domain.quarantined || o->display_domain.npa.quarantined ||
         o->display_domain_votes.quarantined)
@@ -3645,7 +3725,7 @@ static int arc_retire_all(owners_t* o)
 {
     uint32_t i;
     int ok = 1;
-    if (!o || o->ufs_rail_owner.bound || o->ufs_rail_owner.held || native_display_retained(o))
+    if (!o || o->ufs_rail_owner.bound || o->ufs_rail_owner.held || native_domains_retained(o))
         return 0;
     for (i = 0u; i < ARC_RAIL_MAX && !o->arc_rails[i].bound; ++i) {
     }
@@ -4140,7 +4220,7 @@ static VOID owners_destroy(owners_t* o)
     /* the WDF/PnP owner has not yet supplied a complete worker/ISR teardown proof. Never
      * release bound storage. */
 
-    if (native_display_retained(o) || o->sleep.bound || o->sleep.frozen || o->sleep.faulted ||
+    if (native_domains_retained(o) || o->sleep.bound || o->sleep.frozen || o->sleep.faulted ||
         ufs_native_retains_graph(&o->ufs_native) || o->ufs_group_bridge || o->ufs_group_votes[0] ||
         o->ufs_group_votes[1] || o->ufs_rail_owner.held || o->ufs_owner_uncertain ||
         o->rpmh_irq_pipeline.bound || o->rpmh_irq_pipeline.faulted ||
@@ -4287,6 +4367,9 @@ static owners_t* owners_create(VOID)
     o->gpucc_io = o->gcc_io;
     o->gpucc_io.read32 = gpucc_read;
     o->gpucc_io.write32 = gpucc_write;
+    o->tcsr_io = o->gcc_io;
+    o->tcsr_io.read32 = tcsr_read;
+    o->tcsr_io.write32 = tcsr_write;
     o->display.clocks = o->gcc_io;
     o->display.clocks.read32 = dispcc_read32;
     o->display.clocks.write32 = dispcc_write32;
@@ -5818,7 +5901,7 @@ NTSTATUS hw_backend_win_d0_quiesce(_In_ WDFDEVICE dev)
                     o->ufs_scalar_catalog || o->ufs_scalar_owner || o->ufs_group_bridge ||
                     o->ufs_group_votes[0] || o->ufs_group_votes[1] || o->ufs_ice_config.saved ||
                     o->ufs_rail_owner.held || o->ufs_owner_uncertain ||
-                    native_display_retained(o)) {
+                    native_domains_retained(o)) {
                     g_quarantined_rsc_owner = o;
                     status = STATUS_DEVICE_BUSY;
                     TraceEvents(TRACE_LEVEL_WARNING, TRACE_RESOURCE,
@@ -6056,7 +6139,7 @@ NTSTATUS hw_backend_win_d0_unmap_rsc(_In_ WDFDEVICE dev)
     o = inst && inst->io.dev == dev ? inst->io.owners : NULL;
     if (o && (ufs_native_retains_graph(&o->ufs_native) || o->ufs_group_bridge ||
               o->ufs_group_votes[0] || o->ufs_group_votes[1] || o->ufs_rail_owner.held ||
-              o->ufs_owner_uncertain || native_display_retained(o))) {
+              o->ufs_owner_uncertain || native_domains_retained(o))) {
         g_quarantined_rsc_owner = o;
         TraceEvents(TRACE_LEVEL_WARNING, TRACE_POWER,
                     "footswitch: unmap rejected epoch=%llX UFS-client=%llX uncertain=%u",
@@ -6464,7 +6547,7 @@ fail: {
     BOOLEAN preload_retained = graph && graph->preloads && !preload_win_abort(graph);
     fs_retained =
         owner && (ufs_native_retains_graph(&owner->ufs_native) || owner->ufs_rail_owner.held ||
-                  owner->ufs_owner_uncertain || native_display_retained(owner));
+                  owner->ufs_owner_uncertain || native_domains_retained(owner));
 
     if (preload_retained) {
         g_quarantined_preload_graph = graph;

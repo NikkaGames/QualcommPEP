@@ -548,13 +548,13 @@ const gcc_clock_t gcc_clocks[] = {
     {"gcc_mmu_tcu_vote_gds", GCC_KIND_GDSC, 0x0u, 0x0u, 0x0u, -1, 0x7D068u, 0x0u, CLOCK_CTL_GCC},
     {"gcc_pcie_0_aux_clk", GCC_KIND_VOTE, 0x6B044u, 0x52008u, 0x8u, 14, 0x0u, 0x6B000u, CLOCK_CTL_GCC},
     {"gcc_pcie_0_cfg_ahb_clk", GCC_KIND_VOTE, 0x6B040u, 0x52008u, 0x4u, 3, 0x0u, 0x6B000u, CLOCK_CTL_GCC},
-    {"gcc_pcie_0_gdsc", GCC_KIND_GDSC, 0x0u, 0x0u, 0x0u, -1, 0x6B004u, 0x0u, CLOCK_CTL_GCC},
+    {"gcc_pcie_0_gdsc", GCC_KIND_GDSC, 0x0u, 0x5214Cu, 0x1u, -1, 0x6B004u, 0x0u, CLOCK_CTL_GCC},
     {"gcc_pcie_0_mstr_axi_clk", GCC_KIND_VOTE, 0x6B030u, 0x52008u, 0x2u, 0, 0x0u, 0x6B000u, CLOCK_CTL_GCC},
     {"gcc_pcie_0_phy_aux_clk", GCC_KIND_VOTE, 0x6B054u, 0x52018u, 0x80000000u, 15, 0x0u, 0x6B000u, CLOCK_CTL_GCC},
-    {"gcc_pcie_0_phy_gdsc", GCC_KIND_GDSC, 0x0u, 0x0u, 0x0u, -1, 0x6C000u, 0x0u, CLOCK_CTL_GCC},
+    {"gcc_pcie_0_phy_gdsc", GCC_KIND_GDSC, 0x0u, 0x5214Cu, 0x4u, -1, 0x6C000u, 0x0u, CLOCK_CTL_GCC},
     {"gcc_pcie_0_phy_rchng_clk", GCC_KIND_VOTE, 0x6B074u, 0x52000u, 0x400000u, 16, 0x0u, 0x6B000u, CLOCK_CTL_GCC},
-    {"gcc_pcie_0_pipe_clk", GCC_KIND_VOTE, 0x6B064u, 0x52008u, 0x10u, 17, 0x0u, 0x6B000u, CLOCK_CTL_GCC},
-    {"gcc_pcie_0_pipe_div2_clk", GCC_KIND_VOTE, 0x6B0D8u, 0x52028u, 0x10u, 17, 0x0u, 0x6B000u, CLOCK_CTL_GCC},
+    {"gcc_pcie_0_pipe_clk", GCC_KIND_VOTE_REQ, 0x6B064u, 0x52008u, 0x10u, 17, 0x0u, 0x6B000u, CLOCK_CTL_GCC},
+    {"gcc_pcie_0_pipe_div2_clk", GCC_KIND_VOTE_REQ, 0x6B0D8u, 0x52028u, 0x10u, 17, 0x0u, 0x6B000u, CLOCK_CTL_GCC},
     {"gcc_pcie_0_slv_axi_clk", GCC_KIND_VOTE, 0x6B020u, 0x52008u, 0x1u, 18, 0x0u, 0x6B000u, CLOCK_CTL_GCC},
     {"gcc_pcie_0_slv_q2a_axi_clk", GCC_KIND_VOTE, 0x6B01Cu, 0x52008u, 0x20u, 18, 0x0u, 0x6B000u, CLOCK_CTL_GCC},
     {"gcc_pcie_rscc_ahb_clk", GCC_KIND_VOTE, 0x11004u, 0x52010u, 0x100000u, 3, 0x0u, 0x11000u, CLOCK_CTL_GCC},
@@ -730,6 +730,7 @@ const gcc_clock_t gcc_clocks[] = {
     {"disp_cc_pll_test_clk", GCC_KIND_BRANCH, 0xD010u, 0u, 0u, -1, 0u, 0u, CLOCK_CTL_DISPCC},
     {"disp_cc_mdss_accu_shift_clk", GCC_KIND_BRANCH, 0xE060u, 0u, 0u, -1, 0u, 0u, CLOCK_CTL_DISPCC},
     {"disp_cc_xo_clk", GCC_KIND_BRANCH, 0xE05Cu, 0u, 0u, -1, 0u, 0u, CLOCK_CTL_DISPCC},
+    {"tcsr_pcie_0_clkref_en", GCC_KIND_REQ, 0x44u, 0u, 0u, -1, 0u, 0u, CLOCK_CTL_TCSR},
 };
 const unsigned int gcc_clock_cnt = sizeof(gcc_clocks) / sizeof(gcc_clocks[0]);
 

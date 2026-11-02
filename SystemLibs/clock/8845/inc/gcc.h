@@ -52,11 +52,14 @@ typedef struct gcc_domain {
 /* Request-only branches verify the retained enable bit. Downstream CLK_OFF can depend
  * on a peripheral or another hardware owner. */
 #define GCC_KIND_REQ 4u
+/* The consumer controls the source; verify the shared request without waiting for CLK_ON. */
+#define GCC_KIND_VOTE_REQ 5u
 
 #define CLOCK_CTL_GCC 0u
 #define CLOCK_CTL_GPUCC 1u
 #define CLOCK_CTL_DISPCC 2u
-#define CLOCK_CTL_COUNT 3u
+#define CLOCK_CTL_TCSR 3u
+#define CLOCK_CTL_COUNT 4u
 
 typedef struct gcc_clock {
     const char* name;

@@ -261,7 +261,7 @@ malformed:
     return 0;
 }
 
-static int validate_comp_action(const aeob_action_t* a, void* ctx)
+static int validate_resource_action(const aeob_action_t* a, void* ctx)
 {
     aeob_validation_t* v = (aeob_validation_t*)ctx;
     aeob_param_t p;
@@ -301,7 +301,7 @@ aeob_status_t aeo_b_validate_molokai_comp_f_state(const void* buf, size_t avail_
     if (!result)
         return AEO_B_INVALID;
     memset(result, 0, sizeof(*result));
-    return aeo_b_visit_comp_f_state(buf, avail_bytes, acpi_path, comp, fstate, validate_comp_action,
+    return aeo_b_visit_comp_f_state(buf, avail_bytes, acpi_path, comp, fstate, validate_resource_action,
                                     result, &cnt);
 }
 
@@ -315,7 +315,7 @@ aeob_status_t aeo_b_validate_molokai_comp_p_state(const void* buf, size_t avail_
         return AEO_B_INVALID;
     memset(result, 0, sizeof(*result));
     return aeo_b_visit_comp_p_state(buf, avail_bytes, acpi_path, comp, set_id, pstate,
-                                    validate_comp_action, result, &cnt);
+                                    validate_resource_action, result, &cnt);
 }
 
 aeob_status_t aeo_b_validate_molokai_dev_d_state(const void* buf, size_t avail_bytes,
@@ -326,6 +326,6 @@ aeob_status_t aeo_b_validate_molokai_dev_d_state(const void* buf, size_t avail_b
     if (!result)
         return AEO_B_INVALID;
     memset(result, 0, sizeof(*result));
-    return aeo_b_visit_dev_d_state(buf, avail_bytes, acpi_path, state, validate_action, result,
+    return aeo_b_visit_dev_d_state(buf, avail_bytes, acpi_path, state, validate_resource_action, result,
                                    &cnt);
 }

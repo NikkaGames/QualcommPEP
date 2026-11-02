@@ -16,10 +16,6 @@ extern "C" {
  * ownership. Hardware-control action 3 also needs a rail vote before the UFS GDSCR
  * HW_CONTROL bit is set. */
 
-#define RAIL_VDD_CX 0x01u
-#define RAIL_VDD_MM 0x08u
-#define RAIL_VDD_MX 0x10u
-
 typedef struct fs_gdsc_rail_provider {
     void* ctx;
     uint32_t rail_mask;
@@ -51,8 +47,8 @@ typedef struct fs_gdsc_driver {
     uint8_t quarantined;
 } fs_gdsc_driver_t;
 
-/* the supplied DomainId MUST equal the table-derived clock BSP ID (0x20000 |
- * aPowerDomains[] idx). HAL GDSCR physical address must match the Molokai GCC sequence. */
+/* Domain IDs are opaque BSP identifiers. The mapped controller and GDSCR must match
+ * the target's domain metadata. */
 
 int fs_gdsc_init(fs_gdsc_driver_t* driver, const gcc_io_t* io, const char* domain,
                  uint32_t domain_id, void* owner_ctx, int (*owns)(void*, const char*, uint64_t),

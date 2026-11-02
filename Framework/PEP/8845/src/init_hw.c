@@ -3,6 +3,7 @@
  * reg before forwarding to its action-level op. */
 
 #include "hw_backend.h"
+#include "gdsc_phys.h"
 #include <string.h>
 
 static int bound_begin(void* ctx, hw_backend_t* out)
@@ -128,6 +129,13 @@ int hw_backend_bind_graph(res_graph_t* graph)
         if (kind == (int)POWER_FOOTSWITCH)
             continue;
         if (!graph_bind(graph, (power_action_kind_t)kind, &prov))
+            return -3;
+    }
+    for (uint32_t i = 0u;; ++i) {
+        const molokai_gdsc_location_t* domain = molokai_gdsc_at(i);
+        if (!domain)
+            break;
+        if (!domain->required_client && !graph_bind_domain(graph, domain->domain, &prov))
             return -3;
     }
     return 0;

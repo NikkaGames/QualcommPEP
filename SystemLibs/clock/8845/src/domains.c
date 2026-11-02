@@ -64,11 +64,22 @@ const oem_power_domain_t oem_power_domains[OEM_POWER_DOMAIN_CNT] = {
     {"video_cc_mvs1_gdsc", 0x20039u, UINT64_C(0xAAF80A4)},
 };
 
+static const oem_power_domain_t target_domains[] = {
+    {"gcc_pcie_0_gdsc", 0xC1C9C0D4u, UINT64_C(0x0016B004)},
+    {"gcc_pcie_0_phy_gdsc", 0x2AE8F85Bu, UINT64_C(0x0016C000)},
+};
+
 int oem_get_power_domain(const char* name, oem_power_domain_t* out)
 {
     uint32_t i;
     if (!name || !out || !name[0])
         return 0;
+    for (i = 0u; i < sizeof(target_domains) / sizeof(target_domains[0]); ++i) {
+        if (!strcmp(name, target_domains[i].name)) {
+            *out = target_domains[i];
+            return 1;
+        }
+    }
     for (i = 0u; i < OEM_POWER_DOMAIN_CNT; ++i) {
         if (!strcmp(name, oem_power_domains[i].name)) {
             *out = oem_power_domains[i];

@@ -230,12 +230,14 @@ gcc_result_t gcc_enable(const gcc_io_t* io, const gcc_clock_t* clock)
                 return GCC_INVALID;
             return enable_bits(io, clock->cbcr_offset, CBCR_CLK_ENABLE, 1);
         case GCC_KIND_VOTE:
+        case GCC_KIND_VOTE_REQ:
             if (!clock->vote_offset || !clock->vote_mask || !clock->cbcr_offset)
                 return GCC_INVALID;
             r = enable_bits(io, clock->vote_offset, clock->vote_mask, 1);
             if (r != GCC_OK)
                 return r;
-            return wait_branch(io, clock->cbcr_offset, 1);
+            return clock->kind == GCC_KIND_VOTE_REQ ? GCC_OK
+                                                    : wait_branch(io, clock->cbcr_offset, 1);
         case GCC_KIND_BRANCH:
             if (!clock->cbcr_offset)
                 return GCC_INVALID;
@@ -266,6 +268,7 @@ gcc_result_t gcc_disable(const gcc_io_t* io, const gcc_clock_t* clock)
         return GCC_INVALID;
     switch (clock->kind) {
         case GCC_KIND_VOTE:
+        case GCC_KIND_VOTE_REQ:
             if (!clock->vote_offset || !clock->vote_mask || !clock->cbcr_offset)
                 return GCC_INVALID;
             r = enable_bits(io, clock->vote_offset, clock->vote_mask, 0);
@@ -292,6 +295,8 @@ gcc_result_t gcc_disable(const gcc_io_t* io, const gcc_clock_t* clock)
                 r = enable_bits(io, clock->gdscr_offset, GDSCR_SW_COLLAPSE, 1);
             if (r != GCC_OK)
                 return r;
+            if (clock->vote_offset && clock->vote_mask)
+                return GCC_OK;
             /* a second firmware/hardware voter may hold PWR_ON even after our SW_COLLAPSE request.
              * Nevertheless the requested bit must survive a fresh MMIO read; a dropped write cannot
              * succeed. */
@@ -366,7 +371,7 @@ gcc_result_t gcc_readback(const gcc_io_t* io, const gcc_clock_t* clock, gcc_stat
         return GCC_IO_FAILED;
     state->cbcr = v;
     state->on = branch_on(v) ? 1u : 0u;
-    if (clock->kind == GCC_KIND_VOTE) {
+    if (clock->kind == GCC_KIND_VOTE || clock->kind == GCC_KIND_VOTE_REQ) {
         if (!rd(io, clock->vote_offset, &state->vote_reg))
             return GCC_IO_FAILED;
         state->enabled = (state->vote_reg & clock->vote_mask) ? 1u : 0u;

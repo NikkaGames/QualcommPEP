@@ -94,7 +94,7 @@
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
     </DriverSign>
     <Inf>
-      <TimeStamp>700.32000.0.434</TimeStamp>
+      <TimeStamp>700.32000.0.435</TimeStamp>
     </Inf>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
@@ -114,7 +114,7 @@
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
     </DriverSign>
     <Inf>
-      <TimeStamp>700.32000.0.434</TimeStamp>
+      <TimeStamp>700.32000.0.435</TimeStamp>
     </Inf>
   </ItemDefinitionGroup>
   <ItemGroup>

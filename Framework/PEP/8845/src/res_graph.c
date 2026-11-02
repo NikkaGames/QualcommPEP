@@ -179,10 +179,26 @@ int graph_bind(res_graph_t* g, power_action_kind_t k, const graph_provider_t* p)
     return 1;
 }
 
-/* sealing validates ACPI and happens before creation of runtime NPA clients. Restrict
- * post-seal provisioning to the one native-footwitch provider that cannot be obtained
- * during the desc build. */
+int graph_bind_domain(res_graph_t* g, const char* name, const graph_provider_t* p)
+{
+    size_t length;
+    uint32_t i;
+    if (!g || !name || !valid_provider(p) || g->sealed || g->retired || g->quiescing ||
+        g->providers_frozen || g->domain_count >= GRAPH_DOMAIN_PROVIDERS)
+        return 0;
+    for (length = 0u; length < POWER_NAME_BYTES && name[length]; ++length) {
+    }
+    if (!length || length == POWER_NAME_BYTES)
+        return 0;
+    for (i = 0u; i < g->domain_count; ++i)
+        if (!strcmp(g->domains[i].name, name))
+            return 0;
+    memcpy(g->domains[g->domain_count].name, name, length + 1u);
+    g->domains[g->domain_count++].provider = *p;
+    return 1;
+}
 
+/* The UFS required client is provisioned after descriptor validation and before publication. */
 int graph_bind_prepublish_footswitch(res_graph_t* g, const graph_provider_t* p)
 {
     uint32_t i;
@@ -298,6 +314,13 @@ static graph_provider_t* provider(res_graph_t* g, const power_action_t* a)
     if (!a)
         return NULL;
     k = (unsigned)a->kind;
+    if (k == POWER_FOOTSWITCH) {
+        if (g->domain_count > GRAPH_DOMAIN_PROVIDERS)
+            return NULL;
+        for (uint32_t i = 0u; i < g->domain_count; ++i)
+            if (!strcmp(g->domains[i].name, a->u.footswitch.name))
+                return valid_provider(&g->domains[i].provider) ? &g->domains[i].provider : NULL;
+    }
     return k > 0 && k < GRAPH_PROVIDER_CNT && valid_provider(&g->providers[k]) ? &g->providers[k]
                                                                                : NULL;
 }
@@ -712,7 +735,8 @@ static int run_verify_final(void* ctx, const power_sequence_t* sequence)
             !p->supports(p->ctx, identity, sequence->target_d_state, &sequence->actions[i]))
             return 0;
         for (j = 0u; j < i; ++j)
-            if ((unsigned)sequence->actions[j].kind == k && client_key(r->dev, sequence, j) == key)
+            if ((unsigned)sequence->actions[j].kind == k && client_key(r->dev, sequence, j) == key &&
+                run_provider(r, &sequence->actions[j]) == p)
                 break;
         if (j != i)
             continue;
@@ -720,7 +744,8 @@ static int run_verify_final(void* ctx, const power_sequence_t* sequence)
         memcpy(group->dev_path, identity, sizeof(group->dev_path));
         group->target_d_state = sequence->target_d_state;
         for (j = 0u; j < sequence->action_cnt; ++j)
-            if ((unsigned)sequence->actions[j].kind == k && client_key(r->dev, sequence, j) == key)
+            if ((unsigned)sequence->actions[j].kind == k && client_key(r->dev, sequence, j) == key &&
+                run_provider(r, &sequence->actions[j]) == p)
                 group->actions[group->action_cnt++] = sequence->actions[j];
         if (!p->verify_final(p->ctx, identity, sequence->target_d_state, group))
             return 0;
